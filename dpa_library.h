@@ -1,11 +1,14 @@
-/*
+/**
+ * @file DPA support library
+ * @version 0.93
+ *
  * Copyright 2015-2016 MICRORISC s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,201 +17,80 @@
  * limitations under the License.
  */
 
-/*****************************************************************************
- *
- * DPA support library ver.0.93
- *
- *****************************************************************************/
-
 #ifndef _DPA_LIBRARY_H
 #define _DPA_LIBRARY_H
 
-//uint8(16)_t and NULL defines
 #include <stdint.h>
 #include <stddef.h>
 
 #include "DPA.h"
 
-#define __SPI_INTERFACE__				// select for comunication via SPI
-// #define __UART_INTERFACE__			// select for comunication via UART
+#define __SPI_INTERFACE__         // select for comunication via SPI
+//#define __UART_INTERFACE__      // select for comunication via UART
+//#define __STORE_CODE_SUPPORT__  // uncomment for TR7xD modules code upload support
 
-#define TR7xD							// select for TR7xD module
-//#define TR5xD							// select for TR5xD module
+#define TR7xD                     // select for TR7xD module
+//#define TR5xD                   // select for TR5xD module
 
-typedef uint8_t  UINT8;				// Define DPA.h types
-typedef uint16_t UINT16;
+/*
+ * Library status
+ */
+/// DPA support library ready
+#define  DPA_READY      0x00
+/// DPA request is preparing
+#define  DPA_PREPARE    0x01
+/// DPA request processing
+#define  DPA_BUSY       0x02
 
-// library status
-#define  DPA_READY		0x00	 		// DPA support library ready
-#define  DPA_PREPARE	0x01	 		// DPA request is preparing
-#define  DPA_BUSY		0x02	 		// DPA request processing
-
-typedef struct{
-	UINT16  	NADR;
-  	UINT8   	PNUM;
-  	UINT8   	PCMD;
-  	UINT16  	HWPID;
-   	UINT8 		ResponseCode;
- 	UINT8 		DpaValue;
-	TDpaMessage	DpaMessage;
+typedef struct {
+	uint16_t NADR;
+	uint8_t PNUM;
+	uint8_t PCMD;
+	uint16_t HWPID;
+	uint8_t ResponseCode;
+	uint8_t DpaValue;
+	TDpaMessage DpaMessage;
 } T_DPA_PACKET;
 
-typedef void (*T_DPA_ANSWER_HANDLER)(T_DPA_PACKET *DpaAnswer);			// DPA response callback function type
+/// DPA response callback function type
+typedef void (*T_DPA_ANSWER_HANDLER)(T_DPA_PACKET *DpaAnswer);
 
-typedef struct{
-	UINT8	status;
-	UINT8	timeFlag;
-	UINT8	timeCnt;
-	UINT8	extraDataSize;
-	T_DPA_ANSWER_HANDLER	dpaAnswerHandler;
-	T_DPA_PACKET	*dpaRequestPacketPtr;
-}T_DPA_CONTROL;
+typedef struct {
+	uint8_t status;
+	uint8_t timeFlag;
+	uint8_t timeCnt;
+	uint8_t extraDataSize;
+	T_DPA_ANSWER_HANDLER dpaAnswerHandler;
+	T_DPA_PACKET *dpaRequestPacketPtr;
+} T_DPA_CONTROL;
 
-extern T_DPA_CONTROL	dpaControl;
+extern T_DPA_CONTROL dpaControl;
 
-/***************************************************************************************************
-* Function: void DPA_Init(void)
-*
-* PreCondition: none
-*
-* Input: none
-*
-* Output: none
-*
-* Side Effects: none
-*
-* Overview: function initialize DPA support library
-*
-* Note: none
-*
-***************************************************************************************************/
 void DPA_Init(void);
-
-/***************************************************************************************************
-* Function: void DPA_LibraryDriver(void)
-*
-* PreCondition: DPA_Init() for library initialization must be called before
-*
-* Input: none
-*
-* Output: none
-*
-* Side Effects: none
-*
-* Overview: function provides background communication with TR module
-*
-* Note: none
-*
-***************************************************************************************************/
 void DPA_LibraryDriver(void);
+void DPA_SendRequest(T_DPA_PACKET *dpaRequest, uint8_t dataSize);
+uint16_t DPA_GetEstimatedTimeout(void);
 
-/***************************************************************************************************
-* Function: void DPA_SendRequest(T_DPA_PACKET *dpaRequest, UINT8 dataSize)
-*
-* PreCondition: DpaInit() for library initialization must be called before
-*
-* Input: dpaRequest	- pointer to DPA request packet
-*        dataSize  	- number of additional data bytes in DPA request packet
-*
-* Output: none
-*
-* Side Effects: none
-*
-* Overview: sends DPA request packet to desired destination address
-*
-* Note: none
-*
-***************************************************************************************************/
-void DPA_SendRequest(T_DPA_PACKET *dpaRequest, UINT8 dataSize);
+#if defined(__UART_INTERFACE__)
+void DPA_ReceiveUartByte(uint8_t rxByte);
+#endif
 
-/***************************************************************************************************
-* Function: UINT16 DPA_GetEstimatedTimeout(void)
-*
-* PreCondition: DpaInit() for library initialization must be called before
-*
-* Input: none
-*
-* Output: estimated timeout for response packet in ms (computed from confirmation packet data)
-*
-* Side Effects: none
-*
-* Overview: returns estimated timeout for response packet in miliseconds
-*
-* Note: none
-*
-***************************************************************************************************/
-UINT16 DPA_GetEstimatedTimeout(void);
+/**
+ * Return actual status of DPA support library
+ * @return actual status of DPA support library
+ */
+#define DPA_GetStatus()   dpaControl.status
 
-/***************************************************************************************************
-* Function: void DPA_ReceiveUartByte(UINT8 Rx_Byte)
-*
-* PreCondition: DPA_Init() for library initialization must be called before
-*
-* Input: Rx_Byte - received byte from UART modul
-*
-* Output: none
-*
-* Side Effects: none
-*
-* Overview: function transfers received byte from UART to DPA support library
-*
-* Note: none
-*
-***************************************************************************************************/
-void DPA_ReceiveUartByte(UINT8 Rx_Byte);
-
-/***************************************************************************************************
-* Macro: DPA_GetStatus()
-*
-* PreCondition: none
-*
-* Input: none
-*
-* Output: DPA support library actual status
-*
-* Side Effects: none
-*
-* Overview: none
-*
-* Note: none
-*
-***************************************************************************************************/
-#define DPA_GetStatus()			dpaControl.status
-
-/***************************************************************************************************
-* Macro: DPA_SetTimmingFlag()
-*
-* PreCondition: none
-*
-* Input: none
-*
-* Output: none
-*
-* Side Effects: none
-*
-* Overview: setting time flag for DPA_LibraryDiver function
-*
-* Note: function must be called periodicaly every 1 ms
-*
-***************************************************************************************************/
+/**
+ * Setting time flag for DPA_LibraryDriver function
+ * Must be called periodicaly every 1 ms (TR5xD) or 150us (TR7xD)
+ */
 #define DPA_SetTimmingFlag()  dpaControl.timeFlag = 1;
 
-/***************************************************************************************************
-* Macro: DPA_SetAnswerHandler(T_DPA_ANSWER_HANDLER newHandler)
-*
-* PreCondition: DPA_Init() for library initialization must be called before
-*
-* Input: pointer to user DPA response handler
-*
-* Output: none
-*
-* Side Effects: none
-*
-* Overview: macro sets pointer to user DPA response handler
-*
-* Note: none
-*
-***************************************************************************************************/
-#define DPA_SetAnswerHandler(A1)	dpaControl.dpaAnswerHandler = A1
+/**
+ * Set pointer to user DPA response handler
+ * @param A1 Pointer to user DPA response handler
+ */
+#define DPA_SetAnswerHandler(A1) dpaControl.dpaAnswerHandler = A1
 
 #endif
