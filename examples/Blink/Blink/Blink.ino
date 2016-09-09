@@ -44,6 +44,30 @@
 #include <dpa_library.h>
 
 /*
+ * C prototypes
+ */
+#if defined(__SPI_INTERFACE__)
+extern "C" void DPA_DeselectTRmodule();
+extern "C" uint8_t DPA_SendSpiByte(uint8_t txByte);
+#elif defined(__UART_INTERFACE__)
+extern "C" void DPA_SendUartByte(uint8_t txByte);
+#endif
+
+/*
+ * C++ prototypes 
+ */
+void setup();
+void loop();
+void greenLed(uint16_t addr, uint8_t cmd);
+void redLed(uint16_t addr, uint8_t cmd);
+void dpaRequests();
+void dpaAnswerHandler(T_DPA_PACKET *dpaAnswerPacket);
+void dpaTimeoutHandler();
+void swTimeoutHandler();
+void msTimerCallback();
+void usTimerCallback();
+
+/*
  * Addresses
  */
 #define COORDINATOR 0
@@ -147,7 +171,7 @@ void setup() {
 void loop() {
 #if defined(__UART_INTERFACE__)
   // Check and read data from UART
-  DPA_ReadUartByte()
+  DPA_ReadUartByte();
 #endif
   // Sending DPA requests
   if (app_vars.swTimerAck) {

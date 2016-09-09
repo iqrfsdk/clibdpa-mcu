@@ -43,6 +43,33 @@
 
 #include <dpa_library.h>
 
+
+/*
+ * C prototypes
+ */
+#if defined(__SPI_INTERFACE__)
+extern "C" void DPA_DeselectTRmodule();
+extern "C" uint8_t DPA_SendSpiByte(uint8_t txByte);
+#elif defined(__UART_INTERFACE__)
+extern "C" void DPA_SendUartByte(uint8_t txByte);
+#endif
+
+/*
+ * C++ prototypes 
+ */
+void setup();
+void loop();
+void greenLed(uint16_t addr, uint8_t cmd);
+void redLed(uint16_t addr, uint8_t cmd);
+void mqttCallback(char* topic, byte* payload, unsigned int length);
+void mqttReconnect();
+void dpaRequests();
+void dpaAnswerHandler(T_DPA_PACKET *dpaAnswerPacket);
+void dpaTimeoutHandler();
+void swTimeoutHandler();
+void msTimerCallback();
+void usTimerCallback();
+
 /*
  * Addresses
  */
@@ -79,7 +106,7 @@ PubSubClient client(ethClient);
  */
 #if defined(__SPI_INTERFACE__)
 /// SPI SS (Slave select) pin of IQRF DCTR module
-uint8_t iqrfSs = 10;
+uint8_t iqrfSs = 9;
 #endif
 /// User timer period in ms
 uint16_t userTimerPeriod = 1000; // 1000@1ms = 1s
