@@ -20,6 +20,10 @@
 #ifndef _DPA_LIBRARY_H
 #define _DPA_LIBRARY_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include <stddef.h>
 
@@ -92,5 +96,9 @@ void DPA_ReceiveUartByte(uint8_t rxByte);
  * @param A1 Pointer to user DPA response handler
  */
 #define DPA_SetAnswerHandler(A1) dpaControl.dpaAnswerHandler = A1
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

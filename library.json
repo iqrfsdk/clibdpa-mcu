@@ -1,0 +1,42 @@
+{
+  "name": "IQRF DPA",
+  "keywords": "IQRF, DPA, communication, spi, uart, rf, radio, wireless",
+  "description": "IQRF DPA library",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iqrfsdk/clibdpa-mcu.git"
+  },
+  "version": "0.93",
+  "license": "Apache-2.0",
+  "authors": [{
+    "name": "Dusan Machut",
+    "email": "dusan.machut@gmail.com"
+  },
+  {
+    "name": "Rostislav Spinar",
+    "email": "rostislav.spinar@microrisc.com",
+    "url": "https://github.com/spinarr",
+    "maintainer": true
+  },
+  {
+    "name": "Roman Ondracek",
+    "email": "ondracek.roman@centrum.cz",
+    "url": "https://github.com/Roman3349"
+  }],
+  "frameworks": [
+    "arduino"
+  ],
+  "platforms": [
+    "atmelavr",
+    "atmelsam",
+    "microchippic32"
+  ],
+  "examples": [
+    "examples/*/*/*.ino"
+  ],
+  "exclude": [
+    "ci/",
+    ".gitignore",
+    ".travis.yml"
+  ]
+}
