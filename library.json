@@ -1,10 +1,10 @@
 {
-  "name": "IQRF-DPA",
+  "name": "IQRF DPA",
   "keywords": "IQRF, DPA, communication, spi, uart, rf, radio, wireless",
   "description": "IQRF DPA library",
   "repository": {
     "type": "git",
-    "url": "https://github.com/iqrfsdk/clibdpa-uc.git"
+    "url": "https://github.com/iqrfsdk/clibdpa-mcu.git"
   },
   "version": "0.93",
   "license": "Apache-2.0",
