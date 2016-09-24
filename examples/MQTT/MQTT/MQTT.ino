@@ -16,6 +16,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <dpa_library.h>
 #if defined(__PIC32MX__)
 #include <WProgram.h>
 #else
@@ -30,19 +31,6 @@
 #include <SPI.h>
 #include <Ethernet.h>
 #include <PubSubClient.h>
-
-/**
- * IQRF DPA library settings
- */
-#define __SPI_INTERFACE__         // select for comunication via SPI
-//#define __UART_INTERFACE__      // select for comunication via UART
-//#define __STORE_CODE_SUPPORT__  // uncomment for TR7xD modules code upload support
-
-#define TR7xD                     // select for TR7xD module
-//#define TR5xD                   // select for TR5xD module
-
-#include <dpa_library.h>
-
 
 /*
  * C prototypes
@@ -68,7 +56,15 @@ void dpaAnswerHandler(T_DPA_PACKET *dpaAnswerPacket);
 void dpaTimeoutHandler();
 void swTimeoutHandler();
 void msTimerCallback();
+#if defined(TR7xD)
 void usTimerCallback();
+#endif
+#if defined(__PIC32MX__)
+uint32_t msTimerCallbackPic32(uint32_t currentTime);
+#if defined(TR7xD)
+uint32_t usTimerCallbackPic32(uint32_t currentTime);
+#endif
+#endif
 
 /*
  * Addresses
@@ -252,7 +248,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Message arrived [");
   Serial.print(topic);
   Serial.print("] ");
-  for (int i=0; i<length; i++) {
+  for (uint16_t i=0; i<length; i++) {
     Serial.print((char)payload[i]);
   }
   Serial.println();
@@ -385,6 +381,29 @@ void msTimerCallback() {
 void usTimerCallback() {
   DPA_SetTimmingFlag();
 }
+
+#if defined(__PIC32MX__)
+/**
+ * 1ms timer callback
+ * @param currentTime Current time
+ * @return Next time
+ */
+uint32_t msTimerCallbackPic32(uint32_t currentTime) {
+  msTimerCallback();
+  return(currentTime + CORE_TICK_RATE);
+}
+#if defined(TR7xD)
+/**
+ * 150us timer callback for DCTR-7x modules
+ * @param currentTime Current time
+ * @return Next time
+ */
+uint32_t usTimerCallbackPic32(uint32_t currentTime) {
+  usTimerCallback();
+  return(currentTime + CORE_TICK_RATE);
+}
+#endif
+#endif
 
 #if defined(__SPI_INTERFACE__)
 
