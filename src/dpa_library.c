@@ -610,6 +610,17 @@ void DPA_SendDataByte(uint8_t dataByte) {
 }
 
 /**
+ * Transfers received byte from UART to DPA support library
+ * @param rxByte Received byte
+ */
+void DPA_ReceiveUartByte(uint8_t rxByte) {
+	// Write received byte to Rx FiFo
+	dpaUartIfControl.rxBuff[dpaUartIfControl.rxBuffInPtr++] = rxByte;
+	// This makes 16 bytes circle buffer
+	dpaUartIfControl.rxBuffInPtr &= 0x0F;
+}
+
+/**
  * Calculate the CRC8 value of a data set
  * @param inData One byte of data to compute CRC
  * @param seed The starting value of the CRC
