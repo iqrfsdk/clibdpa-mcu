@@ -11,7 +11,7 @@ env:
     - PLATFORMIO_CI_SRC=examples/MQTT/MQTT/MQTT.ino
 matrix:
     allow_failures:
-        - PLATFORMIO_CI_SRC=examples/MQTT/MQTT/MQTT.ino
+        - env: PLATFORMIO_CI_SRC=examples/MQTT/MQTT/MQTT.ino
 install:
     - pip install -U platformio
     - platformio lib -g install MsTimer2 TimerOne DueTimer PubSubClient
