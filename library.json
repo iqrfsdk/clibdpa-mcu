@@ -29,7 +29,8 @@
   "platforms": [
     "atmelavr",
     "atmelsam",
-    "microchippic32"
+    "microchippic32",
+    "teensy"
   ],
   "examples": [
     "examples/*/*/*.ino"

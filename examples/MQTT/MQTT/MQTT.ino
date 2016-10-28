@@ -22,7 +22,7 @@
 #else
 #include <Arduino.h>
 #endif
-#if defined(__AVR__)
+#if defined(__AVR__) || defined(CORE_TEENSY)
 #include <MsTimer2.h>
 #include <TimerOne.h>
 #elif defined(__SAM3X8E__)
@@ -143,7 +143,7 @@ void setup() {
   digitalWrite(iqrfSs, HIGH);
   SPI.begin();
 #endif
-#if defined(__AVR__)
+#if defined(__AVR__) || defined(CORE_TEENSY)
   MsTimer2::set(1, msTimerCallback);
   MsTimer2::start();
 #if defined(TR7xD)
