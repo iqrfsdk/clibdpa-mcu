@@ -121,7 +121,10 @@ typedef struct {
     volatile uint16_t swTimer;
     volatile bool swTimerAck;
     volatile uint8_t ticks;
-
+#if defined(__SPI_INTERFACE__) && defined(TR7xD)
+    // SPI
+    bool TRmoduleSelected;
+#endif
     // DPA
     volatile uint16_t dpaTimeoutCnt;
     uint16_t dpaStep;
@@ -413,6 +416,9 @@ uint32_t usTimerCallbackPic32(uint32_t currentTime) {
  * DPA SPI deselect module
  */
 void DPA_DeselectTRmodule() {
+#if defined(TR7xD)
+    app_vars.TRmoduleSelected = false;
+#endif
     pinMode(iqrfSs, OUTPUT);
     digitalWrite(iqrfSs, HIGH);
 }
@@ -423,13 +429,21 @@ void DPA_DeselectTRmodule() {
  * @return Received byte
  */
 uint8_t DPA_SendSpiByte(uint8_t txByte) {
+#if defined(TR7xD)
+    if (!app_vars.TRmoduleSelected) {
+        app_vars.TRmoduleSelected = true;
+        digitalWrite(iqrfSs, LOW);
+        delayMicroseconds(15);
+    }
+#else
     digitalWrite(iqrfSs, LOW);
     delayMicroseconds(15);
+#endif
     SPI.beginTransaction(SPISettings(250000, MSBFIRST, SPI_MODE0));
     uint8_t rxByte = SPI.transfer(txByte);
     SPI.endTransaction();
     delayMicroseconds(15);
-    digitalWrite(iqrfSs, HIGH);
+    DPA_DeselectTRmodule();
     return rxByte;
 }
 #elif defined(__UART_INTERFACE__)
