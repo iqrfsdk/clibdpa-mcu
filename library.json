@@ -10,7 +10,8 @@
   "license": "Apache-2.0",
   "authors": [{
     "name": "Dusan Machut",
-    "email": "dusan.machut@gmail.com"
+    "email": "dusan.machut@gmail.com",
+    "url": "https://github.com/MacHut-coder"
   },
   {
     "name": "Rostislav Spinar",
