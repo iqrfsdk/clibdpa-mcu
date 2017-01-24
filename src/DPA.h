@@ -3,10 +3,11 @@
 // *********************************************************************
 //
 // File:    $RCSfile: DPA.h,v $
-// Version: $Revision: 1.181 $
-// Date:    $Date: 2016/04/26 11:59:56 $
+// Version: $Revision: 1.185 $
+// Date:    $Date: 2016/09/29 13:15:36 $
 //
 // Revision history:
+//   2016/09/12  Release for DPA 2.28
 //   2016/04/14  Release for DPA 2.27
 //   2016/03/03  Release for DPA 2.26
 //   2016/01/21  Release for DPA 2.25
@@ -29,7 +30,7 @@
 //############################################################################################
 
 // DPA version
-#define	DPA_VERSION_MASTER		0x0227
+#define	DPA_VERSION_MASTER		0x0228
 
 #ifdef __CC5X__
 // Compiled only at CC5X
@@ -160,7 +161,7 @@ typedef struct
 // Maximum number of DPA peripherals per device
 #define MAX_PERIPHERALS				0x70
 
-// Timeslots lengths in 10 ms
+// Time slots lengths in 10 ms
 #define	MIN_STD_TIMESLOT	3	
 #ifdef TR7xD
 #define	MAX_STD_TIMESLOT	5
