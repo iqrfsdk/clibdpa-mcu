@@ -57,7 +57,7 @@ The pointer to struct ```T_DPA_PACKET``` is used for communication between user'
 | DCTR-52D | ```#define TR5xD```|
 | DCTR-72D | ```#define TR7xD```|
 
-- enable or disable library extension for uploading new FW to DCTR-7x modules
+- enable or disable library extension for uploading new custom DPA handler of firmware to DCTR-7x modules
 
 |  Extension  |               Macro                 |
 | :---------: | ----------------------------------- |
@@ -72,7 +72,7 @@ The pointer to struct ```T_DPA_PACKET``` is used for communication between user'
 | UART | ```void dpaSendUartByte(uint8_t TxByte)```        |
 | UART | ```uint8_t dpaReceiveUartByte(uint8_t *RxByte)``` |	
 
-- in case of using STORE CODE extension, implement function to transfer of 1B from selected open file on storage media. Inside this function, user should call ```dpaIncFileByteCounter()``` macro, whenever a byte is read from the file
+- in case of using STORE CODE extension, implement function to read 1B from selected open file on storage media. Inside this function, user should call ```dpaIncFileByteCounter()``` macro, whenever a byte is read from the file.
 
 |  Extension  |               Function                 |
 | :---------: | -------------------------------------- |
@@ -86,7 +86,7 @@ void dpaInit(T_DPA_ANSWER_HANDLER dpaAnswerHandler); // dpaAnswerHandler is user
 
 ## API functions
 - ```void dpaInit(T_DPA_ANSWER_HANDLER dpaAnswerHandler)``` - ```dpaAnswerHandler``` is user's function which is called by the library after asynchronous packet reception from DPA framework
-- ```void dpaLibraryDriver(void)``` - The brief description of these functions is in the paragraph Integration.
+- ```void dpaLibraryDriver(void)``` - The brief description of this function is in the paragraph Integration.
 - ```uint8_t dpaSendRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Timeout)``` - The function sends DPA request to TR module via selected interface. The user fills the ```T_DPA_PACKET``` struct, defines size of additional data in the DPA request (if any) and Timeout of opperation in ms. By additional data are meant bytes which follows after DPA request header NAdr, PNum, PCmd and HwProfile. Some DPA requests require the additional data. The function must be called periodically, if returns code ```DPA_OPERATION_IN_PROGRESS```. Periodically function calling is necessary end, when returns one of the following return codes:
     - ```DPA_OPERATION_OK``` - operation OK, answer to our request is in ```T_DPA_PACKET``` struct
     - ```DPA_OPERATION_TIMEOUT```  - operation timeout
@@ -95,8 +95,8 @@ void dpaInit(T_DPA_ANSWER_HANDLER dpaAnswerHandler); // dpaAnswerHandler is user
     - ```DPA_TR_MODULE_NOT_READY```  - operation ERROR, TR module is not ready    
 
 - ```uint8_t dpaMakeConfigurationCRC(T_DPA_PACKET *DpaRequest)``` - Function calculates the CRC of the new configuration data for TR module
-- ```void dpaIncFileByteCounter(void)``` - The brief description of these functions is in the paragraph Integration.
-- ```uint8_t dpaStoreCodeToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo)``` - Function ensures the storing of code image from IQRF or HEX file with the new custom DPA handler, or firmware for TR module. The user fills the ```T_DPA_CODE_FILE_INFO``` struct, with the information necessary to store code image. Then the function must be called periodically, until returns ```DPA_STORE_CODE_SUCCESS```, or ```DPA_STORE_CODE_ERROR```. 
+- ```void dpaIncFileByteCounter(void)``` - The brief description of this function is in the paragraph Integration.
+- ```uint8_t dpaStoreCodeToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo)``` - Function ensures the storing of code image from IQRF or HEX file with the new custom DPA handler, or firmware for DCTR-7xD module. The user fills the ```T_DPA_CODE_FILE_INFO``` struct, with the information necessary to store code image. Then the function must be called periodically, until returns ```DPA_STORE_CODE_SUCCESS```, or ```DPA_STORE_CODE_ERROR```. 
 
 ## License
 This library is licensed under Apache License 2.0:
