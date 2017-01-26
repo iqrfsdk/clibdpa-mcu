@@ -1,5 +1,6 @@
+
 /**
- * Copyright 2015-2016 MICRORISC s.r.o.
+ * Copyright 2015-2017 MICRORISC s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,52 +18,25 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <dpa_library.h>
+
 #if defined(__PIC32MX__)
-#include <WProgram.h>
+  #include <WProgram.h>
 #else
-#include <Arduino.h>
+  #include <Arduino.h>
 #endif
+
 #if defined(__AVR__) || defined(CORE_TEENSY)
-#include <MsTimer2.h>
-#include <TimerOne.h>
+  #include <TimerOne.h>
 #elif defined(__SAM3X8E__)
-#include <DueTimer.h>
-#endif
-#if defined(__SPI_INTERFACE__)
-#include <SPI.h>
+  #include <DueTimer.h>
 #endif
 
-/*
- * C prototypes
- */
 #if defined(__SPI_INTERFACE__)
-extern "C" void DPA_DeselectTRmodule();
-extern "C" uint8_t DPA_SendSpiByte(uint8_t txByte);
-#elif defined(__UART_INTERFACE__)
-extern "C" void DPA_SendUartByte(uint8_t txByte);
+  #include <SPI.h>
 #endif
 
-/*
- * C++ prototypes 
- */
-void setup();
-void loop();
-void greenLed(uint16_t addr, uint8_t cmd);
-void redLed(uint16_t addr, uint8_t cmd);
-void dpaRequests();
-void dpaAnswerHandler(T_DPA_PACKET *dpaAnswerPacket);
-void dpaTimeoutHandler();
-void swTimeoutHandler();
-void msTimerCallback();
-#if defined(TR7xD)
-void usTimerCallback();
-#endif
-#if defined(__PIC32MX__)
-uint32_t msTimerCallbackPic32(uint32_t currentTime);
-#if defined(TR7xD)
-uint32_t usTimerCallbackPic32(uint32_t currentTime);
-#endif
-#endif
+#define TR_SS           10          // TR module chip select pin
+#define PWR             9           // TR module power control pin
 
 /*
  * Addresses
@@ -76,326 +50,311 @@ uint32_t usTimerCallbackPic32(uint32_t currentTime);
 #define LOCAL       0xFC
 
 /*
- * Message types
+ * C prototypes
  */
-
-#define CONFIRMATION  1
-#define RESPONSE      2
+#if defined(__SPI_INTERFACE__)
+  extern "C" uint8_t dpaSendSpiByte(uint8_t Tx_Byte);
+  extern "C" void dpaDeselectTRmodule(void);
+#elif defined(__UART_INTERFACE__)
+  extern "C" void dpaSendUartByte(uint8_t Tx_Byte);
+  extern "C" uint8_t dpaReceiveUartByte(uint8_t *Rx_Byte);
+#endif
 
 /*
- * Statuses
+ * C++ prototypes
  */
-#define NO_WAITING            0
-#define CONFIRMATION_WAITING  1
-#define RESPONSE_WAITING      2
+void myAsyncPacketHandler(T_DPA_PACKET *dpaAnswerPkt);
+uint8_t sendMyDpaRequest(T_DPA_PACKET *DpaRequest, UINT8 DataSize, UINT16 Timeout);
+void simpleDpaCmd (uint16_t Addr, uint8_t Peripheral, uint8_t Cmd);
+#if defined(__PIC32MX__)
+  uint32_t systemTimerIterruptHandler(uint32_t CurrentTime);
+#else
+  void systemTimerIterruptHandler(void);
+#endif
 
 /*
  * Variables
  */
-#if defined(__SPI_INTERFACE__)
-/// SPI SS (Slave select) pin of IQRF DCTR module
-uint8_t iqrfSs = 10;
-#endif
-/// User timer period in ms
-uint16_t userTimerPeriod = 1000; // 1000@1ms = 1s
-
-typedef enum {
-    GLED_PULSE,
-    RLED_PULSE
-} DPA_RQ;
-
 typedef struct {
     // Timer
-    volatile uint16_t swTimer;
-    volatile bool swTimerAck;
-    volatile uint8_t ticks;
-#if defined(__SPI_INTERFACE__) && defined(TR7xD)
-    // SPI
-    bool TRmoduleSelected;
-#endif
+    volatile uint16_t SwTimer;
+    uint16_t SwTimerPreset;
+    volatile bool SwTimerAck;
+    #if defined(__PIC32MX__)
+      uint32_t SwTimerTimmingInterval;
+    #endif
     // DPA
-    volatile uint16_t dpaTimeoutCnt;
-    uint16_t dpaStep;
-    uint8_t state;
-    T_DPA_PACKET myDpaRequest;
-    DPA_RQ cmds;
-} app_vars_t;
-app_vars_t app_vars;
+    uint8_t State;
+    uint8_t AsyncPacketFlag;
+    T_DPA_PACKET MyDpaRequest;
+} APP_VARS;
+APP_VARS AppVars;
 
-/**
- * Init peripherals
- */
+//=============================================================================
 void setup() {
-    Serial.begin(9600);
-#if defined(__UART_INTERFACE__)
-    Serial1.begin(115200);
-#elif defined(__SPI_INTERFACE__)
-    pinMode(iqrfSs, OUTPUT);
-    digitalWrite(iqrfSs, HIGH);
-    SPI.begin();
-#endif
-#if defined(__AVR__) || defined(CORE_TEENSY)
-    MsTimer2::set(1, msTimerCallback);
-    MsTimer2::start();
-#if defined(TR7xD)
-    Timer1.initialize(150);
-    Timer1.attachInterrupt(usTimerCallback);
-#endif
-#elif defined(__SAM3X8E__)
-    Timer6.attachInterrupt(msTimerCallback).start(1000);
-#if defined(TR7xD)
-    Timer7.attachInterrupt(usTimerCallback).start(150);
-#endif
-#elif defined(__PIC32MX__)
-    attachCoreTimerService(msTimerCallbackPic32);
-#if defined(TR7xD)
-    attachCoreTimerService(usTimerCallbackPic32);
-#endif
-#endif
-    // Clear local variable
-    memset(&app_vars, 0, sizeof (app_vars_t));
-    app_vars.swTimer = userTimerPeriod;
-    app_vars.state = 1;
-    // DPA library initialization
-    DPA_Init();
-    // Set DPA response handler
-    DPA_SetAnswerHandler(dpaAnswerHandler);
-    // Wait 1s
-    delay(1000);
-    Serial.println("Peripheral and DPA init done");
-}
+  Serial.begin(9600);
 
-/**
- * Main loop
- */
+  AppVars.State = 0;
+  AppVars.AsyncPacketFlag = false;
+
+  #ifdef __SPI_INTERFACE__
+  pinMode(PWR, OUTPUT);                 // TR module power off (make TR module RESET)
+  digitalWrite(PWR, HIGH);
+  pinMode(TR_SS, OUTPUT);
+  digitalWrite(TR_SS, LOW);
+  delay(500);
+
+  digitalWrite(PWR, LOW);               // TR module power on
+  digitalWrite(TR_SS, HIGH);            // deselect TR module
+  SPI.begin();                          // start SPI peripheral
+  delay(500);                           // pause
+  #endif
+
+  #ifdef __UART_INTERFACE__
+  pinMode(PWR, OUTPUT);                 // TR module power off (make TR module RESET)
+  digitalWrite(PWR, HIGH);
+  delay(500);
+
+  digitalWrite(PWR, LOW);               // TR module power on
+  Serial1.begin(57600);                 // start UART1 peripheral
+  #endif
+
+  dpaInit(myAsyncPacketHandler);        // initialize DPA library
+
+  #if defined(__AVR__) || defined(CORE_TEENSY)
+    #if defined(TR7xD) || defined(__UART_INTERFACE__)
+      Timer1.initialize(150);                                     // initialize timer1, call dpa driver every 150us
+      AppVars.SwTimer = AppVars.SwTimerPreset = 10000;            // time 1.5s for DPA request sending
+    #else
+      Timer1.initialize(1000);                                    // initialize timer1, call dpa driver every 1000us
+      AppVars.SwTimer = AppVars.SwTimerPreset = 1500;             // time 1.5s for DPA request sending
+    #endif
+    Timer1.attachInterrupt(systemTimerIterruptHandler);           // attaches callback() as a timer overflow interrupt
+  #endif
+
+  #if defined(__SAM3X8E__)
+    #if defined(TR7xD) || defined(__UART_INTERFACE__)
+      Timer6.attachInterrupt(systemTimerIterruptHandler).start(150); // initialize timer1, call dpa driver every 150us
+      AppVars.SwTimer = AppVars.SwTimerPreset = 10000;            // time 1.5s for DPA request sending
+    #else
+      Timer6.attachInterrupt(systemTimerIterruptHandler).start(1000);// initialize timer1, call dpa driver every 1000us
+      AppVars.SwTimer = AppVars.SwTimerPreset = 1500;             // time 1.5s for DPA request sending
+    #endif
+  #endif
+
+  #if defined(__PIC32MX__)
+    #if defined(TR7xD) || defined(__UART_INTERFACE__)
+      AppVars.SwTimerTimmingInterval = CORE_TICK_RATE / 6.7;
+      AppVars.SwTimer = AppVars.SwTimerPreset = 10000;            // time 1.5s for DPA request sending
+    #else
+      AppVars.SwTimerTimmingInterval = CORE_TICK_RATE;
+      AppVars.SwTimer = AppVars.SwTimerPreset = 1500;             // time 1.5s for DPA request sending
+    #endif
+    attachCoreTimerService(systemTimerIterruptHandler);
+  #endif
+
+}
+//=============================================================================
+
 void loop() {
-#if defined(__UART_INTERFACE__)
-    // Check and read data from UART
-    DPA_ReadUartByte();
-#endif
-    // Sending DPA requests
-    if (app_vars.swTimerAck) {
-        // Function for sending DPA requests over SPI/UART
-        dpaRequests();
-        app_vars.swTimerAck = false;
-    }
-    // Run DPA library handler
-    DPA_LibraryDriver();
-}
 
-/**
- * DPA request to drive green LED peripheral
- * @param addr Address
- * &param cmd Command
- */
-void greenLed(uint16_t addr, uint8_t cmd) {
-    app_vars.myDpaRequest.NADR = addr;
-    app_vars.myDpaRequest.PNUM = PNUM_LEDG;
-    app_vars.myDpaRequest.PCMD = cmd;
-    app_vars.myDpaRequest.HWPID = HWPID_DoNotCheck; // replace HW_PROFILE_DO_NOT_CHECK
-    // Initial timeout 1s for either confirmation or response
-    app_vars.dpaTimeoutCnt = 1000;
-    DPA_SendRequest(&app_vars.myDpaRequest, 0);
-}
+  if (AppVars.SwTimerAck == true){                              // DPA request time flag is set
+    AppVars.SwTimerAck = false;
 
-/**
- * DPA request to drive red LED peripheral
- * @param addr Address
- * &param cmd Command
- */
-void redLed(uint16_t addr, uint8_t cmd) {
-    app_vars.myDpaRequest.NADR = addr;
-    app_vars.myDpaRequest.PNUM = PNUM_LEDR;
-    app_vars.myDpaRequest.PCMD = cmd;
-    app_vars.myDpaRequest.HWPID = HWPID_DoNotCheck; // replace HW_PROFILE_DO_NOT_CHECK
-    // Initial timeout 1s for either confirmation or response
-    app_vars.dpaTimeoutCnt = 1000;
-    DPA_SendRequest(&app_vars.myDpaRequest, 0);
-}
-
-/**
- * Send DPA requests
- */
-void dpaRequests() {
-    // if DPA library is busy, or dpa operation in progress, then return
-    if (DPA_GetStatus() != DPA_READY || app_vars.dpaStep != NO_WAITING) {
-        return;
-    }
-    // 100ms before sending another request
-    app_vars.ticks = 100;
-    while (app_vars.ticks) {
-    }
-    switch (app_vars.state) {
-    case 1:
-        redLed(COORDINATOR, CMD_LED_PULSE);
-        Serial.println("LEDR pulse");
-        app_vars.state = 2;
+    switch (AppVars.State){                                     // select which request is going to send
+      case 0:                                                   // coordinator - LED R pulse
+        Serial.println("LEDR pulse on Coordinator");
+        simpleDpaCmd (COORDINATOR, PNUM_LEDR, CMD_LED_PULSE);
+        AppVars.State++;
         break;
-    case 2:
-        greenLed(NODE1, CMD_LED_PULSE);
-        Serial.println("LEDG pulse");
-        app_vars.state = 1;
+
+      case 1:                                                   // node 1 - LED G pulse
+        Serial.println("LEDG pulse on Node 1");
+        simpleDpaCmd (NODE1, PNUM_LEDG, CMD_LED_PULSE);
+        AppVars.State++;
+        break;
+
+      case 2:                                                   // node 1 - LED G pulse
+        Serial.println("LEDG pulse on Node 2");
+        simpleDpaCmd (NODE2, PNUM_LEDG, CMD_LED_PULSE);
+        AppVars.State = 0;
         break;
     }
-    if (app_vars.myDpaRequest.NADR == 0x00 || app_vars.myDpaRequest.NADR == 0xFC) {
-        // DPA answer would be response
-        app_vars.dpaStep = RESPONSE_WAITING;
-    } else {
-        // DPA answer would be confirmation
-        app_vars.dpaStep = CONFIRMATION_WAITING;
-    }
+
+  }
+
+  if (AppVars.AsyncPacketFlag == true){                         // asynchronous packet indication
+    AppVars.AsyncPacketFlag = false;
+    Serial.println();
+    Serial.println("!!! Asynchronous DPA packet received !!!");
+    Serial.println();
+  }
+
 }
+//=============================================================================
 
 /**
- * DPA answer handler
- * @param dpaAnswerPacket Pointer to DPA answer packet
- */
-void dpaAnswerHandler(T_DPA_PACKET *dpaAnswerPacket) {
-    if (app_vars.dpaStep == CONFIRMATION_WAITING &&
-            dpaAnswerPacket->ResponseCode == STATUS_CONFIRMATION) {
-        app_vars.dpaStep = RESPONSE_WAITING;
-        app_vars.dpaTimeoutCnt = DPA_GetEstimatedTimeout();
-        return;
-    }
-    if (app_vars.dpaStep == RESPONSE_WAITING &&
-            dpaAnswerPacket->ResponseCode == STATUS_NO_ERROR) {
-        app_vars.dpaStep = NO_WAITING;
-        app_vars.dpaTimeoutCnt = 0;
-        // ANY USER CODE FOR DPA RESPONSE PROCESSING
-        return;
-    }
-    // ANY USER CODE FOR ASYNCHRONOUS DPA MESSAGES PROCESSING
-}
-
-/**
- * DPA response timeout handler
- */
-void dpaTimeoutHandler() {
-    app_vars.dpaStep = NO_WAITING;
-    // ANY USER CODE FOR OPERATION TIMEOUT HANDLING
-}
-
-/**
- * User timeout handler
- */
-void swTimeoutHandler() {
-    app_vars.swTimerAck = true;
-}
-
-/**
- * 1ms timer callback
- */
-void msTimerCallback() {
-#if defined(TR5xD)
-    DPA_SetTimmingFlag();
-#endif
-    // Timeout handler
-    if (app_vars.dpaTimeoutCnt) {
-        if ((--app_vars.dpaTimeoutCnt) == 0) {
-            // If timeout is expired it call timeout handler
-            dpaTimeoutHandler();
-        }
-    }
-    // SW timer, call timeout handler
-    if (app_vars.swTimer) {
-        if ((--app_vars.swTimer) == 0) {
-            swTimeoutHandler();
-            app_vars.swTimer = userTimerPeriod;
-        }
-    }
-    // Delay timer
-    if (app_vars.ticks) {
-        --app_vars.ticks;
-    }
-}
-
-/**
- * 150us timer callback for DCTR-7x modules
- */
-void usTimerCallback() {
-    DPA_SetTimmingFlag();
-}
-
+* System timer Interrupt handler  (1ms or 150us)
+*
+* @param   none
+* @return   none
+*
+**/
 #if defined(__PIC32MX__)
+  uint32_t systemTimerIterruptHandler(uint32_t CurrentTime){
 
-/**
- * 1ms timer callback
- * @param currentTime Current time
- * @return Next time
- */
-uint32_t msTimerCallbackPic32(uint32_t currentTime) {
-    msTimerCallback();
-    return (currentTime + CORE_TICK_RATE);
-}
-#if defined(TR7xD)
+    if (AppVars.SwTimer) AppVars.SwTimer--;
+    else{
+      AppVars.SwTimer = AppVars.SwTimerPreset;
+      AppVars.SwTimerAck = true;
+    }
 
-/**
- * 150us timer callback for DCTR-7x modules
- * @param currentTime Current time
- * @return Next time
- */
-uint32_t usTimerCallbackPic32(uint32_t currentTime) {
-    usTimerCallback();
-    return (currentTime + CORE_TICK_RATE);
-}
+    dpaLibraryDriver();
+    return(CurrentTime + AppVars.SwTimerTimmingInterval);
+  }
+#else
+  void systemTimerIterruptHandler(void){
+
+    if (AppVars.SwTimer) AppVars.SwTimer--;
+    else{
+      AppVars.SwTimer = AppVars.SwTimerPreset;
+      AppVars.SwTimerAck = true;
+    }
+
+    dpaLibraryDriver();
+  }
 #endif
-#endif
+//=============================================================================
 
-#if defined(__SPI_INTERFACE__)
-
+#ifdef __SPI_INTERFACE__
 /**
- * DPA SPI deselect module
- */
-void DPA_DeselectTRmodule() {
-#if defined(TR7xD)
-    app_vars.TRmoduleSelected = false;
-#endif
-    pinMode(iqrfSs, OUTPUT);
-    digitalWrite(iqrfSs, HIGH);
-}
+* Send DPA byte over SPI
+*
+* @param       Tx_Byte to send
+* @return      Received Rx_Byte
+*
+**/
+uint8_t dpaSendSpiByte(uint8_t Tx_Byte){
+    uint8_t Rx_Byte;
 
-/**
- * Send DPA byte over SPI
- * @param txByte Byte to send
- * @return Received byte
- */
-uint8_t DPA_SendSpiByte(uint8_t txByte) {
-#if defined(TR7xD)
-    if (!app_vars.TRmoduleSelected) {
-        app_vars.TRmoduleSelected = true;
-        digitalWrite(iqrfSs, LOW);
+    if (!DpaControl.TRmoduleSelected){
+        SPI.beginTransaction(SPISettings(250000, MSBFIRST, SPI_MODE0));
+        DpaControl.TRmoduleSelected = true;
+        digitalWrite(TR_SS, LOW);
         delayMicroseconds(15);
     }
-#else
-    digitalWrite(iqrfSs, LOW);
-    delayMicroseconds(15);
-#endif
-    SPI.beginTransaction(SPISettings(250000, MSBFIRST, SPI_MODE0));
-    uint8_t rxByte = SPI.transfer(txByte);
+
+    Rx_Byte = SPI.transfer(Tx_Byte);
+
+    #ifdef TR5xD
+        delayMicroseconds(15);
+        digitalWrite(TR_SS, HIGH);
+        DpaControl.TRmoduleSelected = false;
+        SPI.endTransaction();
+    #endif
+
+    return Rx_Byte;
+}
+//=============================================================================
+
+/**
+* DPA deselect module
+*
+* @param   none
+* @return   none
+*
+**/
+void dpaDeselectTRmodule(void){
+    digitalWrite(TR_SS, HIGH);
+    DpaControl.TRmoduleSelected = false;
     SPI.endTransaction();
-    delayMicroseconds(15);
-    DPA_DeselectTRmodule();
-    return rxByte;
 }
-#elif defined(__UART_INTERFACE__)
-
-/**
- * Send DPA byte over UART
- * @param txByte Byte to send
- */
-void DPA_SendUartByte(uint8_t txByte) {
-    Serial1.write(txByte);
-}
-
-/**
- * Read DPA byte from UART
- */
-void DPA_ReadUartByte() {
-    while (Serial1.available()) {
-        // Read received byte
-        uint8_t rxByte = Serial1.read();
-        // Load that byte to DPA library
-        DPA_ReceiveUartByte(rxByte);
-    }
-}
+//=============================================================================
 #endif
+
+#ifdef __UART_INTERFACE__
+/**
+* Send DPA byte over SCI
+*
+* @param       Tx_Byte to send
+* @return      none
+*
+**/
+void dpaSendUartByte(uint8_t Tx_Byte){
+  Serial1.write(Tx_Byte);
+}
+//=============================================================================
+
+/**
+* Read DPA byte over SCI
+*
+* @param       pointer to char Rx_Byte to transfer received byte to dpa library
+* @return      false - no char to read
+*              true - character ready
+*
+**/
+uint8_t dpaReceiveUartByte(uint8_t *Rx_Byte){
+  if (Serial1.available() > 0){
+    *Rx_Byte = Serial1.read();
+    return(true);
+  }
+  return(false);
+}
+//=============================================================================
+#endif
+
+/*
+ *------------------------------------------------------------
+ *           asynchronous packet service rutine
+ *------------------------------------------------------------
+ */
+void myAsyncPacketHandler(T_DPA_PACKET *dpaAnswerPkt){
+
+  /* here you can add any code for asynchronous packet service */
+
+  AppVars.AsyncPacketFlag = true;
+}
+
+/*
+*------------------------------------------------------------
+*           send DPA request and process response
+*------------------------------------------------------------
+*/
+uint8_t sendMyDpaRequest(T_DPA_PACKET *DpaRequest, UINT8 DataSize, UINT16 Timeout){
+
+  uint8_t OpResult;
+
+  Serial.println("Sending request");
+
+  while((OpResult = dpaSendRequest(DpaRequest, DataSize, Timeout)) == DPA_OPERATION_IN_PROGRESS); // send request and wait for result
+
+  switch(OpResult){
+      case DPA_OPERATION_OK: Serial.println("Operation OK"); break;             // operation OK
+      case DPA_OPERATION_TIMEOUT: Serial.println("Command timeout"); break;     // operation timeout
+      case DPA_CONFIRMATION_ERR: Serial.println("Confirmation ERROR"); break;   // confirmation error
+      case DPA_RESPONSE_ERR: Serial.println("Response ERROR"); break;           // response error
+      case DPA_TR_MODULE_NOT_READY: Serial.println("TR module not ready"); break; // TR module not ready
+  }
+
+  Serial.println();
+
+  return(OpResult);
+}
+//=============================================================================
+
+
+/*
+*------------------------------------------------------------
+*                 node dpa commands service
+*------------------------------------------------------------
+*/
+void simpleDpaCmd (uint16_t Addr, uint8_t Peripheral, uint8_t Cmd){
+
+  AppVars.MyDpaRequest.NADR = Addr;                                 // set address
+  AppVars.MyDpaRequest.PNUM = Peripheral;                           // set peripheral
+  AppVars.MyDpaRequest.PCMD = Cmd;                                  // set peripheral command
+  AppVars.MyDpaRequest.HWPID = HWPID_DoNotCheck;                    // do not check HWPID
+
+  sendMyDpaRequest(&AppVars.MyDpaRequest, 0, 2000);                 // send request and process response
+}
+//=============================================================================

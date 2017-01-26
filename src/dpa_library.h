@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 MICRORISC s.r.o.
+ * Copyright 2015-2017 MICRORISC s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ extern "C" {
 #define __SPI_INTERFACE__				    // select for comunication via SPI
 // #define __UART_INTERFACE__			  // select for comunication via UART
 
-#define __STORE_CODE_SUPPORT__		  // uncomment for TR7xD modules code upload support 
+// #define __STORE_CODE_SUPPORT__		// uncomment for TR7xD modules code upload support
 
 #define TR7xD							          // select for TR7xD module
 //#define TR5xD							          // select for TR5xD module
@@ -88,7 +88,7 @@ typedef struct{
 	UINT8	TimeoutPrescaller;
 	UINT8	TimeoutModulator;
 	UINT16	TimeoutTimer;
-	UINT16	FileByteCounter;						
+	UINT16	FileByteCounter;
 	T_DPA_ANSWER_HANDLER	DpaAnswerHandler;
 	T_DPA_TIMEOUT_HANDLER   DpaTimeoutHandler;
 	T_DPA_PACKET	*DpaRequestPacketPtr;
@@ -190,11 +190,11 @@ UINT8 dpaSendRequest(T_DPA_PACKET *DpaRequest, UINT8 DataSize, UINT16 Timeout);
 ***************************************************************************************************
 * Function: UINT8 dpaMakeConfigurationCRC(T_DPA_PACKET *DpaRequest)
 *
-* PreCondition: dpaInit() for library initialization must be called before 						
+* PreCondition: dpaInit() for library initialization must be called before
 *
 * Input: DpaRequest	- pointer to DPA request packet
 *
-* Output: configuration data CRC 
+* Output: configuration data CRC
 *
 * Side Effects: none
 *
@@ -210,7 +210,7 @@ UINT8 dpaMakeConfigurationCRC(T_DPA_PACKET *DpaRequest);
 ***************************************************************************************************
 * Function: void dpaSuspendDriver(void)
 *
-* PreCondition: dpaInit(.. ) for library initialization must be called before             
+* PreCondition: dpaInit(.. ) for library initialization must be called before
 *
 * Input: none
 *
@@ -230,7 +230,7 @@ void dpaSuspendDriver(void);
 ***************************************************************************************************
 * Function: void dpaRunDriver(void)
 *
-* PreCondition: dpaInit(.. ) for library initialization must be called before             
+* PreCondition: dpaInit(.. ) for library initialization must be called before
 *
 * Input: none
 *
@@ -250,7 +250,7 @@ void dpaRunDriver(void);
 ***************************************************************************************************
 * Function: UINT8 dpaStoreCodeToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo)
 *
-* PreCondition: dpaInit() for library initialization must be called before 						
+* PreCondition: dpaInit() for library initialization must be called before
 *               T_DPA_CODE_FILE_INFO *CodeFileInfo must be initialized
 *
 * Input: 		CodeFileInfo  pointer to T_DPA_CODE_FILE_INFO structure with code file image information
@@ -260,7 +260,7 @@ void dpaRunDriver(void);
 *							  DPA_STORE_CODE_SUCCESS   -> operation ended with success
 *               DPA_STORE_CODE_ERROR     -> operation ended with error
 *
-* Overview: Function for store HEX or IQRF code image to external EEPROM in TR module  
+* Overview: Function for store HEX or IQRF code image to external EEPROM in TR module
 *
 * Note: function must be called periodicaly until DPA_STORE_CODE_SUCCESS or DPA_STORE_CODE_ERROR is returned
 *
@@ -293,4 +293,3 @@ UINT8 dpaStoreCodeToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo);
 #endif
 
 #endif
-
