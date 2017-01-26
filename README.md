@@ -29,15 +29,18 @@ platformio lib install "IQRF DPA"
 
 ## Compatibility table
 
-|         MCU        |  Works |            Boards            |
-| ------------------ | :----: | ---------------------------- |
-| Atmega328 @ 16MHz  |    ✓   | Arduino Uno, Nano, Mini      |
-| Atmega32u4 @ 16MHz |    ✓   | Arduino Leonardo, Micro      |
-| Atmega2560 @ 16MHz |    ✓   | Arduino Mega 2560            |
-| ATSAM3X8E          |    ✓   | Arduino Due                  |
-| PIC32MX320F128H    |    ✓   | chipKIT Uno32                |
-| PIC32MX340F512H    |    ✓   | chipKIT uC32                 |
-| MK66FX1M0VMD18     |    ✓   | Teensy 3.6                   |
+|         MCU         |  Works |            Boards              |
+| ------------------- | :----: | ------------------------------ |
+| Atmega168 @ 16MHz   |    ✓   | Arduino Duemilanove, Decimalia |
+| Atmega328 @ 16MHz   |    ✓   | Arduino Uno, Nano, Mini        |
+| Atmega32u4 @ 16MHz  |    ✓   | Arduino Leonardo, Micro        |
+| Atmega2560 @ 16MHz  |    ✓   | Arduino Mega 2560              |
+| ATSAM3X8E           |    ✓   | Arduino Due                    |
+| PIC32MX320F128H     |    ✓   | chipKIT Uno32                  |
+| PIC32MX340F512H     |    ✓   | chipKIT uC32                   |
+| Atmega32u4 @ 16MHz  |    ✓   | Teensy 2.0                     |
+| AT90USB1286 @ 16MHZ |    ✓   | Teensy 2.0++                   |
+| MK20DX256 @ 72MHZ   |    ✓   | Teensy 3.1 / 3.2               |
 
 ## Integration
 
