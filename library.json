@@ -6,11 +6,12 @@
     "type": "git",
     "url": "https://github.com/iqrfsdk/clibdpa-mcu.git"
   },
-  "version": "0.93",
+  "version": "0.96",
   "license": "Apache-2.0",
   "authors": [{
     "name": "Dusan Machut",
-    "email": "dusan.machut@gmail.com"
+    "email": "dusan.machut@gmail.com",
+    "url": "https://github.com/MacHut-coder"
   },
   {
     "name": "Rostislav Spinar",

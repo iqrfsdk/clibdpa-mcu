@@ -29,21 +29,24 @@ platformio lib install "IQRF DPA"
 
 ## Compatibility table
 
-|         MCU        |  Works |            Boards            |
-| ------------------ | :----: | ---------------------------- |
-| Atmega328 @ 16MHz  |    ✓   | Arduino Uno, Nano            |
-| Atmega32u4 @ 16MHz |    ✓   | Arduino Leonardo, Micro      |
-| Atmega2560 @ 16MHz |    ✓   | Arduino Mega 2560            |
-| ATSAM3X8E          |    ✓   | Arduino Due                  |
-| PIC32MX320F128H    |    ✓   | chipKIT Uno32                |
-| PIC32MX340F512H    |    ✓   | chipKIT uC32                 |
-| MK66FX1M0VMD18     |    ✓   | Teensy 3.6                   |
+|           MCU           |  Works |            Boards              |
+| ----------------------- | :----: | ------------------------------ |
+| Atmega168 @ 16MHz       |    ✓   | Arduino Duemilanove, Decimalia |
+| Atmega328 @ 16MHz       |    ✓   | Arduino Uno, Nano, Mini        |
+| Atmega32u4 @ 16MHz      |    ✓   | Arduino Leonardo, Micro        |
+| Atmega2560 @ 16MHz      |    ✓   | Arduino Mega 2560              |
+| ATSAM3X8E @ 84MHz       |    ✓   | Arduino Due                    |
+| PIC32MX320F128H @ 80MHz |    ✓   | chipKIT Uno32                  |
+| PIC32MX340F512H @ 80MHz |    ✓   | chipKIT uC32                   |
+| Atmega32u4 @ 16MHz      |    ✓   | Teensy 2.0                     |
+| AT90USB1286 @ 16MHZ     |    ✓   | Teensy 2.0++                   |
+| MK20DX256 @ 72MHZ       |    ✓   | Teensy 3.1 / 3.2               |
 
 ## Integration
 
-The pointer to struct ```T_DPA_PACKET``` is used for communication between user's application and the library. The definition of ```T_DPA_PACKET``` can be found in the file [```dpa_library.h```](https://github.com/iqrfsdk/clibdpa-mcu/blob/develop/src/dpa_library.h). If the user wishes to use the services of the library the files [```dpa_library.c```](https://github.com/iqrfsdk/clibdpa-mcu/blob/develop/src/dpa_library.c) and [```dpa_library.h```](https://github.com/iqrfsdk/clibdpa-mcu/blob/develop/src/dpa_library.h) must be included in user's project and following conditions must be met.
+The pointer to struct ```T_DPA_PACKET``` is used for communication between user's application and the library. The definition of ```T_DPA_PACKET``` can be found in the file [```dpa_library.h```](https://github.com/iqrfsdk/clibdpa-mcu/blob/develop/src/dpa_library.h). If the user wishes to use the services of the library the files [```dpa_library.c```](https://github.com/iqrfsdk/clibdpa-mcu/blob/develop/src/dpa_library.c), [```dpa_library.h```](https://github.com/iqrfsdk/clibdpa-mcu/blob/develop/src/dpa_library.h) and [```dpa.h```](https://github.com/iqrfsdk/clibdpa-mcu/blob/develop/src/DPA.h) must be included in user's project and following conditions must be met.
 
-- select the communication interface in the library header file
+- select the communication interface in the dpa_library.h header file
 
 | Bus  |              Macro               |
 | :--: | -------------------------------- |
@@ -57,38 +60,51 @@ The pointer to struct ```T_DPA_PACKET``` is used for communication between user'
 | DCTR-52D | ```#define TR5xD```|
 | DCTR-72D | ```#define TR7xD```|
 
+- enable or disable library extension for uploading new custom DPA handler of firmware to DCTR-7x modules
+
+|  Extension  |               Macro                 |
+| :---------: | ----------------------------------- |
+|  STORE CODE | ```#define __STORE_CODE_SUPPORT__```|
+
 - implement functions to transfer of 1B to TR module via selected communication interface and deselect module if using SPI interface
 
-| Bus  |                    Function                    |
-| :--: | ---------------------------------------------- |
-| SPI  | ```uint8_t DPA_SendSpiByte(uint8_t txByte)```  |
-| SPI  | ```void DPA_DeselectTRmodule(void)```          |
-| UART | ```void DPA_SendUartByte(uint8_t txByte)```    |
-| UART | ```void DPA_ReceiveUartByte(uint8_t rxByte)``` |	
+| Bus  |                      Function                     |
+| :--: | ------------------------------------------------- |
+| SPI  | ```uint8_t dpaSendSpiByte(uint8_t TxByte)```      |
+| SPI  | ```void dpaDeselectTRmodule(void)```              |
+| UART | ```void dpaSendUartByte(uint8_t TxByte)```        |
+| UART | ```uint8_t dpaReceiveUartByte(uint8_t *RxByte)``` |	
 
-- call the function void DPA_SetTimmingFlag(void) with 1ms period. It is recommended to call the function in the interrupt.
-- call the function void DPA_LibraryDriver(void) in the main loop of the user's application. The calling period is not strictly defined. If the function is called in the interrupt then it is necessary to bear in mind that the function takes time at least of 1B transfer via selected interface.
-- initialize the library by calling following functions first:
+- in case of using STORE CODE extension, implement function to read 1B from selected open file on storage media. Inside this function, user should call ```dpaIncFileByteCounter()``` macro, whenever a byte is read from the file.
+
+|  Extension  |               Function                 |
+| :---------: | -------------------------------------- |
+|  STORE CODE | ```uint8_t dpaReadByteFromFile(void)```|
+
+- call the function ```void dpaLibraryDriver(void)``` with 1ms period in case of using DCTR-5xD modules in SPI mode. Otherwise call this function with 150us period. (DCTR-5xD in UART mode, or DCTR-7xD in SPI or UART mode). It is recommended to call the function in the interrupt.
+- initialize the library by calling following function first:
 ```c
-void DPA_Init(void);
-void DPA_SetAnswerHandler(T_DPA_ANSWER_HANDLER dpaAnswerHandler); // dpaAnswerHandler is user's function which is called by the library after packet reception from DPA framework.
+void dpaInit(T_DPA_ANSWER_HANDLER dpaAnswerHandler); // dpaAnswerHandler is user's function which is called by the library after asynchronous packet reception from DPA framework
 ```
 
 ## API functions
-- ```void DPA_Init(void)```
-- ```DPA_SetAnswerHandler(T_DPA_ANSWER_HANDLER dpaAnswerHandler)```
-- ```DPA_SetTimmingFlag(void)```
-- ```void DPA_LibraryDriver(void)``` - The brief description of these functions is in the paragraph Integration.
-- ```void DPA_SendRequest(T_DPA_PACKET *dpaRequest, uint8_t dataSize)``` - The function sends DPA request to TR module via selected interface. The user fills the ```T_DPA_PACKET``` struct and defines size of additional data (if any) in the DPA request. By additional data are meant bytes which follows after DPA request header NAdr, PNum, PCmd and HwProfile. Some DPA requests require the additional data.
-- ```uint16_t DPA_GetEstimatedTimeout(void)``` - The function returns estimated time for delivery of DPA response for sent DPA request. The timeout is calculated from the bytes in DPA confirmation and is in miliseconds.
-- ```DPA_GetStatus()``` The function returns a state in which the library is found. It is recommended to call this macro before calling DPA_SendRequest(...).
-    - ```DPA_READY``` - the library is ready for new requests
-    - ```DPA_BUSY```  - the library is processing the request 
+- ```void dpaInit(T_DPA_ANSWER_HANDLER dpaAnswerHandler)``` - ```dpaAnswerHandler``` is user's function which is called by the library after asynchronous packet reception from DPA framework
+- ```void dpaLibraryDriver(void)``` - The brief description of this function is in the paragraph Integration.
+- ```uint8_t dpaSendRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Timeout)``` - The function sends DPA request to TR module via selected interface. The user fills the ```T_DPA_PACKET``` struct, defines size of additional data in the DPA request (if any) and Timeout of opperation in ms. By additional data are meant bytes which follows after DPA request header NAdr, PNum, PCmd and HwProfile. Some DPA requests require the additional data. The function must be called periodically, if returns code ```DPA_OPERATION_IN_PROGRESS```. Periodically function calling is necessary end, when returns one of the following return codes:
+    - ```DPA_OPERATION_OK``` - operation OK, answer to our request is in ```T_DPA_PACKET``` struct
+    - ```DPA_OPERATION_TIMEOUT```  - operation timeout
+    - ```DPA_CONFIRMATION_ERR```  - operation ERROR, coordinator doesn't confirm our request
+    - ```DPA_RESPONSE_ERR```  - operation ERROR, TR module returned an unexpected response
+    - ```DPA_TR_MODULE_NOT_READY```  - operation ERROR, TR module is not ready    
+
+- ```uint8_t dpaMakeConfigurationCRC(T_DPA_PACKET *DpaRequest)``` - Function calculates the CRC of the new configuration data for TR module
+- ```void dpaIncFileByteCounter(void)``` - The brief description of this function is in the paragraph Integration.
+- ```uint8_t dpaStoreCodeToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo)``` - Function ensures the storing of code image from IQRF or HEX file with the new custom DPA handler, or firmware for DCTR-7xD module. The user fills the ```T_DPA_CODE_FILE_INFO``` struct, with the information necessary to store code image. Then the function must be called periodically, until returns ```DPA_STORE_CODE_SUCCESS```, or ```DPA_STORE_CODE_ERROR```. 
 
 ## License
 This library is licensed under Apache License 2.0:
 
- > Copyright 2015-2016 MICRORISC s.r.o.
+ > Copyright 2015-2017 MICRORISC s.r.o.
  > 
  > Licensed under the Apache License, Version 2.0 (the "License");
  > you may not use this file except in compliance with the License.
