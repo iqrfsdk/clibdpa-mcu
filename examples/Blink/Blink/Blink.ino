@@ -35,7 +35,7 @@
   #include <SPI.h>
 #endif
 
-#define TR_SS           10          // TR module chip select pin
+#define TR_SS           8           // TR module chip select pin
 #define PWR             9           // TR module power control pin
 
 /*
