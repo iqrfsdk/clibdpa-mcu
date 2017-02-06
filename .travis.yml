@@ -7,15 +7,19 @@ cache:
     directories:
         - "~/.platformio"
 env:
-    - PLATFORMIO_CI_SRC=examples/Blink/Blink/Blink.ino
-    - PLATFORMIO_CI_SRC=examples/MQTT/MQTT/MQTT.ino
+    - PLATFORMIO_CI_SRC=examples/Blink/Blink/
+    - PLATFORMIO_CI_SRC=examples/Console/Console/
+    - PLATFORMIO_CI_SRC=examples/MQTT/MQTT/
 matrix:
     allow_failures:
-        - env: PLATFORMIO_CI_SRC=examples/MQTT/MQTT/MQTT.ino
+        - env: PLATFORMIO_CI_SRC=examples/Console/Console/
+        - env: PLATFORMIO_CI_SRC=examples/MQTT/MQTT/
 install:
     - pip install -U platformio
-    - platformio lib -g install TimerOne DueTimer PubSubClient
+    - platformio lib -g install TimerOne DueTimer PubSubClient 872
     # Tmp fix for Microchip gcc-pic32
     - sudo apt-get install lib32z1 lib32ncurses5 lib32bz2-1.0
 script:
-    - platformio ci --lib="." --project-conf platformio.ini
+    - if [[ "$PLATFORMIO_CI_SRC" == "examples/Blink/Blink/" ]]; then platformio ci --lib="." --project-conf examples/Blink/platformio.ini; fi
+    - if [[ "$PLATFORMIO_CI_SRC" == "examples/Console/Console/" ]]; then platformio ci --lib="." --project-conf examples/Console/platformio.ini; fi
+    - if [[ "$PLATFORMIO_CI_SRC" == "examples/MQTT/MQTT/" ]]; then platformio ci --lib="." --project-conf examples/MQTT/platformio.ini; fi
