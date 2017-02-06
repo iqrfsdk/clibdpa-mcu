@@ -23,6 +23,7 @@
  *****************************************************************************
 */
 #include <Arduino.h>
+#include <ctype.h>
 #include "dpa_library.h"
 
 #ifdef __SPI_INTERFACE__
