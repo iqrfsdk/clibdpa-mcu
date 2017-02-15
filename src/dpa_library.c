@@ -18,7 +18,7 @@
 /*
  *****************************************************************************
  *
- * DPA support library ver.0.96
+ * DPA support library ver.1.00
  *
  *****************************************************************************
 */
@@ -104,7 +104,7 @@ UINT8 dpaDoCRC8(UINT8 InData, UINT8 Seed);
 
 #endif
 
-#if defined (__STORE_CODE_SUPPORT__) && defined(TR7xD)
+#if defined (__STORE_CODE_SUPPORT__)
 
 UINT16 dpaFlatcherCRC16(UINT8 *DataAddress, UINT8 DataLen, UINT16 Seed);
 void dpaSendDataToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo, UINT8 DataSize);
@@ -195,7 +195,7 @@ void dpaInit(T_DPA_ANSWER_HANDLER asyncPacketHandler){
 
 	#ifdef __SPI_INTERFACE__
     DpaControl.TRmoduleSelected = false;
-  	DpaControl.TimeCnt = SPI_STATUS_POOLING_TIME;
+  	DpaControl.TimeCnt = (SPI_STATUS_POOLING_TIME * 7) + 1;
   	DpaSpiIfControl.SpiStat = 0;
   	DpaSpiIfControl.Direction = SPI_TRANSFER_NONE;
 	#endif
@@ -231,14 +231,7 @@ void dpaLibraryDriver(void){
 	#ifdef __SPI_INTERFACE__
 		if (DpaControl.Status == DPA_BUSY || !DpaControl.TimeCnt){
 			dpaSpiInterfaceDriver();
-
-			#ifdef TR5xD
-			  DpaControl.TimeCnt = SPI_STATUS_POOLING_TIME + 1;
-			#endif
-
-			#ifdef TR7xD
-			  DpaControl.TimeCnt = (SPI_STATUS_POOLING_TIME * 7) + 1;
-			#endif
+		  DpaControl.TimeCnt = (SPI_STATUS_POOLING_TIME * 7) + 1;
 		}
 		DpaControl.TimeCnt--;
 	#endif
@@ -247,15 +240,13 @@ void dpaLibraryDriver(void){
 		dpaUartInterfaceDriver();
 	#endif
 
-  #if defined(TR7xD) || defined(__UART_INTERFACE__)
-    if (--DpaControl.TimeoutPrescaller) return;                                 // prescaler 7 = 1050us , prescaler 6 = 900us
+  if (--DpaControl.TimeoutPrescaller) return;                                   // prescaler 7 = 1050us , prescaler 6 = 900us
 
-    if (++DpaControl.TimeoutModulator <= 2) DpaControl.TimeoutPrescaller = 7;   // every third round do timeout timer correction
-    else{                                                                       // 2 * 1050us + 900us = 3000us
-      DpaControl.TimeoutModulator = 0;
-      DpaControl.TimeoutPrescaller = 6;
-    }
-  #endif
+  if (++DpaControl.TimeoutModulator <= 2) DpaControl.TimeoutPrescaller = 7;     // every third round do timeout timer correction
+  else{                                                                         // 2 * 1050us + 900us = 3000us
+    DpaControl.TimeoutModulator = 0;
+    DpaControl.TimeoutPrescaller = 6;
+  }
 
   if (DpaControl.TimeoutTimer){                                                 // service timeout timer
     if (!(--DpaControl.TimeoutTimer)){                                          // if timeout expired
@@ -849,7 +840,7 @@ UINT8 dpaDoCRC8(UINT8 InData, UINT8 Seed){
 
 #endif
 
-#if defined (__STORE_CODE_SUPPORT__) && defined(TR7xD)
+#if defined (__STORE_CODE_SUPPORT__)
 /*
 ***************************************************************************************************
 * Function: UINT8 dpaStoreCodeToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo)

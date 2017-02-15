@@ -16,7 +16,7 @@
 
 /*****************************************************************************
  *
- * DPA support library ver.0.96
+ * DPA support library ver.1.00
  *
  *****************************************************************************
 */
@@ -35,9 +35,6 @@ extern "C" {
 
 // #define __STORE_CODE_SUPPORT__		// uncomment for TR7xD modules code upload support
 
-#define TR7xD							          // select for TR7xD module
-//#define TR5xD							          // select for TR5xD module
-
 #define systemDisableInt()  noInterrupts()        // disable Interrupts (Arduino platform)
 #define systemEnableInt()   interrupts()          // enable Interrupts (Arduino platform)
 
@@ -47,13 +44,7 @@ extern "C" {
 #define  CUSTOM_HANDLER_ADDRESS    0x3A20
 
 // Address of the DPA Custom Handler end + 1
-#if defined( TR7xD )
 #define CUSTOM_HANDLER_ADDRESS_END  0x3D80
-#elif defined ( TR5xD )
-#define CUSTOM_HANDLER_ADDRESS_END  0x3D00
-#else
-#error Unsupported DCTR type
-#endif
 
 typedef uint8_t  UINT8;				      // Define dpa_library data types
 typedef uint16_t UINT16;
@@ -96,7 +87,7 @@ typedef struct{
 
 extern T_DPA_CONTROL	DpaControl;
 
-#if defined (__STORE_CODE_SUPPORT__) && defined(TR7xD)
+#if defined (__STORE_CODE_SUPPORT__)
 
 #define DPA_CODE_FILE_NOT_DEFINED	0
 #define DPA_CODE_FILE_HEX			    1
@@ -266,7 +257,7 @@ void dpaRunDriver(void);
 *
 ***************************************************************************************************
 */
-#if defined (__STORE_CODE_SUPPORT__) && defined(TR7xD)
+#if defined (__STORE_CODE_SUPPORT__)
 UINT8 dpaStoreCodeToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo);
 #endif
 

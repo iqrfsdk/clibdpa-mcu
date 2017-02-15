@@ -1,4 +1,4 @@
-# cLibDPA-MCU
+﻿# cLibDPA-MCU
 
 [![Build Status](https://travis-ci.org/iqrfsdk/clibdpa-mcu.svg?branch=develop)](https://travis-ci.org/iqrfsdk/clibdpa-mcu)
 [![Apache License](https://img.shields.io/badge/license-APACHE2-blue.svg)](https://github.com/iqrfsdk/clibdpa-mcu/blob/master/LICENSE)
@@ -11,9 +11,9 @@ These boards [1](http://iqrf.org/weben/index.php?sekce=products&id=iqrf-bb-01&ot
 
 ## Features
 
-- intended for communication with DCTR-72D and DCTR-52D modules
+- intended for communication with DCTR-7xD modules
 - intended for both DPA coordinator and node
-- supported DPA frameworks: 2.x
+- supported DPA frameworks: 3.x
 - supported communication interfaces: SPI, UART
 - supported programming languages: C for MCU
 - lightweight and easy to use
@@ -53,14 +53,7 @@ The pointer to struct ```T_DPA_PACKET``` is used for communication between user'
 | SPI  | ```#define __SPI_INTERFACE__```  |
 | UART | ```#define __UART_INTERFACE__``` |
 
-- select module type
-
-|  Module  |        Macro       |
-| :------: | ------------------ |
-| DCTR-52D | ```#define TR5xD```|
-| DCTR-72D | ```#define TR7xD```|
-
-- enable or disable library extension for uploading new custom DPA handler of firmware to DCTR-7x modules
+- enable or disable library extension for uploading new custom DPA handler of firmware to DCTR-7xD modules
 
 |  Extension  |               Macro                 |
 | :---------: | ----------------------------------- |
@@ -81,7 +74,7 @@ The pointer to struct ```T_DPA_PACKET``` is used for communication between user'
 | :---------: | -------------------------------------- |
 |  STORE CODE | ```uint8_t dpaReadByteFromFile(void)```|
 
-- call the function ```void dpaLibraryDriver(void)``` with 1ms period in case of using DCTR-5xD modules in SPI mode. Otherwise call this function with 150us period. (DCTR-5xD in UART mode, or DCTR-7xD in SPI or UART mode). It is recommended to call the function in the interrupt.
+- call the function ```void dpaLibraryDriver(void)``` with 150us period. It is recommended to call the function in the interrupt.
 - initialize the library by calling following function first:
 ```c
 void dpaInit(T_DPA_ANSWER_HANDLER dpaAnswerHandler); // dpaAnswerHandler is user's function which is called by the library after asynchronous packet reception from DPA framework

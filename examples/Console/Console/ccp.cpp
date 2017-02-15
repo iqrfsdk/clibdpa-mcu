@@ -62,7 +62,7 @@ const COM Commands[] PROGMEM ={          // command decode table
   "osinfo",ccpOsCmd,CMD_OS_READ,
   "loadcfg",ccpLoadConfigCmd,0,
 
-  #if defined (__STORE_CODE_SUPPORT__) && defined(TR7xD)
+  #if defined (__STORE_CODE_SUPPORT__)
     "storecode",ccpDpaStoreCodeCmd,0,
     "verifycode",ccpDpaLoadVerifyCodeCmd,0,
     "loadcode",ccpDpaLoadVerifyCodeCmd,1,

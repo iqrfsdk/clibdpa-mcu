@@ -57,7 +57,7 @@
   extern "C" void dpaSendUartByte(uint8_t Tx_Byte);
   extern "C" uint8_t dpaReceiveUartByte(uint8_t *Rx_Byte);
 #endif
-#if defined (__STORE_CODE_SUPPORT__) && defined(TR7xD)
+#if defined (__STORE_CODE_SUPPORT__)
   extern "C" uint8_t dpaReadByteFromFile(void);
 #endif
 
@@ -80,7 +80,7 @@ uint8_t   AsyncPacketFlag;
 
 T_DPA_PACKET MyDpaPacket;
 
-#if defined (__STORE_CODE_SUPPORT__) && defined(TR7xD)
+#if defined (__STORE_CODE_SUPPORT__)
   File CodeFile;
   T_DPA_CODE_FILE_INFO  MyDpaCodeFileInfo;
 #endif
@@ -119,13 +119,8 @@ void setup() {
 
   dpaInit(myAsyncPacketHandler);        // initialize DPA library
 
-  #if defined(TR7xD) || defined(__UART_INTERFACE__)
-    Timer1.initialize(150);                                     // initialize timer1, call dpa driver every 150us
-  #else
-    Timer1.initialize(1000);                                    // initialize timer1, call dpa driver every 1000us
-  #endif
+  Timer1.initialize(150);                             // initialize timer1, call dpa driver every 150us
   Timer1.attachInterrupt(dpaLibraryDriver);           // attaches callback() as a timer overflow interrupt
-
 }
 //=============================================================================
 
@@ -160,13 +155,6 @@ uint8_t dpaSendSpiByte(uint8_t Tx_Byte){
     }
 
     Rx_Byte = SPI.transfer(Tx_Byte);
-
-    #ifdef TR5xD
-        delayMicroseconds(15);
-        digitalWrite(TR_SS, HIGH);
-        DpaControl.TRmoduleSelected = false;
-        SPI.endTransaction();
-    #endif
 
     return Rx_Byte;
 }
@@ -218,7 +206,7 @@ uint8_t dpaReceiveUartByte(uint8_t *Rx_Byte){
 //=============================================================================
 #endif
 
-#if defined (__STORE_CODE_SUPPORT__) && defined(TR7xD)
+#if defined (__STORE_CODE_SUPPORT__)
 /*
  * Read byte from code file
  *
@@ -727,7 +715,7 @@ void ccpLoadConfigCmd (word CommandTabParameter){
 }
 //=============================================================================
 
-#if defined (__STORE_CODE_SUPPORT__) && defined(TR7xD)
+#if defined (__STORE_CODE_SUPPORT__)
 
 /*
 *------------------------------------------------------------

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef _DPA_DEMO_H
-#define _DPA_DEMO_H
+#ifndef _CONSOLE_H
+#define _CONSOLE_H
 
 void ccpCoordinatorCmd (word CommandTabParameter);
 void ccpLedCmd (word CommandTabParameter);
