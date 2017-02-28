@@ -3,11 +3,11 @@
 // *********************************************************************
 //
 // File:    $RCSfile: DPA.h,v $
-// Version: $Revision: 1.197 $
-// Date:    $Date: 2017/01/16 15:21:15 $
+// Version: $Revision: 1.199 $
+// Date:    $Date: 2017/02/23 16:43:13 $
 //
 // Revision history:
-//   2016/xx/yy  Release for DPA 3.00
+//   2017/xx/yy  Release for DPA 3.00
 //   2016/09/12  Release for DPA 2.28
 //   2016/04/14  Release for DPA 2.27
 //   2016/03/03  Release for DPA 2.26
@@ -159,10 +159,10 @@ typedef struct
 #define MAX_ADDRESS					( 240 - 1 )
 
 // Time slots lengths in 10 ms
-#define	MIN_STD_TIMESLOT	3	
+#define	MIN_STD_TIMESLOT	4	
 #define	MAX_STD_TIMESLOT	6
 
-#define	MIN_LP_TIMESLOT		9
+#define	MIN_LP_TIMESLOT		8
 #define	MAX_LP_TIMESLOT		11
 
 #ifdef DPA_STD
@@ -180,35 +180,35 @@ typedef struct
 #define DPA_MAX_DATA_LENGTH			( sizeofBufferCOM - sizeof( TDpaIFaceHeader ) - 2 * sizeof( uns8 ) )
 
 // Maximum number of peripherals info that can fit in the message
-#define MAX_PERIPHERALS_PER_BLOCK_INFO	( DPA_MAX_DATA_LENGTH / sizeof( TPeripheralInfoAnswer ) )
+#define	MAX_PERIPHERALS_PER_BLOCK_INFO	( DPA_MAX_DATA_LENGTH / sizeof( TPeripheralInfoAnswer ) )
 
 // Standard peripheral numbers
-#define  PNUM_COORDINATOR	0x00
-#define  PNUM_NODE			0x01
-#define  PNUM_OS			0x02
-#define  PNUM_EEPROM		0x03
-#define  PNUM_EEEPROM		0x04
-#define  PNUM_RAM			0x05
-#define  PNUM_LEDR			0x06
-#define  PNUM_LEDG			0x07
-#define  PNUM_SPI			0x08
-#define  PNUM_IO			0x09
-#define  PNUM_THERMOMETER	0x0A
-#define  PNUM_PWM			0x0B
-#define  PNUM_UART			0x0C
-#define  PNUM_FRC			0x0D
+#define	PNUM_COORDINATOR	0x00
+#define	PNUM_NODE			0x01
+#define	PNUM_OS				0x02
+#define	PNUM_EEPROM			0x03
+#define	PNUM_EEEPROM		0x04
+#define	PNUM_RAM			0x05
+#define	PNUM_LEDR			0x06
+#define	PNUM_LEDG			0x07
+#define	PNUM_SPI			0x08
+#define	PNUM_IO				0x09
+#define	PNUM_THERMOMETER	0x0A
+#define	PNUM_PWM			0x0B
+#define	PNUM_UART			0x0C
+#define	PNUM_FRC			0x0D
 
 // Number of the 1st user peripheral
-#define  PNUM_USER			0x20
+#define	PNUM_USER			0x20
 // Number of the last user peripheral
-#define  PNUM_USER_MAX		0x3E
+#define	PNUM_USER_MAX		0x3E
 // Maximum peripheral number
-#define  PNUM_MAX			0x7F
+#define	PNUM_MAX			0x7F
 
 // Fake peripheral number used to flag DPA response with error sent by RF
-#define  PNUM_ERROR_FLAG	0xFE
+#define	PNUM_ERROR_FLAG	0xFE
 // Special peripheral used for enumeration
-#define  PNUM_ENUMERATION	0xFF
+#define	PNUM_ENUMERATION	0xFF
 
 // DPA Commands for predefined peripherals
 #define	CMD_COORDINATOR_ADDR_INFO  0
@@ -347,7 +347,7 @@ typedef enum
   // Beginning of the user code error interval
   ERROR_USER_FROM = 0x20,
   // End of the user code error interval
-  ERROR_USER_TO = 0x3e,
+  ERROR_USER_TO = 0x3f,
 
   // Bit/flag reserved for a future use
   STATUS_RESERVED_FLAG = 0x40,
