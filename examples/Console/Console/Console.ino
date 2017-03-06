@@ -85,9 +85,11 @@ T_DPA_PACKET MyDpaPacket;
   T_DPA_CODE_FILE_INFO  MyDpaCodeFileInfo;
 #endif
 
-//=============================================================================
-
-void setup() {
+/**
+ * Setup peripherals
+ */
+void setup()
+{
   Serial.begin(9600);
 
   SDCardReady = SD.begin(SD_SS);        // initialize SD card
@@ -95,9 +97,10 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, LOW);
 
-  #ifdef __SPI_INTERFACE__
   pinMode(PWR, OUTPUT);                 // TR module power off (make TR module RESET)
   digitalWrite(PWR, HIGH);
+
+#ifdef __SPI_INTERFACE__
   pinMode(TR_SS, OUTPUT);
   digitalWrite(TR_SS, LOW);
   delay(500);
@@ -106,45 +109,47 @@ void setup() {
   digitalWrite(TR_SS, HIGH);            // deselect TR module
   SPI.begin();                          // start SPI peripheral
   delay(500);                           // pause
-  #endif
+#endif
 
-  #ifdef __UART_INTERFACE__
-  pinMode(PWR, OUTPUT);                 // TR module power off (make TR module RESET)
-  digitalWrite(PWR, HIGH);
+#ifdef __UART_INTERFACE__
   delay(500);
-
   digitalWrite(PWR, LOW);               // TR module power on
   Serial1.begin(57600);                 // start UART1 peripheral
-  #endif
+#endif
 
   dpaInit(myAsyncPacketHandler);        // initialize DPA library
 
   Timer1.initialize(150);                             // initialize timer1, call dpa driver every 150us
   Timer1.attachInterrupt(dpaLibraryDriver);           // attaches callback() as a timer overflow interrupt
 }
-//=============================================================================
 
-void loop() {
-  ccp();                              // console command processor
+/**
+ * Main loop
+ */
+void loop()
+{
+  // console command processor
+  ccp();
 
-  if (AsyncPacketFlag == true){       // asynchronous packet indication
+  // asynchronous packet indication
+  if (AsyncPacketFlag == true){
     AsyncPacketFlag = false;
     Serial.println();
     Serial.println("!!! Asynchronous DPA packet received !!!");
     Serial.println();
   }
 }
-//=============================================================================
 
 #ifdef __SPI_INTERFACE__
 /**
-* Send DPA byte over SPI
-*
-* @param       Tx_Byte to send
-* @return      Received Rx_Byte
-*
-**/
-uint8_t dpaSendSpiByte(uint8_t Tx_Byte){
+ * Send DPA byte over SPI
+ *
+ * @param       Tx_Byte to send
+ * @return      Received Rx_Byte
+ *
+ */
+uint8_t dpaSendSpiByte(uint8_t Tx_Byte)
+{
     uint8_t Rx_Byte;
 
     if (!DpaControl.TRmoduleSelected){
@@ -158,56 +163,54 @@ uint8_t dpaSendSpiByte(uint8_t Tx_Byte){
 
     return Rx_Byte;
 }
-//=============================================================================
 
 /**
-* DPA deselect module
-*
-* @param   none
-* @return   none
-*
-**/
-void dpaDeselectTRmodule(void){
+ * DPA deselect module
+ *
+ * @param   none
+ * @return   none
+ *
+ */
+void dpaDeselectTRmodule(void)
+{
     digitalWrite(TR_SS, HIGH);
     DpaControl.TRmoduleSelected = false;
     SPI.endTransaction();
 }
-//=============================================================================
 #endif
 
 #ifdef __UART_INTERFACE__
 /**
-* Send DPA byte over SCI
-*
-* @param       Tx_Byte to send
-* @return      none
-*
-**/
-void dpaSendUartByte(uint8_t Tx_Byte){
+ * Send DPA byte over SCI
+ *
+ * @param       Tx_Byte to send
+ * @return      none
+ *
+ */
+void dpaSendUartByte(uint8_t Tx_Byte)
+{
   Serial1.write(Tx_Byte);
 }
-//=============================================================================
 
 /**
-* Read DPA byte over SCI
-*
-* @param       pointer to char Rx_Byte to transfer received byte to dpa library
-* @return      false - no char to read
-*              true - character ready
-*
-**/
-uint8_t dpaReceiveUartByte(uint8_t *Rx_Byte){
+ * Read DPA byte over SCI
+ *
+ * @param       *Rx_Byte pointer to char to transfer received byte to dpa library
+ * @return      false - no char to read; true - character ready
+ *
+ */
+uint8_t dpaReceiveUartByte(uint8_t *Rx_Byte)
+{
   if (Serial1.available() > 0){
     *Rx_Byte = Serial1.read();
     return(true);
   }
   return(false);
 }
-//=============================================================================
 #endif
 
 #if defined (__STORE_CODE_SUPPORT__)
-/*
+/**
  * Read byte from code file
  *
  * @param - none
@@ -222,72 +225,67 @@ uint8_t dpaReadByteFromFile(void)
   }
   else return(0);
 }
-//=============================================================================
 #endif
 
-/*
- *------------------------------------------------------------
- *           asynchronous packet service rutine
- *------------------------------------------------------------
+/**
+ * asynchronous packet service rutine
+ *
+ * @param - dpaAnswerPkt pointer to T_DPA_PACKET structure with data from TR module
+ * @return - none
+ *
  */
-void myAsyncPacketHandler(T_DPA_PACKET *dpaAnswerPkt){
+void myAsyncPacketHandler(T_DPA_PACKET *dpaAnswerPkt)
+{
 
   /* here you can add any code for asynchronous packet service */
 
   AsyncPacketFlag = true;
 }
-//=============================================================================
-/*
-*****************************************************************************
-*  Function:
-*  char bToHexa_high(uint8_t B)
-*
-*  Summary:
-*  Converts the upper nibble of a binary value to a hexadecimal ASCII byte.
-*
-*  Returns:
-*    The upper hexadecimal ASCII byte '0'-'9' or 'A'-'F'.
-***************************************************************************
-*/
+
+/**
+ * Converts the upper nibble of a binary value to a hexadecimal ASCII byte
+ *
+ * @param - B binary value to conversion
+ * @return - ASCII char converted from upper nibble
+ *
+ */
 char bToHexa_high(uint8_t B)
 {
   B >>= 4;
   return (B>0x9) ? B+'A'-10:B+'0';
 }
-//=============================================================================
 
-/*
-***************************************************************************
-*  Function:
-*  char bToHexa_low(uint8_t B)
-*
-*  Summary:
-*  Converts the lower nibble of a binary value to a hexadecimal ASCII byte.
-*
-*  Returns:
-*    The lower hexadecimal ASCII byte '0'-'9' or 'A'-'F'.
-****************************************************************************
-*/
+/**
+ * Converts the lower nibble of a binary value to a hexadecimal ASCII byte.
+ *
+ * @param - B binary value to conversion
+ * @return - ASCII char converted from lower nibble
+ *
+ */
 char bToHexa_low(uint8_t B)
 {
   B &= 0x0F;
   return (B>0x9) ? B+'A'-10:B+'0';
 }
-//=============================================================================
 
-/*
-*------------------------------------------------------------
-*           send DPA request and process response
-*------------------------------------------------------------
-*/
-uint8_t sendMyDpaRequest(T_DPA_PACKET *DpaRequest, UINT8 DataSize, UINT16 Timeout){
+/**
+ * Send DPA request and process DPA response
+ * @param DpaRequest Pointer to DPA request
+ * @param DataSize Size of data
+ * @param Timeout Timeout
+ * @return Operation result
+ */
+uint8_t sendMyDpaRequest(T_DPA_PACKET *DpaRequest, UINT8 DataSize, UINT16 Timeout)
+{
 
   uint8_t Message;
   uint8_t OpResult;
 
-  sysMsgPrinter(CCP_SENDING_REQUEST);                    // "Sending request" message
+  // "Sending request" message
+  sysMsgPrinter(CCP_SENDING_REQUEST);
 
-  while((OpResult = dpaSendRequest(DpaRequest, DataSize, Timeout)) == DPA_OPERATION_IN_PROGRESS); // send request and wait for result
+  // send request and wait for result
+  while((OpResult = dpaSendRequest(DpaRequest, DataSize, Timeout)) == DPA_OPERATION_IN_PROGRESS);
 
   switch(OpResult){
       case DPA_OPERATION_OK: Message = CCP_RESPONSE_OK; break;           // operation OK
@@ -300,16 +298,13 @@ uint8_t sendMyDpaRequest(T_DPA_PACKET *DpaRequest, UINT8 DataSize, UINT16 Timeou
 
   return(OpResult);
 }
-//=============================================================================
 
-/*
-*------------------------------------------------------------
-*    print result of commands discovery get and bond get
-*------------------------------------------------------------
-*/
 const char DBInfoHead[] PROGMEM = {"    0 1 2 3 4 5 6 7 8 9 A B C D E F"};
-
-void printDiscBondInfo(void){
+/**
+ * print result of discovery get or bond get commands
+ */
+void printDiscBondInfo(void)
+{
   char MsgString[36];
   uint16_t Mask;
   uint16_t Data;
@@ -332,20 +327,19 @@ void printDiscBondInfo(void){
     Serial.print(CrLf);
   }
 }
-//=============================================================================
 
-/*
-*------------------------------------------------------------
-*            print results of command OS info
-*------------------------------------------------------------
-*/
 const char OSModuleType[] PROGMEM = {"Module type    : "};
 const char OSModuleId[] PROGMEM = {"Module ID      : "};
 const char OSModuleOsVer[] PROGMEM = {"OS version     : "};
 const char OSModuleSupply[] PROGMEM = {"Supply voltage : "};
 const char OSModuleRssi[] PROGMEM = {"Last RSSI      : "};
-
-void printOsInfo(UINT8 *infoBuffer){
+/**
+ * Print results of OS info command
+ * @param infoBuffer buffer with TR module and OS information data
+ * @return none
+ */
+void printOsInfo(UINT8 *infoBuffer)
+{
 
   uint8_t ModuleType = infoBuffer[5] >> 4;
   uint8_t McuType = infoBuffer[5] & 0x07;
@@ -356,11 +350,12 @@ void printOsInfo(UINT8 *infoBuffer){
   uint8_t Ptr, I;
   char TempString[24];
 
+  // decode and print module type
   Serial.print(CrLf);
   strcpy_P(TempString, OSModuleType);
-  Serial.print(TempString);                                 // print module type
+  Serial.print(TempString);
   Ptr=0;
-  if(infoBuffer[3] & 0x80){                                 // module type decode
+  if(infoBuffer[3] & 0x80){
     TempString[Ptr++]='D';
     TempString[Ptr++]='C';
   }
@@ -387,8 +382,9 @@ void printOsInfo(UINT8 *infoBuffer){
   TempString[Ptr++] = 0;
   Serial.println(TempString);
 
+  // print module ID
   strcpy_P(TempString, OSModuleId);
-  Serial.print(TempString);                                 // print module ID
+  Serial.print(TempString);
   for (I=3, Ptr=0; Ptr<8; I--){
     TempString[Ptr++]=bToHexa_high(infoBuffer[I]);
     TempString[Ptr++]=bToHexa_low(infoBuffer[I]);
@@ -396,13 +392,17 @@ void printOsInfo(UINT8 *infoBuffer){
   TempString[Ptr]=0;
   Serial.println(TempString);
 
+  // print OS version string
   strcpy_P(TempString, OSModuleOsVer);
-  Serial.print(TempString);                              // print OS version string
-  Ptr=0;                                                 // decode OS version and build
-  TempString[Ptr++] = bToHexa_low(OsVersion >> 8);       // major version
+  Serial.print(TempString);
+  Ptr=0;
+
+  // major version
+  TempString[Ptr++] = bToHexa_low(OsVersion >> 8);
   TempString[Ptr++] = '.';
 
-  I = OsVersion & 0x00FF;                                // minor version
+  // minor version
+  I = OsVersion & 0x00FF;
 
   if (I < 10){
     TempString[Ptr++] = '0';
@@ -415,7 +415,8 @@ void printOsInfo(UINT8 *infoBuffer){
 
   if(McuType == PIC16LF1938) TempString[Ptr++]='D';
 
-  TempString[Ptr++] = ' ';                              // OS build
+  // OS build
+  TempString[Ptr++] = ' ';
   TempString[Ptr++] = '(';
   TempString[Ptr++] = bToHexa_high(OsBuild >> 8);
   TempString[Ptr++] = bToHexa_low(OsBuild >> 8);
@@ -424,38 +425,40 @@ void printOsInfo(UINT8 *infoBuffer){
   TempString[Ptr++] = ')';
   TempString[Ptr] = 0;
   Serial.println(TempString);
-                                                      // supply voltage
+
+  // supply voltage
   if (ModuleType == TR_72D || ModuleType == TR_76D) SupplyVoltage = (26112 / (127 - infoBuffer[9]));
   else SupplyVoltage = (225 + infoBuffer[9] * 10);
 
   Ptr = SupplyVoltage/100;
   I = SupplyVoltage%100;
 
+  // print supply voltage
   strcpy_P(TempString, OSModuleSupply);
-  Serial.print(TempString);                           // print supply voltage
+  Serial.print(TempString);
   Serial.print(Ptr);
   Serial.print(".");
   Serial.print(I);
   Serial.println("V");
 
+  // print last RSSI
   strcpy_P(TempString, OSModuleRssi);
-  Serial.print(TempString);                           // print last RSSI
+  Serial.print(TempString);
   Serial.println(infoBuffer[8]);
 }
-//=============================================================================
 
-/*
-*------------------------------------------------------------
-*              coordinator dpa commands service
-*------------------------------------------------------------
-*/
 const char CoordinatorNumBNodes[] PROGMEM = {"Number of bonded nodes = "};
 const char CoordinatorNumDNodes[] PROGMEM = {"Number of discovered nodes = "};
 const char CoordinatorNodesClear[] PROGMEM = {"All nodes cleared successfully"};
 const char CoordinatorNodeAdr[] PROGMEM = {"Bonded node address = "};
 const char CoordinatorNodeNum[] PROGMEM = {"Number of bonded nodes = "};
-
-void ccpCoordinatorCmd (uint16_t CommandTabParameter){
+/**
+ * coordinator dpa commands service
+ * @param CommandTabParameter parameter from CCP command table
+ * @return none
+ */
+void ccpCoordinatorCmd (uint16_t CommandTabParameter)
+{
 
   uint8_t ReqAddr = 0;
   uint8_t TxPower = 7;
@@ -464,10 +467,11 @@ void ccpCoordinatorCmd (uint16_t CommandTabParameter){
   uint8_t BondingMask = 0;
   char TempString[32];
 
-  MyDpaPacket.NADR = COORDINATOR_ADDRESS;                         // DPA header
+  // DPA header
+  MyDpaPacket.NADR = COORDINATOR_ADDRESS;
   MyDpaPacket.PNUM = PNUM_COORDINATOR;
   MyDpaPacket.HWPID = HWPID_DoNotCheck;
-  MyDpaPacket.PCMD = 0xFF;                                        // dummy command
+  MyDpaPacket.PCMD = 0xFF;                                         // dummy command
 
   switch(CommandTabParameter){
 
@@ -568,19 +572,20 @@ void ccpCoordinatorCmd (uint16_t CommandTabParameter){
     }
   }
 }
-//=============================================================================
 
-/*
-*------------------------------------------------------------
-*                 leds dpa commands service
-*------------------------------------------------------------
-*/
-void ccpLedCmd (word CommandTabParameter){
+/**
+ * leds dpa commands service
+ * @param CommandTabParameter parameter from CCP command table
+ * @return none
+ */
+void ccpLedCmd (uint16_t CommandTabParameter)
+{
 
   uint8_t Message = 0;
 
   // processing of command input parameters
-  if (ccpFindCmdParameter(CcpCommandParameter)){                    // read required operation
+  // read required operation
+  if (ccpFindCmdParameter(CcpCommandParameter)){
     if (strcmp("on",CcpCommandParameter)==0) MyDpaPacket.PCMD = CMD_LED_SET_ON;
     else if (strcmp("off",CcpCommandParameter)==0) MyDpaPacket.PCMD = CMD_LED_SET_OFF;
        else if (strcmp("get",CcpCommandParameter)==0) MyDpaPacket.PCMD = CMD_LED_GET;
@@ -589,7 +594,8 @@ void ccpLedCmd (word CommandTabParameter){
   }
   else Message = CCP_BAD_PARAMETER;
 
-  if (ccpFindCmdParameter(CcpCommandParameter)){                    // read destination address
+  // read destination address
+  if (ccpFindCmdParameter(CcpCommandParameter)){
     MyDpaPacket.NADR = atoi(CcpCommandParameter);                   // set destination address
   }
   else Message = CCP_BAD_PARAMETER;                                 // if address not exist, print error msg
@@ -601,7 +607,7 @@ void ccpLedCmd (word CommandTabParameter){
     MyDpaPacket.HWPID = HWPID_DoNotCheck;                           // do not check HWPID
 
     if (sendMyDpaRequest(&MyDpaPacket, 0, 2000) == DPA_OPERATION_OK){
-      if (MyDpaPacket.PCMD == (RESPONSE_FLAG | CMD_LED_GET)){            // response to command CMD_OS_READ
+      if (MyDpaPacket.PCMD == (RESPONSE_FLAG | CMD_LED_GET)){       // response to command CMD_OS_READ
         Serial.print("LED is ");                                    // print LED status
         if (MyDpaPacket.DpaMessage.Response.PData[0] == 1) Serial.println("on");
         else Serial.println("off");
@@ -609,14 +615,14 @@ void ccpLedCmd (word CommandTabParameter){
     }
   }
 }
-//=============================================================================
 
-/*
-*------------------------------------------------------------
-*                 node dpa commands service
-*------------------------------------------------------------
-*/
-void ccpNodeCmd (word CommandTabParameter){
+/**
+ * node dpa commands service
+ * @param CommandTabParameter parameter from CCP command table
+ * @return none
+ */
+void ccpNodeCmd (uint16_t CommandTabParameter)
+{
 
   MyDpaPacket.NADR = 0;
   MyDpaPacket.PNUM = PNUM_NODE;                            // peripheral NODE
@@ -632,14 +638,14 @@ void ccpNodeCmd (word CommandTabParameter){
   }
   else sysMsgPrinter(CCP_BAD_PARAMETER);                   // bad parameter
 }
-//=============================================================================
 
-/*
-*------------------------------------------------------------
-*                 OS dpa commands service
-*------------------------------------------------------------
-*/
-void ccpOsCmd (word CommandTabParameter){
+/**
+ * OS dpa commands service
+ * @param CommandTabParameter parameter from CCP command table
+ * @return none
+ */
+void ccpOsCmd (uint16_t CommandTabParameter)
+{
 
   MyDpaPacket.NADR = 0;
   MyDpaPacket.PNUM = PNUM_OS;                            // peripheral OS
@@ -656,21 +662,22 @@ void ccpOsCmd (word CommandTabParameter){
     }
   }
 }
-//=============================================================================
 
-/*
-*------------------------------------------------------------
-*          dpa load configuration command service
-*------------------------------------------------------------
-*/
-void ccpLoadConfigCmd (word CommandTabParameter){
+/**
+ * dpa load configuration command service
+ * @param CommandTabParameter parameter from CCP command table
+ * @return none
+ */
+void ccpLoadConfigCmd (uint16_t CommandTabParameter)
+{
 
   uint8_t Message = 0;
   uint8_t CfgCrc;
   char Filename[16];
   File CfgFile;
 
-  if (!SDCardReady) Message = CCP_SD_CARD_ERR;                        // if SD card is not ready print error msg
+  // if SD card is not ready print error msg
+  if (!SDCardReady) Message = CCP_SD_CARD_ERR;
   else{
     // processing of command input parameters
     if (ccpFindCmdParameter(CcpCommandParameter)){                    // read configuration file filename
@@ -713,21 +720,20 @@ void ccpLoadConfigCmd (word CommandTabParameter){
     }
   }
 }
-//=============================================================================
 
 #if defined (__STORE_CODE_SUPPORT__)
 
-/*
-*------------------------------------------------------------
-*          dpa store code command service
-*------------------------------------------------------------
-*/
 const char ProgressBar[] PROGMEM = {'-','-','-','-','-','-','-','-','-','-',0x0D,0x00};
 const char StoreCodeImgAdr[] PROGMEM = {"Code image address : 0x"};
 const char StoreCodeImgSize[] PROGMEM = {"Code image size : 0x"};
 const char StoreCodeImgCrc[] PROGMEM = {"Code image CRC : 0x"};
-
-void ccpDpaStoreCodeCmd (word CommandTabParameter){
+/**
+ * dpa store code command service
+ * @param CommandTabParameter parameter from CCP command table
+ * @return none
+ */
+void ccpDpaStoreCodeCmd (uint16_t CommandTabParameter)
+{
   uint8_t Message = 0;
   uint8_t TempVariable;
   uint8_t StoreProgress;
@@ -810,19 +816,18 @@ void ccpDpaStoreCodeCmd (word CommandTabParameter){
     }
   }
 }
-//=============================================================================
 
-/*
-*------------------------------------------------------------
-*          dpa load/verifi code command service
-*------------------------------------------------------------
-*/
 const char LoadCodeImgOk[] PROGMEM = {"Code image load OK"};
 const char LoadCodeImgErr[] PROGMEM = {"Code image load ERROR"};
 const char VerifyCodeImgOk[] PROGMEM = {"Code image verification OK"};
 const char VerifyCodeImgErr[] PROGMEM = {"Code image verification ERROR"};
-
-void ccpDpaLoadVerifyCodeCmd (word CommandTabParameter){
+/**
+ * dpa load/verifi code command service
+ * @param CommandTabParameter parameter from CCP command table
+ * @return none
+ */
+void ccpDpaLoadVerifyCodeCmd (uint16_t CommandTabParameter)
+{
 
   uint8_t Message = 0;
   char MsgString[32];
@@ -881,17 +886,16 @@ void ccpDpaLoadVerifyCodeCmd (word CommandTabParameter){
     DpaAditionalTimeout = 0;
   }
 }
-//=============================================================================
 
-/*
-*------------------------------------------------------------
-*          dpa custom handler on/off command service
-*------------------------------------------------------------
-*/
 const char CustomHandlerOn[] PROGMEM = {"Custom DPA handler is ON"};
 const char CustomHandlerOff[] PROGMEM = {"Custom DPA handler is OFF"};
-
-void ccpDpaCustomHandlerOnOffCmd (word CommandTabParameter){
+/**
+ * dpa custom handler on/off command service
+ * @param CommandTabParameter parameter from CCP command table
+ * @return none
+ */
+void ccpDpaCustomHandlerOnOffCmd (uint16_t CommandTabParameter)
+{
 
   uint8_t Message = 0;
   uint8_t CDpaHandlerSet;
@@ -926,6 +930,5 @@ void ccpDpaCustomHandlerOnOffCmd (word CommandTabParameter){
     }
   }
 }
-//=============================================================================
 
 #endif

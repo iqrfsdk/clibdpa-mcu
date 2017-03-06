@@ -54,7 +54,7 @@ extern char CcpCommandParameter[SIZE_OF_PARAM];
 extern const char CrLf[];
 
 extern void ccp(void);
-extern byte ccpFindCmdParameter(char *DestinationString);
-extern void sysMsgPrinter(word Msg);
+extern uint8_t ccpFindCmdParameter(char *DestinationString);
+extern void sysMsgPrinter(uint16_t Msg);
 
 #endif

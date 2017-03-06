@@ -17,14 +17,14 @@
 #ifndef _CONSOLE_H
 #define _CONSOLE_H
 
-void ccpCoordinatorCmd (word CommandTabParameter);
-void ccpLedCmd (word CommandTabParameter);
-void ccpNodeCmd (word CommandTabParameter);
-void ccpOsCmd (word CommandTabParameter);
-void ccpLoadConfigCmd (word CommandTabParameter);
-void ccpDpaStoreCodeCmd (word CommandTabParameter);
-void ccpDpaLoadVerifyCodeCmd (word CommandTabParameter);
-void ccpDpaCustomHandlerOnOffCmd (word CommandTabParameter);
+void ccpCoordinatorCmd (uint16_t CommandTabParameter);
+void ccpLedCmd (uint16_t CommandTabParameter);
+void ccpNodeCmd (uint16_t CommandTabParameter);
+void ccpOsCmd (uint16_t CommandTabParameter);
+void ccpLoadConfigCmd (uint16_t CommandTabParameter);
+void ccpDpaStoreCodeCmd (uint16_t CommandTabParameter);
+void ccpDpaLoadVerifyCodeCmd (uint16_t CommandTabParameter);
+void ccpDpaCustomHandlerOnOffCmd (uint16_t CommandTabParameter);
 
 extern uint8_t   SDCardReady;
 

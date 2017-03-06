@@ -36,15 +36,15 @@
 /* data types */
 typedef struct {                        // command decode table item structure
   char    Com[16];
-  void    (*Func)(word);
-  word    Param;
+  void    (*Func)(uint16_t);
+  uint16_t    Param;
 } COM;
 
 /* function prototypes */
 void find_command(void);
-void memcpy_P (byte *Destination, byte *Source, word Count);
-void ccpClsCmd (word CommandParameter);
-void ccpLsCmd (word CommandParameter);
+void memcpy_P (uint8_t *Destination, uint8_t *Source, uint16_t Count);
+void ccpClsCmd (uint16_t CommandParameter);
+void ccpLsCmd (uint16_t CommandParameter);
 
 /* global variables */
 const COM Commands[] PROGMEM ={          // command decode table
@@ -62,12 +62,12 @@ const COM Commands[] PROGMEM ={          // command decode table
   "osinfo",ccpOsCmd,CMD_OS_READ,
   "loadcfg",ccpLoadConfigCmd,0,
 
-  #if defined (__STORE_CODE_SUPPORT__)
-    "storecode",ccpDpaStoreCodeCmd,0,
-    "verifycode",ccpDpaLoadVerifyCodeCmd,0,
-    "loadcode",ccpDpaLoadVerifyCodeCmd,1,
-    "customhandler",ccpDpaCustomHandlerOnOffCmd,0,
-  #endif
+#if defined (__STORE_CODE_SUPPORT__)
+  "storecode",ccpDpaStoreCodeCmd,0,
+  "verifycode",ccpDpaLoadVerifyCodeCmd,0,
+  "loadcode",ccpDpaLoadVerifyCodeCmd,1,
+  "customhandler",ccpDpaCustomHandlerOnOffCmd,0,
+#endif
 };
 
 #define HEADER_LINE_SIZE    75
@@ -103,24 +103,23 @@ const char CrLf[] = {0x0D,0x0A,0x00};
 const char Back[] = {0x08,0x20,0x08,0x00};
 
 COM CmdWorkCopy;
-void (*run_func)(word);                   // pointer to command service function
-word Parameter;                           // command service function parameter
-byte ComEndPos;                           // end of command position in input buffer
-byte CSel;
+void (*run_func)(uint16_t);                   // pointer to command service function
+uint16_t Parameter;                           // command service function parameter
+uint8_t ComEndPos;                           // end of command position in input buffer
+uint8_t CSel;
 
 char CcpCommandParameter[SIZE_OF_PARAM];
 char InLine[SIZE_OF_IN_BUFF] = {"rst\0"};   // input buffer
-byte InLinePtr = SIZE_OF_IN_BUFF-1;         // input buffer pointer
+uint8_t InLinePtr = SIZE_OF_IN_BUFF-1;         // input buffer pointer
 boolean RepeatInLine = true;
 boolean Esc = false;                        // receiver flags
 boolean Esc2 = false;
 
-/*
-*------------------------------------------------------------
-*              console command processor kernel
-*------------------------------------------------------------
-*/
-void ccp(void) {
+/**
+ * console command processor kernel
+ */
+void ccp(void)
+{
 
   char ConsoleChar;
 
@@ -170,16 +169,15 @@ void ccp(void) {
   }
 }
 
-/*
-*-----------------------------------------------------------------------
-*                      find command in input buffer
-*   - set pointer to command service function
-*   - initialize parameter of command service function
-*   - set position in input buffer for command parameter reading
-*-----------------------------------------------------------------------
-*/
-void find_command(void){  /* find command in input buffer */
-  byte x,y;
+/**
+ * find command in input buffer
+ *   - set pointer to command service function
+ *   - initialize parameter of command service function
+ *   - set position in input buffer to command parameter reading
+ */
+void find_command(void)
+{
+  uint8_t x,y;
 
   for (CSel=0; CSel < (sizeof(Commands)/sizeof(COM));CSel++){    // compare input buffer with existing command patterns
     memcpy_P(&CmdWorkCopy, &Commands[CSel], sizeof(CmdWorkCopy));
@@ -204,15 +202,16 @@ void find_command(void){  /* find command in input buffer */
   ComEndPos=0;
 }
 
-/*
-*------------------------------------------------------------
-*                  find string in ccpInBuff
-*------------------------------------------------------------
-*/
-byte ccpFindCmdParameter(char *DestinationString){
+/**
+ * find string in ccpInBuff
+ * @param DestinationString pointer to string where parameter going to be placed
+ * @return size of parameter string
+ */
+uint8_t ccpFindCmdParameter(char *DestinationString)
+{
 
-  byte  TempCnt = 0;
-  byte  TempChar;
+  uint8_t  TempCnt = 0;
+  uint8_t  TempChar;
 
   InLine[SIZE_OF_IN_BUFF-1] = 0;
 
@@ -235,36 +234,41 @@ byte ccpFindCmdParameter(char *DestinationString){
   return(TempCnt);
 }
 
-/*
-*------------------------------------------------------------
-*               copy data from FLASH to RAM
-*------------------------------------------------------------
-*/
-void memcpy_P (byte *Destination, byte *Source, word Count){
+/**
+ * copy data from FLASH to RAM
+ * @param Destination pointer to destination position in RAM
+ * @param Source pointer to source position in FLASH
+ * @param Count number of data bytes to be copied
+ * @return none
+ */
+void memcpy_P (uint8_t *Destination, uint8_t *Source, uint16_t Count)
+{
   while (Count--){
     *Destination = pgm_read_byte_near(Source++);
   }
 }
 
-/*
-*------------------------------------------------------------
-*                  system message printing
-*------------------------------------------------------------
-*/
-void sysMsgPrinter(word Msg){
+/**
+ * print system message
+ * @param Msg number of desired system message
+ * @return none
+ */
+void sysMsgPrinter(uint16_t Msg)
+{
   char Message[26];
 
   strcpy_P(Message, &SystemMsg[Msg][0]);
   Serial.println(Message);
 }
 
-/*
-*------------------------------------------------------------
-*              clear screen command service
-*------------------------------------------------------------
-*/
-void ccpClsCmd (word CommandParameter){
-  byte x,y;
+/**
+ * clear screen command service
+ * @param CommandParameter parameter from CCP command table
+ * @return none
+ */
+void ccpClsCmd (uint16_t CommandParameter)
+{
+  uint8_t x,y;
   char HeaderChar;
 
   Serial.print(CrLf);
@@ -281,12 +285,12 @@ void ccpClsCmd (word CommandParameter){
   }
 }
 
-/*
-*------------------------------------------------------------
-*              root SD card file list
-*------------------------------------------------------------
-*/
-void ccpLsCmd (word CommandParameter){
+/**
+ * root SD card file list
+ * @param CommandParameter parameter from CCP command table
+ * @return none
+ */
+void ccpLsCmd (uint16_t CommandParameter){
   File root;
 
   dpaSuspendDriver();                                                     // suspend SPI comunication with TR module
