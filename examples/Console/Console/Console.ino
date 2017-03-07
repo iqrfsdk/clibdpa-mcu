@@ -68,9 +68,9 @@
 void myAsyncPacketHandler(T_DPA_PACKET *dpaAnswerPkt);
 char bToHexa_high(uint8_t B);
 char bToHexa_low(uint8_t B);
-uint8_t sendMyDpaRequest(T_DPA_PACKET *DpaRequest, UINT8 DataSize, UINT16 Timeout);
+uint8_t sendMyDpaRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Timeout);
 void printDiscBondInfo(void);
-void printOsInfo(UINT8 *infoBuffer);
+void printOsInfo(uint8_t *infoBuffer);
 
 /*
  * Variables
@@ -275,7 +275,7 @@ char bToHexa_low(uint8_t B)
  * @param Timeout Timeout
  * @return Operation result
  */
-uint8_t sendMyDpaRequest(T_DPA_PACKET *DpaRequest, UINT8 DataSize, UINT16 Timeout)
+uint8_t sendMyDpaRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Timeout)
 {
 
   uint8_t Message;
@@ -338,7 +338,7 @@ const char OSModuleRssi[] PROGMEM = {"Last RSSI      : "};
  * @param infoBuffer buffer with TR module and OS information data
  * @return none
  */
-void printOsInfo(UINT8 *infoBuffer)
+void printOsInfo(uint8_t *infoBuffer)
 {
 
   uint8_t ModuleType = infoBuffer[5] >> 4;
@@ -658,7 +658,7 @@ void ccpOsCmd (uint16_t CommandTabParameter)
 
   if (sendMyDpaRequest(&MyDpaPacket, 0, 2000) == DPA_OPERATION_OK){
     if (MyDpaPacket.PCMD == (RESPONSE_FLAG | CMD_OS_READ)){            // response to command CMD_OS_READ
-      printOsInfo((UINT8 *)&MyDpaPacket.DpaMessage.Response.PData[0]); // decode received data
+      printOsInfo((uint8_t *)&MyDpaPacket.DpaMessage.Response.PData[0]); // decode received data
     }
   }
 }

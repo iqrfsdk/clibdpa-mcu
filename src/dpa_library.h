@@ -46,9 +46,6 @@ extern "C" {
 // Address of the DPA Custom Handler end + 1
 #define CUSTOM_HANDLER_ADDRESS_END  0x3D80
 
-typedef uint8_t  UINT8;				      // Define dpa_library data types
-typedef uint16_t UINT16;
-
 // dpaSendRequest(...  ) function return codes
 #define DPA_OPERATION_OK            0
 #define DPA_OPERATION_IN_PROGRESS   1
@@ -58,12 +55,12 @@ typedef uint16_t UINT16;
 #define DPA_TR_MODULE_NOT_READY     5
 
 typedef struct{
-	UINT16  	NADR;
-  UINT8   	PNUM;
-  UINT8   	PCMD;
-  UINT16  	HWPID;
-  UINT8 		ResponseCode;
- 	UINT8 		DpaValue;
+	uint16_t  	NADR;
+  uint8_t   	PNUM;
+  uint8_t   	PCMD;
+  uint16_t  	HWPID;
+  uint8_t 		ResponseCode;
+ 	uint8_t 		DpaValue;
 	TDpaMessage	DpaMessage;
 } T_DPA_PACKET;
 
@@ -71,15 +68,16 @@ typedef void (*T_DPA_ANSWER_HANDLER)(T_DPA_PACKET *DpaAnswer);			// DPA response
 typedef void (*T_DPA_TIMEOUT_HANDLER)(void);                        // DPA timeout callback function type
 
 typedef struct{
-	volatile UINT8	Status;
-  UINT8 SuspendFlag;
-  UINT8 TRmoduleSelected;
-	UINT8	TimeCnt;
-	UINT8	ExtraDataSize;
-	UINT8	TimeoutPrescaller;
-	UINT8	TimeoutModulator;
-	UINT16	TimeoutTimer;
-	UINT16	FileByteCounter;
+	volatile uint8_t	Status;
+  uint8_t SuspendFlag;
+	uint8_t BroadcastRoutingFlag;
+  uint8_t TRmoduleSelected;
+	uint8_t	TimeCnt;
+	uint8_t	ExtraDataSize;
+	uint8_t	TimeoutPrescaller;
+	uint8_t	TimeoutModulator;
+	uint16_t	TimeoutTimer;
+	uint16_t	FileByteCounter;
 	T_DPA_ANSWER_HANDLER	DpaAnswerHandler;
 	T_DPA_TIMEOUT_HANDLER   DpaTimeoutHandler;
 	T_DPA_PACKET	*DpaRequestPacketPtr;
@@ -97,15 +95,15 @@ extern T_DPA_CONTROL	DpaControl;
 #define	DPA_STORE_CODE_ERROR		  222			// dpaStoreCodeToEeeprom return code (operation ended with error)
 
 typedef struct{
-	UINT16	TrAddress;							  // DPA address of destination TR module
-	UINT16	ImageEeepromAdr;					// absolute address in TR eeeprom to store code
-	UINT16	ImageSize;							  // size of code image stored in eeeprom
-	UINT16	ImageCRC;							    // initial CRC value (before save) / CRC of code image (after save)
-	UINT16	FileSize;							    // size of code file on SD card
-	UINT8	FileType;							      // file type (HEX / IQRF)
+	uint16_t	TrAddress;							  // DPA address of destination TR module
+	uint16_t	ImageEeepromAdr;					// absolute address in TR eeeprom to store code
+	uint16_t	ImageSize;							  // size of code image stored in eeeprom
+	uint16_t	ImageCRC;							    // initial CRC value (before save) / CRC of code image (after save)
+	uint16_t	FileSize;							    // size of code file on SD card
+	uint8_t	FileType;							      // file type (HEX / IQRF)
 }T_DPA_CODE_FILE_INFO;
 
-extern UINT16 DpaAditionalTimeout;
+extern uint16_t DpaAditionalTimeout;
 
 #endif
 
@@ -151,7 +149,7 @@ void dpaLibraryDriver(void);
 
 /*
 ***************************************************************************************************
-* Function: UINT8 dpaSendRequest(T_DPA_PACKET *DpaRequest, UINT8 DataSize, UINT16 Timeout)
+* Function: uint8_t dpaSendRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Timeout)
 *
 * PreCondition: dpaInit() for library initialization must be called before
 *
@@ -175,11 +173,11 @@ void dpaLibraryDriver(void);
 *
 ***************************************************************************************************
 */
-UINT8 dpaSendRequest(T_DPA_PACKET *DpaRequest, UINT8 DataSize, UINT16 Timeout);
+uint8_t dpaSendRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Timeout);
 
 /*
 ***************************************************************************************************
-* Function: UINT8 dpaMakeConfigurationCRC(T_DPA_PACKET *DpaRequest)
+* Function: uint8_t dpaMakeConfigurationCRC(T_DPA_PACKET *DpaRequest)
 *
 * PreCondition: dpaInit() for library initialization must be called before
 *
@@ -195,7 +193,7 @@ UINT8 dpaSendRequest(T_DPA_PACKET *DpaRequest, UINT8 DataSize, UINT16 Timeout);
 *
 ***************************************************************************************************
 */
-UINT8 dpaMakeConfigurationCRC(T_DPA_PACKET *DpaRequest);
+uint8_t dpaMakeConfigurationCRC(T_DPA_PACKET *DpaRequest);
 
 /*
 ***************************************************************************************************
@@ -239,7 +237,7 @@ void dpaRunDriver(void);
 
 /*
 ***************************************************************************************************
-* Function: UINT8 dpaStoreCodeToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo)
+* Function: uint8_t dpaStoreCodeToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo)
 *
 * PreCondition: dpaInit() for library initialization must be called before
 *               T_DPA_CODE_FILE_INFO *CodeFileInfo must be initialized
@@ -258,7 +256,7 @@ void dpaRunDriver(void);
 ***************************************************************************************************
 */
 #if defined (__STORE_CODE_SUPPORT__)
-UINT8 dpaStoreCodeToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo);
+uint8_t dpaStoreCodeToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo);
 #endif
 
 /*
