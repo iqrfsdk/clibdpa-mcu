@@ -35,9 +35,9 @@
 
 /* data types */
 typedef struct {                        // command decode table item structure
-  char    Com[16];
-  void    (*Func)(uint16_t);
-  uint16_t    Param;
+  char  Com[16];
+  void  (*Func)(uint16_t);
+  uint16_t  Param;
 } COM;
 
 /* function prototypes */
@@ -105,14 +105,14 @@ const char Back[] = {0x08,0x20,0x08,0x00};
 COM CmdWorkCopy;
 void (*run_func)(uint16_t);                   // pointer to command service function
 uint16_t Parameter;                           // command service function parameter
-uint8_t ComEndPos;                           // end of command position in input buffer
+uint8_t ComEndPos;                            // end of command position in input buffer
 uint8_t CSel;
 
 char CcpCommandParameter[SIZE_OF_PARAM];
-char InLine[SIZE_OF_IN_BUFF] = {"rst\0"};   // input buffer
-uint8_t InLinePtr = SIZE_OF_IN_BUFF-1;         // input buffer pointer
+char InLine[SIZE_OF_IN_BUFF] = {"rst\0"};     // input buffer
+uint8_t InLinePtr = SIZE_OF_IN_BUFF-1;        // input buffer pointer
 boolean RepeatInLine = true;
-boolean Esc = false;                        // receiver flags
+boolean Esc = false;                          // receiver flags
 boolean Esc2 = false;
 
 /**

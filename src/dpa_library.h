@@ -30,10 +30,10 @@ extern "C" {
 #include <stdint.h>
 #include <stddef.h>
 
-#define __SPI_INTERFACE__				    // select for comunication via SPI
-// #define __UART_INTERFACE__			  // select for comunication via UART
+#define __SPI_INTERFACE__           // select for comunication via SPI
+// #define __UART_INTERFACE__       // select for comunication via UART
 
-// #define __STORE_CODE_SUPPORT__		// uncomment for TR7xD modules code upload support
+#define __STORE_CODE_SUPPORT__      // uncomment for TR7xD modules code upload support
 
 #define systemDisableInt()  noInterrupts()        // disable Interrupts (Arduino platform)
 #define systemEnableInt()   interrupts()          // enable Interrupts (Arduino platform)
@@ -55,52 +55,52 @@ extern "C" {
 #define DPA_TR_MODULE_NOT_READY     5
 
 typedef struct{
-	uint16_t  	NADR;
-  uint8_t   	PNUM;
-  uint8_t   	PCMD;
-  uint16_t  	HWPID;
-  uint8_t 		ResponseCode;
- 	uint8_t 		DpaValue;
-	TDpaMessage	DpaMessage;
+  uint16_t    NADR;
+  uint8_t     PNUM;
+  uint8_t     PCMD;
+  uint16_t    HWPID;
+  uint8_t     ResponseCode;
+ 	uint8_t     DpaValue;
+  TDpaMessage	DpaMessage;
 } T_DPA_PACKET;
 
-typedef void (*T_DPA_ANSWER_HANDLER)(T_DPA_PACKET *DpaAnswer);			// DPA response callback function type
+typedef void (*T_DPA_ANSWER_HANDLER)(T_DPA_PACKET *DpaAnswer);      // DPA response callback function type
 typedef void (*T_DPA_TIMEOUT_HANDLER)(void);                        // DPA timeout callback function type
 
 typedef struct{
-	volatile uint8_t	Status;
+  volatile uint8_t  Status;
   uint8_t SuspendFlag;
-	uint8_t BroadcastRoutingFlag;
+  uint8_t BroadcastRoutingFlag;
   uint8_t TRmoduleSelected;
-	uint8_t	TimeCnt;
-	uint8_t	ExtraDataSize;
-	uint8_t	TimeoutPrescaller;
-	uint8_t	TimeoutModulator;
-	uint16_t	TimeoutTimer;
-	uint16_t	FileByteCounter;
-	T_DPA_ANSWER_HANDLER	DpaAnswerHandler;
-	T_DPA_TIMEOUT_HANDLER   DpaTimeoutHandler;
-	T_DPA_PACKET	*DpaRequestPacketPtr;
+  uint8_t TimeCnt;
+  uint8_t ExtraDataSize;
+  uint8_t TimeoutPrescaller;
+  uint8_t TimeoutModulator;
+  uint16_t  TimeoutTimer;
+  uint16_t  FileByteCounter;
+  T_DPA_ANSWER_HANDLER  DpaAnswerHandler;
+  T_DPA_TIMEOUT_HANDLER DpaTimeoutHandler;
+  T_DPA_PACKET  *DpaRequestPacketPtr;
 }T_DPA_CONTROL;
 
 extern T_DPA_CONTROL	DpaControl;
 
 #if defined (__STORE_CODE_SUPPORT__)
 
-#define DPA_CODE_FILE_NOT_DEFINED	0
-#define DPA_CODE_FILE_HEX			    1
-#define DPA_CODE_FILE_IQRF			  2
+#define DPA_CODE_FILE_NOT_DEFINED   0
+#define DPA_CODE_FILE_HEX           1
+#define DPA_CODE_FILE_IQRF          2
 
-#define	DPA_STORE_CODE_SUCCESS		111			// dpaStoreCodeToEeeprom return code (operation ended with success)
-#define	DPA_STORE_CODE_ERROR		  222			// dpaStoreCodeToEeeprom return code (operation ended with error)
+#define	DPA_STORE_CODE_SUCCESS    111     // dpaStoreCodeToEeeprom return code (operation ended with success)
+#define	DPA_STORE_CODE_ERROR      222     // dpaStoreCodeToEeeprom return code (operation ended with error)
 
 typedef struct{
-	uint16_t	TrAddress;							  // DPA address of destination TR module
-	uint16_t	ImageEeepromAdr;					// absolute address in TR eeeprom to store code
-	uint16_t	ImageSize;							  // size of code image stored in eeeprom
-	uint16_t	ImageCRC;							    // initial CRC value (before save) / CRC of code image (after save)
-	uint16_t	FileSize;							    // size of code file on SD card
-	uint8_t	FileType;							      // file type (HEX / IQRF)
+  uint16_t  TrAddress;                // DPA address of destination TR module
+  uint16_t  ImageEeepromAdr;          // absolute address in TR eeeprom to store code
+  uint16_t  ImageSize;                // size of code image stored in eeeprom
+  uint16_t  ImageCRC;                 // initial CRC value (before save) / CRC of code image (after save)
+  uint16_t  FileSize;                 // size of code file on SD card
+  uint8_t FileType;                   // file type (HEX / IQRF)
 }T_DPA_CODE_FILE_INFO;
 
 extern uint16_t DpaAditionalTimeout;

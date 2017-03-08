@@ -144,8 +144,8 @@ void loop()
 /**
  * Send DPA byte over SPI
  *
- * @param       Tx_Byte to send
- * @return      Received Rx_Byte
+ * @param Tx_Byte to send
+ * @return Received Rx_Byte
  *
  */
 uint8_t dpaSendSpiByte(uint8_t Tx_Byte)
@@ -183,8 +183,8 @@ void dpaDeselectTRmodule(void)
 /**
  * Send DPA byte over SCI
  *
- * @param       Tx_Byte to send
- * @return      none
+ * @param  Tx_Byte to send
+ * @return none
  *
  */
 void dpaSendUartByte(uint8_t Tx_Byte)
@@ -195,8 +195,8 @@ void dpaSendUartByte(uint8_t Tx_Byte)
 /**
  * Read DPA byte over SCI
  *
- * @param       *Rx_Byte pointer to char to transfer received byte to dpa library
- * @return      false - no char to read; true - character ready
+ * @param  *Rx_Byte pointer to char to transfer received byte to dpa library
+ * @return  false - no char to read; true - character ready
  *
  */
 uint8_t dpaReceiveUartByte(uint8_t *Rx_Byte)
