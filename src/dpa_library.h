@@ -107,174 +107,56 @@ extern uint16_t DpaAditionalTimeout;
 
 #endif
 
-/*
-***************************************************************************************************
-* Function: void dpaInit(T_DPA_ANSWER_HANDLER asyncPacketHandler)
-*
-* PreCondition: none
-*
-* Input: pointer to user call back function for asynchronous packet service
-*
-* Output: none
-*
-* Side Effects: none
-*
-* Overview: function initialize DPA support library
-*
-* Note: none
-*
-***************************************************************************************************
-*/
+/**
+ * Function initialize DPA support library
+ * @param  asyncPacketHandler pointer to user call back function for asynchronous packet service
+ * @return: none
+ */
 void dpaInit(T_DPA_ANSWER_HANDLER asyncPacketHandler);
 
-/*
-***************************************************************************************************
-* Function: void dpaLibraryDriver(void)
-*
-* PreCondition: dpaInit() for library initialization must be called before
-*
-* Input: none
-*
-* Output: none
-*
-* Side Effects: none
-*
-* Overview: function provides background communication with TR module
-*
-* Note: none
-*
-***************************************************************************************************
-*/
+/**
+ * Function provides background communication with TR module
+ */
 void dpaLibraryDriver(void);
 
-/*
-***************************************************************************************************
-* Function: uint8_t dpaSendRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Timeout)
-*
-* PreCondition: dpaInit() for library initialization must be called before
-*
-* Input: DpaRequest	- pointer to DPA request packet
-*        DataSize  	- number of additional data bytes in DPA request packet
-*        Timeout    - operation timeout in ms
-*
-* Output: operation result
-*           - DPA_OPERATION_OK            0
-*           - DPA_OPERATION_IN_PROGRESS   1
-*           - DPA_OPERATION_TIMEOUT       2
-*           - DPA_CONFIRMATION_ERR        3
-*           - DPA_RESPONSE_ERR            4
-*           - DPA_TR_MODULE_NOT_READY     5
-*
-* Side Effects: none
-*
-* Overview: sends DPA request packet to desired destination address
-*
-* Note: none
-*
-***************************************************************************************************
-*/
+/**
+ * Sends DPA request packet to desired destination address
+ * @param DpaRequest  pointer to DPA request packet
+ * @param DataSize  number of additional data bytes in DPA request packet
+ * @param Timeout operation timeout in ms
+ * @return operation result (DPA_OPERATION_OK, DPA_OPERATION_IN_PROGRESS, DPA_OPERATION_TIMEOUT ... )
+ */
 uint8_t dpaSendRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Timeout);
 
-/*
-***************************************************************************************************
-* Function: uint8_t dpaMakeConfigurationCRC(T_DPA_PACKET *DpaRequest)
-*
-* PreCondition: dpaInit() for library initialization must be called before
-*
-* Input: DpaRequest	- pointer to DPA request packet
-*
-* Output: configuration data CRC
-*
-* Side Effects: none
-*
-* Overview: makes CRC from TR module configuration data
-*
-* Note: none
-*
-***************************************************************************************************
-*/
+/**
+ * Makes CRC from TR module configuration data
+ * @param DpaRequest	pointer to DPA request packet
+ * @return Configuration data CRC
+ */
 uint8_t dpaMakeConfigurationCRC(T_DPA_PACKET *DpaRequest);
 
-/*
-***************************************************************************************************
-* Function: void dpaSuspendDriver(void)
-*
-* PreCondition: dpaInit(.. ) for library initialization must be called before
-*
-* Input: none
-*
-* Output: none
-*
-* Side Effects: none
-*
-* Overview: temporary suspend DPA comunication driver
-*
-* Note: none
-*
-***************************************************************************************************
-*/
+/**
+ * Temporary suspend DPA comunication driver
+ */
 void dpaSuspendDriver(void);
 
-/*
-***************************************************************************************************
-* Function: void dpaRunDriver(void)
-*
-* PreCondition: dpaInit(.. ) for library initialization must be called before
-*
-* Input: none
-*
-* Output: none
-*
-* Side Effects: none
-*
-* Overview: run DPA comunication driver
-*
-* Note: none
-*
-***************************************************************************************************
-*/
+/**
+ * Run DPA comunication driver
+ */
 void dpaRunDriver(void);
 
-/*
-***************************************************************************************************
-* Function: uint8_t dpaStoreCodeToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo)
-*
-* PreCondition: dpaInit() for library initialization must be called before
-*               T_DPA_CODE_FILE_INFO *CodeFileInfo must be initialized
-*
-* Input: 		CodeFileInfo  pointer to T_DPA_CODE_FILE_INFO structure with code file image information
-*
-* Output:		Progress status or operation result
-*               0 - 100 -> progress status
-*							  DPA_STORE_CODE_SUCCESS   -> operation ended with success
-*               DPA_STORE_CODE_ERROR     -> operation ended with error
-*
-* Overview: Function for store HEX or IQRF code image to external EEPROM in TR module
-*
-* Note: function must be called periodicaly until DPA_STORE_CODE_SUCCESS or DPA_STORE_CODE_ERROR is returned
-*
-***************************************************************************************************
-*/
+/**
+ * Function for store HEX or IQRF code image to external EEPROM in TR module
+ * @param CodeFileInfo  pointer to T_DPA_CODE_FILE_INFO structure with code file image information
+ * @return  Proggess status or operation result (0 - 100 -> progress status, DPA_STORE_CODE_SUCCESS, DPA_STORE_CODE_ERROR)
+ */
 #if defined (__STORE_CODE_SUPPORT__)
 uint8_t dpaStoreCodeToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo);
 #endif
 
-/*
-***************************************************************************************************
-* Macro: dpaIncFileByteCounter(void)
-*
-* PreCondition: none
-*
-* Input: none
-*
-* Output: none
-*
-* Side Effects: increments value of file byte couter used in dpaStoreCodeToEeeprom(...) function
-*
-* Note: none
-*
-***************************************************************************************************
-*/
+/**
+ * Macro: increments value of file byte couter used in dpaStoreCodeToEeeprom(...) function
+ */
 #define dpaIncFileByteCounter()	DpaControl.FileByteCounter++
 
 #ifdef __cplusplus

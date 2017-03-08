@@ -150,16 +150,16 @@ enum {
 
 #define dpaSetTimeoutTimer(A1)  DpaControl.TimeoutTimer = A1
 
-//******************************************************************************
-//      function prototypes
-//******************************************************************************
+/*
+ *      function prototypes
+ */
 void dpaAnswerHandler(T_DPA_PACKET *dpaAnswerPkt);
 void dpaTimeoutHandler(void);
 uint16_t dpaGetEstimatedTimeout(void);
 
-//******************************************************************************
-//		 	public variable declarations
-//******************************************************************************
+/*
+ *		 	public variable declarations
+ */
 T_DPA_CONTROL		DpaControl;
 T_DPA_PACKET 		DpaLibDpaAnswer;
 T_DPA_ANSWER_HANDLER tempReceiverHandler;
@@ -167,25 +167,13 @@ T_DPA_ANSWER_HANDLER tempReceiverHandler;
 volatile uint8_t DpaApplicationSM = DPA_SM_PREPARE_REQUEST;
 uint16_t  DpaAditionalTimeout;
 
-/*
-***************************************************************************************************
-* Function: void dpaInit(T_DPA_ANSWER_HANDLER asyncPacketHandler)
-*
-* PreCondition: none
-*
-* Input: pointer to user call back function for asynchronous packet service
-*
-* Output: none
-*
-* Side Effects: none
-*
-* Overview: function initialize DPA support library
-*
-* Note: none
-*
-***************************************************************************************************
-*/
-void dpaInit(T_DPA_ANSWER_HANDLER asyncPacketHandler){
+/**
+ * Function initialize DPA support library
+ * @param  asyncPacketHandler pointer to user call back function for asynchronous packet service
+ * @return: none
+ */
+void dpaInit(T_DPA_ANSWER_HANDLER asyncPacketHandler)
+{
 
 	DpaControl.Status = DPA_READY;
 	DpaControl.DpaAnswerHandler = asyncPacketHandler;
@@ -194,179 +182,149 @@ void dpaInit(T_DPA_ANSWER_HANDLER asyncPacketHandler){
   DpaControl.TimeoutModulator = 0;
 	DpaControl.TimeoutPrescaller = 7;
 
-	#ifdef __SPI_INTERFACE__
-    DpaControl.TRmoduleSelected = false;
-  	DpaControl.TimeCnt = (SPI_STATUS_POOLING_TIME * 7) + 1;
-  	DpaSpiIfControl.SpiStat = 0;
-  	DpaSpiIfControl.Direction = SPI_TRANSFER_NONE;
-	#endif
+#ifdef __SPI_INTERFACE__
+  DpaControl.TRmoduleSelected = false;
+	DpaControl.TimeCnt = (SPI_STATUS_POOLING_TIME * 7) + 1;
+	DpaSpiIfControl.SpiStat = 0;
+	DpaSpiIfControl.Direction = SPI_TRANSFER_NONE;
+#endif
 
-	#ifdef __UART_INTERFACE__
-  	DpaUartIfControl.Direction = UART_TRANSFER_NONE;
-  	DpaUartIfControl.WasEscape = 0;
-	#endif
+#ifdef __UART_INTERFACE__
+	DpaUartIfControl.Direction = UART_TRANSFER_NONE;
+	DpaUartIfControl.WasEscape = 0;
+#endif
 }
 
-/*
-***************************************************************************************************
-* Function: void dpaLibraryDriver(void)
-*
-* PreCondition: dpaInit(.. ) for library initialization must be called before
-*
-* Input: none
-*
-* Output: none
-*
-* Side Effects: none
-*
-* Overview: function provides background communication with TR module
-*
-* Note: none
-*
-***************************************************************************************************
-*/
-void dpaLibraryDriver(void){
+/**
+ * Function provides background communication with TR module
+ */
+void dpaLibraryDriver(void)
+{
 
   if (DpaControl.SuspendFlag == true) return;
 
-	#ifdef __SPI_INTERFACE__
-		if (DpaControl.Status == DPA_BUSY || !DpaControl.TimeCnt){
-			dpaSpiInterfaceDriver();
-		  DpaControl.TimeCnt = (SPI_STATUS_POOLING_TIME * 7) + 1;
-		}
-		DpaControl.TimeCnt--;
-	#endif
+#ifdef __SPI_INTERFACE__
+	if (DpaControl.Status == DPA_BUSY || !DpaControl.TimeCnt){
+		dpaSpiInterfaceDriver();
+	  DpaControl.TimeCnt = (SPI_STATUS_POOLING_TIME * 7) + 1;
+	}
+	DpaControl.TimeCnt--;
+#endif
 
-	#ifdef __UART_INTERFACE__
-		dpaUartInterfaceDriver();
-	#endif
+#ifdef __UART_INTERFACE__
+	dpaUartInterfaceDriver();
+#endif
 
-  if (--DpaControl.TimeoutPrescaller) return;                                   // prescaler 7 = 1050us , prescaler 6 = 900us
+  // prescaler 7 = 1050us , prescaler 6 = 900us
+  if (--DpaControl.TimeoutPrescaller) return;
 
-  if (++DpaControl.TimeoutModulator <= 2) DpaControl.TimeoutPrescaller = 7;     // every third round do timeout timer correction
-  else{                                                                         // 2 * 1050us + 900us = 3000us
-    DpaControl.TimeoutModulator = 0;
+	// every third round do timeout timer correction
+  if (++DpaControl.TimeoutModulator <= 2) DpaControl.TimeoutPrescaller = 7;
+  else{
+    DpaControl.TimeoutModulator = 0;		// 2 * 1050us + 900us = 3000us
     DpaControl.TimeoutPrescaller = 6;
   }
 
-  if (DpaControl.TimeoutTimer){                                                 // service timeout timer
-    if (!(--DpaControl.TimeoutTimer)){                                          // if timeout expired
-      if (DpaControl.DpaTimeoutHandler != NULL) DpaControl.DpaTimeoutHandler(); // call user timeout handler
+  // service timeout timer
+  if (DpaControl.TimeoutTimer){
+		// if timeout expired
+    if (!(--DpaControl.TimeoutTimer)){
+			// call user timeout handler
+      if (DpaControl.DpaTimeoutHandler != NULL) DpaControl.DpaTimeoutHandler();
     }
   }
 
 }
 
-/*
-***************************************************************************************************
-* Function: uint8_t dpaSendRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Timeout)
-*
-* PreCondition: dpaInit(.. ) for library initialization must be called before
-*
-* Input: DpaRequest  - pointer to DPA request packet
-*        DataSize   - number of additional data bytes in DPA request packet
-*        Timeout    - operation timeout in ms
-*
-* Output: operation result
-*           - DPA_OPERATION_OK            0
-*           - DPA_OPERATION_IN_PROGRESS   1
-*           - DPA_OPERATION_TIMEOUT       2
-*           - DPA_CONFIRMATION_ERR        3
-*           - DPA_RESPONSE_ERR            4
-*           - DPA_TR_MODULE_NOT_READY     5
-*
-* Side Effects: none
-*
-* Overview: sends DPA request packet to desired destination address
-*
-* Note: none
-*
-***************************************************************************************************
-*/
-uint8_t dpaSendRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Timeout){
+/**
+ * Sends DPA request packet to desired destination address
+ * @param DpaRequest  pointer to DPA request packet
+ * @param DataSize  number of additional data bytes in DPA request packet
+ * @param Timeout operation timeout in ms
+ * @return operation result (DPA_OPERATION_OK, DPA_OPERATION_IN_PROGRESS, DPA_OPERATION_TIMEOUT ... )
+ */
+uint8_t dpaSendRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Timeout)
+{
 
   uint8_t OperationResult = DPA_OPERATION_IN_PROGRESS;
 
-  switch (DpaApplicationSM){                                                                                                // DPA operation state machine
+  // DPA operation state machine
+	switch (DpaApplicationSM){
 
     case DPA_SM_PREPARE_REQUEST:{
-      if (DpaControl.Status == DPA_NOT_READY) return(DPA_TR_MODULE_NOT_READY);                                              // if TR module is not ready
+			// if TR module is not ready
+			if (DpaControl.Status == DPA_NOT_READY) return(DPA_TR_MODULE_NOT_READY);
 
-      while (DpaControl.Status == DPA_BUSY);                                                                                // wait until library is ready
+      // wait until library is ready
+			while (DpaControl.Status == DPA_BUSY);
 
-      systemDisableInt();                                                                                                   // disable interrupts
-      tempReceiverHandler = DpaControl.DpaAnswerHandler;                                                                    // save pointer to async packet user service rutine
-      DpaControl.DpaAnswerHandler = dpaAnswerHandler;                                                                       // set pointer to dpa system receiver handler
+      systemDisableInt();                                                       // disable interrupts
+      tempReceiverHandler = DpaControl.DpaAnswerHandler;                        // save pointer to async packet user service rutine
+      DpaControl.DpaAnswerHandler = dpaAnswerHandler;                           // set pointer to dpa system receiver handler
 
-      DpaControl.DpaRequestPacketPtr = DpaRequest;                                                                          // initialize transfer parameters
+      DpaControl.DpaRequestPacketPtr = DpaRequest;                              // initialize transfer parameters
       DpaControl.ExtraDataSize = DataSize;
 
-      dpaSetTimeoutTimer(Timeout);                                                                                          // set operation timeout
-      systemEnableInt();                                                                                                    // enable interrupts
+      dpaSetTimeoutTimer(Timeout);                                              // set operation timeout
+      systemEnableInt();                                                        // enable interrupts
 
       // if command for coordinator or local interface,  wait for response
       if (DpaRequest->NADR==COORDINATOR_ADDRESS || DpaRequest->NADR==LOCAL_ADDRESS) DpaApplicationSM = DPA_SM_WAIT_RESPONSE;
-      else DpaApplicationSM = DPA_SM_WAIT_CONFIRMATION;                                                                     // if command for node, wait for confirmation
+      else DpaApplicationSM = DPA_SM_WAIT_CONFIRMATION;                         // if command for node, wait for confirmation
 
 			DpaControl.BroadcastRoutingFlag = false;
     }
     break;
 
-    case DPA_SM_PROCESS_CONFIRMATION:{                                                                                      // confimation received OK
-      if (DpaControl.BroadcastRoutingFlag == true) DpaApplicationSM = DPA_SM_WAIT_BROADCAST_ROUTING;                        // wait for broadcat routing
-			else DpaApplicationSM = DPA_SM_WAIT_RESPONSE;	                       																									// wait for response
+    // confimation received OK
+		case DPA_SM_PROCESS_CONFIRMATION:{
+      if (DpaControl.BroadcastRoutingFlag == true) DpaApplicationSM = DPA_SM_WAIT_BROADCAST_ROUTING;    // wait for broadcat routing
+			else DpaApplicationSM = DPA_SM_WAIT_RESPONSE;	                       															// wait for response
     }
     break;
 
-    case DPA_SM_PROCESS_RESPONSE:{                                                                                          // response received OK
-      memcpy((uint8_t *)DpaRequest, (uint8_t *)&DpaLibDpaAnswer, sizeof(T_DPA_PACKET));                                     // copy received DPA packet to user DPA packet structure
-      OperationResult = DPA_OPERATION_OK;                                                                                   // result of DPA operation
+    // response received OK
+		case DPA_SM_PROCESS_RESPONSE:{
+			// copy received DPA packet to user DPA packet structure
+      memcpy((uint8_t *)DpaRequest, (uint8_t *)&DpaLibDpaAnswer, sizeof(T_DPA_PACKET));
+      OperationResult = DPA_OPERATION_OK;
     }
     break;
 
-    case DPA_SM_WAIT_CONFIRMATION:                                                                                          // waiting for confirmation or response
+		// waiting for confirmation, response or broadcast routing
+		case DPA_SM_WAIT_CONFIRMATION:
     case DPA_SM_WAIT_RESPONSE:
 		case DPA_SM_WAIT_BROADCAST_ROUTING:
     break;
 
-    case DPA_SM_CONFIRMATION_ERR: OperationResult = DPA_CONFIRMATION_ERR; break;                                           // confirmation error
-    case DPA_SM_RESPONSE_ERR: OperationResult = DPA_RESPONSE_ERR; break;                                                   // response error
+		// confirmation error
+		case DPA_SM_CONFIRMATION_ERR: OperationResult = DPA_CONFIRMATION_ERR; break;
+		// response error
+		case DPA_SM_RESPONSE_ERR: OperationResult = DPA_RESPONSE_ERR; break;
+		// operation timeout
     case DPA_SM_TIMEOUT:{
-			if (DpaControl.BroadcastRoutingFlag == true) OperationResult = DPA_OPERATION_OK;			                               // broadcast routed
-			else OperationResult = DPA_OPERATION_TIMEOUT; 			                       																					 // operation timeout
+			if (DpaControl.BroadcastRoutingFlag == true) OperationResult = DPA_OPERATION_OK;
+			else OperationResult = DPA_OPERATION_TIMEOUT;
 		}
 		break;
   }
 
   if (OperationResult != DPA_OPERATION_IN_PROGRESS){
-    systemDisableInt();                                                                                                     // disable interrupts
-    DpaControl.DpaAnswerHandler = tempReceiverHandler;                                                                      // restore pointer to async packet user service rutine
-    systemEnableInt();                                                                                                      // enable interrupts
-    DpaApplicationSM = DPA_SM_PREPARE_REQUEST;                                                                              // DPA operation end, initialize state machine for next request
+    systemDisableInt();                                                         // disable interrupts
+    DpaControl.DpaAnswerHandler = tempReceiverHandler;                          // restore pointer to async packet user service rutine
+    systemEnableInt();                                                          // enable interrupts
+    DpaApplicationSM = DPA_SM_PREPARE_REQUEST;                                  // DPA operation end, initialize state machine for next request
   }
 
   return(OperationResult);
 }
 
-/*
-***************************************************************************************************
-* Function: uint16_t dpaGetEstimatedTimeout(void)
-*
-* PreCondition: dpaInit(.. ) for library initialization must be called before
-*
-* Input: none
-*
-* Output: estimated timeout for response packet in ms (computed from confirmation packet data)
-*
-* Side Effects: none
-*
-* Overview: returns estimated timeout for response packet in miliseconds
-*
-* Note: none
-*
-***************************************************************************************************
-*/
-uint16_t dpaGetEstimatedTimeout(void){
+/**
+ * Returns estimated timeout for response packet in miliseconds
+ * @return Estimated timeout for response packet in ms (computed from confirmation packet data)
+ */
+uint16_t dpaGetEstimatedTimeout(void)
+{
 
 	uint16_t EstimatedTimeout;
   uint16_t ResponseTimeSlotLength;
@@ -381,25 +339,13 @@ uint16_t dpaGetEstimatedTimeout(void){
 	return(EstimatedTimeout);
 }
 
-/*
-***************************************************************************************************
-* Function: uint8_t dpaMakeConfigurationCRC(T_DPA_PACKET *DpaRequest)
-*
-* PreCondition: dpaInit(.. ) for library initialization must be called before
-*
-* Input: DpaRequest	- pointer to DPA request packet
-*
-* Output: configuration data CRC
-*
-* Side Effects: none
-*
-* Overview: makes CRC from TR module configuration data
-*
-* Note: none
-*
-***************************************************************************************************
-*/
-uint8_t dpaMakeConfigurationCRC(T_DPA_PACKET *DpaRequest){
+/**
+ * Makes CRC from TR module configuration data
+ * @param DpaRequest	pointer to DPA request packet
+ * @return Configuration data CRC
+ */
+uint8_t dpaMakeConfigurationCRC(T_DPA_PACKET *DpaRequest)
+{
 
 	uint8_t	Cnt;
 	uint8_t	Crc = 0x5F;
@@ -411,63 +357,39 @@ uint8_t dpaMakeConfigurationCRC(T_DPA_PACKET *DpaRequest){
 	return(Crc);
 }
 
-/*
-***************************************************************************************************
-* Function: void dpaSuspendDriver(void)
-*
-* PreCondition: dpaInit(.. ) for library initialization must be called before
-*
-* Input: none
-*
-* Output: none
-*
-* Side Effects: none
-*
-* Overview: temporary suspend DPA comunication driver
-*
-* Note: none
-*
-***************************************************************************************************
-*/
-void dpaSuspendDriver(void){
-  while (DpaControl.Status == DPA_BUSY);                             // wait until library is ready
-  DpaControl.SuspendFlag = true;                                     // set driver suspend flag
+/**
+ * Temporary suspend DPA comunication driver
+ */
+void dpaSuspendDriver(void)
+{
+  // wait until library is ready
+  while (DpaControl.Status == DPA_BUSY);
+  // set driver suspend flag
+  DpaControl.SuspendFlag = true;
 }
 
-/*
-***************************************************************************************************
-* Function: void dpaRunDriver(void)
-*
-* PreCondition: dpaInit(.. ) for library initialization must be called before
-*
-* Input: none
-*
-* Output: none
-*
-* Side Effects: none
-*
-* Overview: run DPA comunication driver
-*
-* Note: none
-*
-***************************************************************************************************
-*/
-void dpaRunDriver(void){
-   DpaControl.SuspendFlag = false;                                // reenable DPA driver running
+/**
+ * Run DPA comunication driver
+ */
+void dpaRunDriver(void)
+{
+	// reenable DPA driver running
+	DpaControl.SuspendFlag = false;
 }
 
 /**
  * Callback function for received packet from TR module check
- *
- * @param - dpaAnswerPkt - pointer to data structure containing received packet from TR module
- * @return - none
- **/
-void dpaAnswerHandler(T_DPA_PACKET *dpaAnswerPkt){
+ * @param  dpaAnswerPkt  Pointer to data structure containing received packet from TR module
+ * @return  none
+ */
+void dpaAnswerHandler(T_DPA_PACKET *dpaAnswerPkt)
+{
 
-  dpaSetTimeoutTimer(0);                                        // stop timeout timmer
+  dpaSetTimeoutTimer(0);                 // stop timeout timmer
 
   switch(DpaApplicationSM){
-    case DPA_SM_WAIT_CONFIRMATION:{                             // waiting for confirmation
+		// waiting for confirmation
+    case DPA_SM_WAIT_CONFIRMATION:{
 			// if confirmation received
       if (dpaAnswerPkt->ResponseCode == STATUS_CONFIRMATION){
 				// process confirmation
@@ -481,7 +403,8 @@ void dpaAnswerHandler(T_DPA_PACKET *dpaAnswerPkt){
     }
     break;
 
-    case DPA_SM_WAIT_RESPONSE:{                                 // waiting for response
+		// waiting for response
+    case DPA_SM_WAIT_RESPONSE:{
 			// if no error received, process response
       if (dpaAnswerPkt->ResponseCode == STATUS_NO_ERROR) DpaApplicationSM = DPA_SM_PROCESS_RESPONSE;
       else DpaApplicationSM = DPA_SM_RESPONSE_ERR;              // process error in response
@@ -494,41 +417,24 @@ void dpaAnswerHandler(T_DPA_PACKET *dpaAnswerPkt){
 
 /**
  * Callback function for service timeout elapsed
- *
- * @param - none
- * @return - none
- **/
-void dpaTimeoutHandler(void){
-
+ */
+void dpaTimeoutHandler(void)
+{
   DpaApplicationSM = DPA_SM_TIMEOUT;
 }
 
 #ifdef __SPI_INTERFACE__
-/*
-***************************************************************************************************
-* Function: void dpaSpiInterfaceDriver(void)
-*
-* PreCondition: SPI module must be initialized and user written functions dpaSendSpiByte
-*               and dpaDeselectTRmodule must exist
-*
-* Input: none
-*
-* Output: none
-*
-* Side Effects: none
-*
-* Overview: function implements IQRF packet communication over SPI with TR module
-*
-* Note: none
-*
-***************************************************************************************************
-*/
-void dpaSpiInterfaceDriver(void){
+/**
+ * Function implements IQRF packet communication over SPI with TR module
+ */
+void dpaSpiInterfaceDriver(void)
+{
 
 	uint8_t LastSpiStat;
 	uint8_t TempData;
 
-	if (DpaSpiIfControl.Direction != SPI_TRANSFER_NONE){			                                                            // is anything to send / receive
+  // is anything to send / receive
+	if (DpaSpiIfControl.Direction != SPI_TRANSFER_NONE){
 
 		if (DpaSpiIfControl.Direction == SPI_TRANSFER_WRITE){
 			switch(DpaSpiIfControl.PacketCnt){
@@ -566,11 +472,11 @@ void dpaSpiInterfaceDriver(void){
 				case 0: dpaSendSpiByte(DpaSpiIfControl.CMD); DpaSpiIfControl.MyCRCS = 0x5F; break; 							              // send SPI CMD
 				case 1: dpaSendSpiByte(DpaSpiIfControl.PTYPE); DpaSpiIfControl.MyCRCS ^= DpaSpiIfControl.PTYPE; break; 		    // send PTYPE
 				case 2: DpaSpiIfControl.DpaPacketPtr->NADR = TempData; break;													                        // receive LOW(NADR)
-				case 3: DpaSpiIfControl.DpaPacketPtr->NADR |= ((uint16_t)TempData << 8); break;									                // receive HIGH(NADR)
+				case 3: DpaSpiIfControl.DpaPacketPtr->NADR |= ((uint16_t)TempData << 8); break;									              // receive HIGH(NADR)
 				case 4: DpaSpiIfControl.DpaPacketPtr->PNUM = TempData; break;													                        // receive PNUM
 				case 5: DpaSpiIfControl.DpaPacketPtr->PCMD = TempData; break;													                        // receive PCMD
 				case 6: DpaSpiIfControl.DpaPacketPtr->HWPID = TempData; break;													                      // receive LOW(HWPID)
-				case 7: DpaSpiIfControl.DpaPacketPtr->HWPID |= ((uint16_t)TempData << 8); break;									              // receive HIGH(HWPID)
+				case 7: DpaSpiIfControl.DpaPacketPtr->HWPID |= ((uint16_t)TempData << 8); break;									            // receive HIGH(HWPID)
 				default:{
 					if (DpaSpiIfControl.PacketCnt == DpaSpiIfControl.PacketLen-2){												                      // send CRCM / receive CRCS
 						DpaSpiIfControl.CRCS = dpaSendSpiByte(DpaSpiIfControl.CRCM);
@@ -666,13 +572,12 @@ void dpaSpiInterfaceDriver(void){
 }
 
 /**
- * Calculate CRC before master's send
- *
+ * Calculate CRC before master's send (see IQRF SPI user manual)
  * @param none
  * @return CrcVal
- *
- **/
-uint8_t dpaGetCRCM(void){	                                                      // see IQRF SPI user manual
+ */
+uint8_t dpaGetCRCM(void)
+{
 
  	unsigned char Cnt, CrcVal, DataSize;
 
@@ -698,66 +603,62 @@ uint8_t dpaGetCRCM(void){	                                                      
 
 
 #ifdef __UART_INTERFACE__
-/*
-***************************************************************************************************
-* Function: void dpaUartInterfaceDriver(void)
-*
-* PreCondition: UART module must be initialized and user written function dpaSendUartByte must exist
-*
-* Input: none
-*
-* Output: none
-*
-* Side Effects: none
-*
-* Overview: function implements IQRF packet communication over UART with TR module
-*
-* Note: none
-*
-***************************************************************************************************
-*/
-void dpaUartInterfaceDriver(void){
+/**
+ * Function implements IQRF packet communication over UART with TR module
+ */
+void dpaUartInterfaceDriver(void)
+{
 
 	uint8_t TempData;
 
-	if (DpaUartIfControl.Direction != UART_TRANSFER_NONE){										                                // is anything to send / receive
+  // is anything to send / receive
+	if (DpaUartIfControl.Direction != UART_TRANSFER_NONE){
 
 		if (DpaUartIfControl.Direction == UART_TRANSFER_READ){
-      if (dpaReceiveUartByte(&TempData)==false) return;                                                     // no data in Rx buffer
+			// no data in Rx buffer
+      if (dpaReceiveUartByte(&TempData)==false) return;
 
-			if (TempData == HDLC_FRM_FLAG_SEQUENCE || DpaUartIfControl.PacketCnt == DpaUartIfControl.PacketLen){	// end of packet or DPA structure is full
+			// end of packet or DPA structure is full
+			if (TempData == HDLC_FRM_FLAG_SEQUENCE || DpaUartIfControl.PacketCnt == DpaUartIfControl.PacketLen){
 				if (DpaUartIfControl.CRC == 0 && DpaControl.DpaAnswerHandler != NULL){
-					DpaControl.DpaAnswerHandler(DpaUartIfControl.DpaPacketPtr);			                                  // call user response handler
+					// call user response handler
+					DpaControl.DpaAnswerHandler(DpaUartIfControl.DpaPacketPtr);
 				}
-				DpaControl.Status = DPA_READY;													                                            // library is ready for next packet
-				DpaUartIfControl.Direction = UART_TRANSFER_NONE;								                                    // stop data transfer
+				// library is ready for next packet
+				DpaControl.Status = DPA_READY;
+				// stop data transfer
+				DpaUartIfControl.Direction = UART_TRANSFER_NONE;
 				return;
 			}
 
-			if (TempData == HDLC_FRM_CONTROL_ESCAPE){											                                        // discard received ESCAPE character
+			// discard received ESCAPE character
+			if (TempData == HDLC_FRM_CONTROL_ESCAPE){
 				DpaUartIfControl.WasEscape = 1;
 				return;
 			}
 
-			if (DpaUartIfControl.WasEscape){													                                            // previous character was ESCAPE
+			// previous character was ESCAPE
+			if (DpaUartIfControl.WasEscape){
 				DpaUartIfControl.WasEscape = 0;
 				TempData ^= HDLC_FRM_ESCAPE_BIT;
 			}
 
-			DpaUartIfControl.CRC = dpaDoCRC8(TempData, DpaUartIfControl.CRC);					                            // add Rx byte to CRC
+			// add Rx byte to CRC
+			DpaUartIfControl.CRC = dpaDoCRC8(TempData, DpaUartIfControl.CRC);
 
 			switch(DpaUartIfControl.PacketCnt){
 				case 0: DpaUartIfControl.DpaPacketPtr->NADR = TempData; break;   				                            // receive LOW(NADR)
-				case 1: DpaUartIfControl.DpaPacketPtr->NADR |= ((uint16_t)TempData << 8); break;	                    // receive HIGH(NADR)
+				case 1: DpaUartIfControl.DpaPacketPtr->NADR |= ((uint16_t)TempData << 8); break;	                  // receive HIGH(NADR)
 				case 2: DpaUartIfControl.DpaPacketPtr->PNUM = TempData; break;					                            // receive PNUM
 				case 3: DpaUartIfControl.DpaPacketPtr->PCMD = TempData;	break;					                            // receive PCMD
 				case 4: DpaUartIfControl.DpaPacketPtr->HWPID = TempData; break;					                            // receive LOW(HWPID)
-				case 5: DpaUartIfControl.DpaPacketPtr->HWPID |= ((uint16_t)TempData << 8); break;	                    // receive HIGH(HWPID)
+				case 5: DpaUartIfControl.DpaPacketPtr->HWPID |= ((uint16_t)TempData << 8); break;	                  // receive HIGH(HWPID)
 				case 6: DpaUartIfControl.DpaPacketPtr->ResponseCode = TempData; break;			                        // receive ResponseCode
 				case 7: DpaUartIfControl.DpaPacketPtr->DpaValue = TempData; break;				                          // receive DpaValue
 				default: DpaUartIfControl.DpaPacketPtr->DpaMessage.Response.PData[DpaUartIfControl.PacketCnt-8] = TempData;	// receive additional data
 			}
-			DpaUartIfControl.PacketCnt++;															                                            // counts number of send/receive byte
+			// counts number of send/receive byte
+			DpaUartIfControl.PacketCnt++;
 		}
 		else{
 			switch(DpaUartIfControl.PacketCnt){
@@ -814,13 +715,12 @@ void dpaUartInterfaceDriver(void){
 }
 
 /**
- * send data byte to TR module + make HDLC byte stuffing and comute CRC
- *
+ * Send data byte to TR module + make HDLC byte stuffing and comute CRC
  * @param data byte for TR module
  * @return none
- *
- **/
-void dpaSendDataByte(uint8_t DataByte){
+ */
+void dpaSendDataByte(uint8_t DataByte)
+{
 
 	if (DataByte == HDLC_FRM_FLAG_SEQUENCE || DataByte == HDLC_FRM_CONTROL_ESCAPE){
 		dpaSendUartByte(HDLC_FRM_CONTROL_ESCAPE);
@@ -832,15 +732,13 @@ void dpaSendDataByte(uint8_t DataByte){
 }
 
 /**
- *  Compute the CRC8 value of a data set
- *
- * @param 	InData  One byte of data to compute CRC from
- *			    Seed    The starting value of the CRC
- *
+ * Compute the CRC8 value of a data set
+ * @param InData  One byte of data to compute CRC from
+ * @param Seed The starting value of the CRC
  * @return	The CRC8 of InData with Seed as initial value
- *
- **/
-uint8_t dpaDoCRC8(uint8_t InData, uint8_t Seed){
+ */
+uint8_t dpaDoCRC8(uint8_t InData, uint8_t Seed)
+{
 
     uint8_t bitsLeft;
 
@@ -855,44 +753,35 @@ uint8_t dpaDoCRC8(uint8_t InData, uint8_t Seed){
 #endif
 
 #if defined (__STORE_CODE_SUPPORT__)
-/*
-***************************************************************************************************
-* Function: uint8_t dpaStoreCodeToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo)
-*
-* PreCondition: dpaInit(.. ) for library initialization must be called before
-*               T_DPA_CODE_FILE_INFO *CodeFileInfo must be initialized
-*
-* Input:    CodeFileInfo  pointer to T_DPA_CODE_FILE_INFO structure with code file image information
-*
-* Output:   Progress status or operation result
-*               0 - 100 -> progress status
-*               DPA_STORE_CODE_SUCCESS   -> operation ended with success
-*               DPA_STORE_CODE_ERROR     -> operation ended with error
-*
-* Overview: Function for store HEX or IQRF code image to external EEPROM in TR module
-*
-* Note: function must be called periodicaly until DPA_STORE_CODE_SUCCESS or DPA_STORE_CODE_ERROR is returned
-*
-***************************************************************************************************
-*/
-uint8_t dpaStoreCodeToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo){
+/**
+ * Function for store HEX or IQRF code image to external EEPROM in TR module
+ * @param CodeFileInfo  pointer to T_DPA_CODE_FILE_INFO structure with code file image information
+ * @return  Proggess status or operation result (0 - 100 -> progress status, DPA_STORE_CODE_SUCCESS, DPA_STORE_CODE_ERROR)
+ */
+uint8_t dpaStoreCodeToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo)
+{
 
 	static uint16_t tempStoreEepromAddress;
 
 	switch(DpaStoreCodeTaskSM){
 		case DPA_STORE_CODE_INIT_TASK:{
-			DpaControl.FileByteCounter = 0;											                                      // initialize code file character read counter
+			// initialize code file character read counter
+			DpaControl.FileByteCounter = 0;
 
-			tempStoreEepromAddress = CodeFileInfo -> ImageEeepromAdr;				                          // temporary store start address of code image in EEEPROM
+			// temporary store start address of code image in EEEPROM
+			tempStoreEepromAddress = CodeFileInfo -> ImageEeepromAdr;
 
 			if (CodeFileInfo -> FileType == DPA_CODE_FILE_IQRF) CodeFileInfo -> ImageCRC = 0x03;		  // initial value for .IQRF CRC
 			else CodeFileInfo -> ImageCRC = 0x01;														                          // initial value for .HEX CRC
 
-			CodeFileInfo -> ImageSize = 0;											                                      // initialize file image size
+			// initialize file image size
+			CodeFileInfo -> ImageSize = 0;
 
-			DpaStartAddressDetected = DpaCodeImageEndDetected = DpaOutputPacketDataCnt = DpaEeepromPageDataCnt = DpaRemainingDataCnt = 0;	// initialize work variables
+			// initialize work variables
+			DpaStartAddressDetected = DpaCodeImageEndDetected = DpaOutputPacketDataCnt = DpaEeepromPageDataCnt = DpaRemainingDataCnt = 0;
 
-			DpaStoreCodeTaskSM = DPA_STORE_CODE_SEND_DATA;							                              // start data sending
+			// start data sending
+			DpaStoreCodeTaskSM = DPA_STORE_CODE_SEND_DATA;
 
 			return(0);
 		}
@@ -904,13 +793,16 @@ uint8_t dpaStoreCodeToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo){
 		break;
 
     case DPA_STORE_CODE_ERROR_END:{
-      DpaStoreCodeTaskSM = DPA_STORE_CODE_INIT_TASK;                                            // initialize task state machine
+			// initialize task state machine
+      DpaStoreCodeTaskSM = DPA_STORE_CODE_INIT_TASK;
       return(DPA_STORE_CODE_ERROR);
     }
 
 		case DPA_STORE_CODE_SUCCESS_END:{
-			CodeFileInfo -> ImageEeepromAdr = tempStoreEepromAddress;				                          // restore start address of code image in EEEPROM
-			DpaStoreCodeTaskSM = DPA_STORE_CODE_INIT_TASK;							                              // initialize task state machine
+			// restore start address of code image in EEEPROM
+			CodeFileInfo -> ImageEeepromAdr = tempStoreEepromAddress;
+			// initialize task state machine
+			DpaStoreCodeTaskSM = DPA_STORE_CODE_INIT_TASK;
 			return(DPA_STORE_CODE_SUCCESS);
 		}
 	}
@@ -920,14 +812,12 @@ uint8_t dpaStoreCodeToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo){
 
 /**
  *  Compute the Flatcher-16 checksum
- *
- * @param 	InData  One byte of data to compute CRC from
- *			    Seed    The starting value of the CRC
- *
+ * @param InData  One byte of data to compute CRC from
+ * @param Seed The starting value of the CRC
  * @return	The FlatcherCRC16 of InData with Seed as initial value
- *
- **/
-uint16_t dpaFlatcherCRC16(uint8_t *DataAddress, uint8_t DataLen, uint16_t Seed){
+ */
+uint16_t dpaFlatcherCRC16(uint8_t *DataAddress, uint8_t DataLen, uint16_t Seed)
+{
 
 	uint16_t	TempL = Seed & 0xFF;
 	uint16_t  TempH = Seed >> 8;
@@ -952,67 +842,71 @@ uint16_t dpaFlatcherCRC16(uint8_t *DataAddress, uint8_t DataLen, uint16_t Seed){
 
 /**
  *  Send prepared data packed to eeeprom peripheral and compute FlatcherCRC16 from data
- *
- * @param 	CodeFileInfo  pointer to T_DPA_CODE_FILE_INFO structure with code file image information
- *          DataSize number of data bytes in output buffer
- *
+ * @param	 CodeFileInfo  pointer to T_DPA_CODE_FILE_INFO structure with code file image information
+ * @param  DataSize number of data bytes in output buffer
  * @return	none
- *
- **/
-void dpaSendDataToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo, uint8_t DataSize){
+ */
+void dpaSendDataToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo, uint8_t DataSize)
+{
 
-  uint8_t_t OpResult;
+  uint8_t OpResult;
 
 	// make CRC from code image block of data
 	CodeFileInfo -> ImageCRC = dpaFlatcherCRC16((uint8_t *)&DpaStoreCodeRequest.DpaMessage.XMemoryRequest.ReadWrite.Write.PData[0], DataSize, CodeFileInfo -> ImageCRC);
-	CodeFileInfo -> ImageSize += DataSize;																			// increase code image size
+	CodeFileInfo -> ImageSize += DataSize;									// increase code image size
 
-	DpaStoreCodeRequest.NADR = CodeFileInfo -> TrAddress;												// set destination address
-	DpaStoreCodeRequest.PNUM = PNUM_EEEPROM;																		// set destination peripheral EEEPROM
-	DpaStoreCodeRequest.PCMD = CMD_EEEPROM_XWRITE;															// set xwrite to eeeprom command
-	DpaStoreCodeRequest.HWPID = HWPID_DoNotCheck;																// do not check HWPID
+	DpaStoreCodeRequest.NADR = CodeFileInfo -> TrAddress;		// set destination address
+	DpaStoreCodeRequest.PNUM = PNUM_EEEPROM;								// set destination peripheral EEEPROM
+	DpaStoreCodeRequest.PCMD = CMD_EEEPROM_XWRITE;					// set xwrite to eeeprom command
+	DpaStoreCodeRequest.HWPID = HWPID_DoNotCheck;						// do not check HWPID
 
-	DpaStoreCodeRequest.DpaMessage.XMemoryRequest.Address = CodeFileInfo -> ImageEeepromAdr;						// set destination address in eeeprom
-	CodeFileInfo -> ImageEeepromAdr += DataSize;																// next write on address
+	// set destination address in eeeprom
+	DpaStoreCodeRequest.DpaMessage.XMemoryRequest.Address = CodeFileInfo -> ImageEeepromAdr;
+	// next write on address
+	CodeFileInfo -> ImageEeepromAdr += DataSize;
 
-  while((OpResult = dpaSendRequest(&DpaStoreCodeRequest,DataSize + 2, 1000)) == DPA_OPERATION_IN_PROGRESS); // send request and wait for result
+  // send request and wait for result
+  while((OpResult = dpaSendRequest(&DpaStoreCodeRequest,DataSize + 2, 1000)) == DPA_OPERATION_IN_PROGRESS);
 
   switch(OpResult){
       case DPA_OPERATION_TIMEOUT:
       case DPA_CONFIRMATION_ERR:
       case DPA_RESPONSE_ERR:
       case DPA_TR_MODULE_NOT_READY:
-        DpaStoreCodeTaskSM = DPA_STORE_CODE_ERROR_END;                        // end operation
+        DpaStoreCodeTaskSM = DPA_STORE_CODE_ERROR_END;
   }
 }
 
 /**
- *  Process HEX file with custom DPA handler code
- *
- * @param 	CodeFileInfo  pointer to T_DPA_CODE_FILE_INFO structure with code file image information
- *
- * @return	none
- *
- **/
-void dpaProcessHexCodeFile(T_DPA_CODE_FILE_INFO *CodeFileInfo){
+ * Process HEX file with custom DPA handler code
+ * @param CodeFileInfo  Pointer to T_DPA_CODE_FILE_INFO structure with code file image information
+ * @return none
+ */
+void dpaProcessHexCodeFile(T_DPA_CODE_FILE_INFO *CodeFileInfo)
+{
 
 	uint8_t	TempValue;
 
-	if (!DpaCodeImageEndDetected){											      // if end of code image not detected
+  // if end of code image not detected
+	if (!DpaCodeImageEndDetected){
     dpaSuspendDriver();
-		if ((TempValue = dpaReadHEXFileLine()) != 0){						// read one line from .HEX file
+		// read one line from .HEX file
+		if ((TempValue = dpaReadHEXFileLine()) != 0){
       dpaRunDriver();
-			if (TempValue == 2){											            // CRC error in hex file detected
-				DpaStoreCodeTaskSM = DPA_STORE_CODE_ERROR_END;		  // end operation
+			// CRC error in hex file detected
+			if (TempValue == 2){
+				DpaStoreCodeTaskSM = DPA_STORE_CODE_ERROR_END;
 			}
-			else DpaCodeImageEndDetected = true;							    // end of file detected
+			else DpaCodeImageEndDetected = true;							 // end of file detected
 			return;
 		}
     dpaRunDriver();
 
-		if (DpaCodeLineBuffer[3] != 0) return;								  // line from hex file do not contain data, read next line
+		// line from hex file do not contain data, read next line
+		if (DpaCodeLineBuffer[3] != 0) return;
 
-		DpaCodeLineAddress = (((uint16_t)DpaCodeLineBuffer[1] << 8) | DpaCodeLineBuffer[2]) / 2;	// compute destination code address
+		// compute destination code address
+		DpaCodeLineAddress = (((uint16_t)DpaCodeLineBuffer[1] << 8) | DpaCodeLineBuffer[2]) / 2;
 
 		if (DpaCodeLineAddress == CUSTOM_HANDLER_ADDRESS){			// if code address == custom DPA handler start address
 			DpaStartAddressDetected = true;									      // set flag, start address detected
@@ -1047,8 +941,9 @@ void dpaProcessHexCodeFile(T_DPA_CODE_FILE_INFO *CodeFileInfo){
 		}
 	}
 	else{																	                    // if end of code image detected
-		if (DpaRemainingDataCnt){											          // if hex file line buffer contains any data
-																			                      // copy it to output buffer
+		// if hex file line buffer contains any data
+		if (DpaRemainingDataCnt){
+		  // copy it to output buffer
 			memcpy ((uint8_t *)&DpaStoreCodeRequest.DpaMessage.XMemoryRequest.ReadWrite.Write.PData[DpaOutputPacketDataCnt], (uint8_t *)&DpaCodeLineBuffer[4], DpaRemainingDataCnt);
 			DpaOutputPacketDataCnt += DpaRemainingDataCnt;				// increase output buffer data counter
 			DpaRemainingDataCnt = 0;										          // clear hex file line buffer data counter
@@ -1060,67 +955,79 @@ void dpaProcessHexCodeFile(T_DPA_CODE_FILE_INFO *CodeFileInfo){
 			}
 		}
 
-		if (DpaOutputPacketDataCnt < 0x20){									    // if output buffer contains less then 0x20 data bytes
-																			                      // fill rest of buffer with zeros
+		// if output buffer contains less then 0x20 data bytes
+		if (DpaOutputPacketDataCnt < 0x20){
+			// fill rest of buffer with zeros
 			memset ((uint8_t *)&DpaStoreCodeRequest.DpaMessage.XMemoryRequest.ReadWrite.Write.PData[DpaOutputPacketDataCnt], 0, 0x20 - DpaOutputPacketDataCnt);
 			DpaOutputPacketDataCnt = 0;										        // clear outpt buffer data counter
 			DpaEeepromPageDataCnt += 0x20;									      // increase eeprom page data counter
-			if (DpaEeepromPageDataCnt == 0x40) DpaEeepromPageDataCnt = 0;	// if eeeprom data page contains 0x40 bytes, clear page data counter
-
-			dpaSendDataToEeeprom(CodeFileInfo, 0x20);						  // send 0x20 data bytes of code image to eeeprom preripheral of TR module
+			// if eeeprom data page contains 0x40 bytes, clear page data counter
+			if (DpaEeepromPageDataCnt == 0x40) DpaEeepromPageDataCnt = 0;
+			// send 0x20 data bytes of code image to eeeprom preripheral of TR module
+			dpaSendDataToEeeprom(CodeFileInfo, 0x20);
 		}
 	}
 }
 
 /**
  * Process IQRF file with IQRF plugin or new OS
- *
- * @param 	CodeFileInfo  pointer to T_DPA_CODE_FILE_INFO structure with code file image information
- *
- * @return	none
- *
- **/
-void dpaProcessIqrfCodeFile(T_DPA_CODE_FILE_INFO *CodeFileInfo){
+ * @param CodeFileInfo  Pointer to T_DPA_CODE_FILE_INFO structure with code file image information
+ * @return none
+ */
+void dpaProcessIqrfCodeFile(T_DPA_CODE_FILE_INFO *CodeFileInfo)
+{
 
 	uint8_t	TempValue;
 
-	if (!DpaCodeImageEndDetected){											// if end of code image not detected
-		if (DpaRemainingDataCnt){											    // if iqrf file line buffer contains any data
+	// if end of code image not detected
+	if (!DpaCodeImageEndDetected){
+		// if iqrf file line buffer contains any data
+		if (DpaRemainingDataCnt){
 
-			TempValue = 32 - DpaOutputPacketDataCnt;				// number of bytes to full output buffer
-			if (TempValue > DpaRemainingDataCnt) TempValue = DpaRemainingDataCnt;  // if required bytes is more then ready bytes in line buffer
-																			                // copy required bytes from line buffer to out buffer
+			// number of bytes to full output buffer
+			TempValue = 32 - DpaOutputPacketDataCnt;
+			// if required bytes is more then ready bytes in line buffer
+			if (TempValue > DpaRemainingDataCnt) TempValue = DpaRemainingDataCnt;
+			// copy required bytes from line buffer to out buffer
 			memcpy ((uint8_t *)&DpaStoreCodeRequest.DpaMessage.XMemoryRequest.ReadWrite.Write.PData[DpaOutputPacketDataCnt], (uint8_t *)&DpaCodeLineBuffer[20-DpaRemainingDataCnt], TempValue);
 
 			DpaRemainingDataCnt -= TempValue;								// decrease remaining data counter
 			DpaOutputPacketDataCnt += TempValue;						// increase output data counter
 
-			if (DpaOutputPacketDataCnt == 32){							// if output buffer contains 32 bytes
+			// if output buffer contains 32 bytes
+			if (DpaOutputPacketDataCnt == 32){
 				DpaOutputPacketDataCnt = 0;									  // clear output buffer data counter
-				dpaSendDataToEeeprom(CodeFileInfo, 32);				// send 32 data bytes of code image to eeeprom preripheral of TR module
+				// send 32 data bytes of code image to eeeprom preripheral of TR module
+				dpaSendDataToEeeprom(CodeFileInfo, 32);
 			}
 		}
 		else{
       dpaSuspendDriver();
-			if ((TempValue = dpaReadIQRFFileLine()) != 0){	// read one line from .IQRF file
+			// read one line from .IQRF file
+			if ((TempValue = dpaReadIQRFFileLine()) != 0){
         dpaRunDriver();
-				if (TempValue == 2){										      // wrong format if .IQRF file detected
+				// wrong format if .IQRF file detected
+				if (TempValue == 2){
 					DpaStoreCodeTaskSM = DPA_STORE_CODE_ERROR_END;		// end operation
 				}
-				else DpaCodeImageEndDetected = true;					// end of file detected
+				else DpaCodeImageEndDetected = true;								// end of file detected
 				return;
 			}
       dpaRunDriver();
-			DpaRemainingDataCnt = 20;										    // number of ready bytes in file line buffer
+			// number of ready bytes in file line buffer
+			DpaRemainingDataCnt = 20;
 		}
 	}
-	else{																	              // if end of code image was detected
-		if (DpaOutputPacketDataCnt){										  // if any data still in output buffer
-			dpaSendDataToEeeprom(CodeFileInfo, DpaOutputPacketDataCnt);	// send rest of data bytes of code image to eeeprom preripheral of TR module
-			DpaOutputPacketDataCnt = 0;										  // clear output buffer data counter
+	else{  // if end of code image was detected
+		// if any data still in output buffer
+		if (DpaOutputPacketDataCnt){
+			// send rest of data bytes of code image to eeeprom preripheral of TR module
+			dpaSendDataToEeeprom(CodeFileInfo, DpaOutputPacketDataCnt);
+			// clear output buffer data counter
+			DpaOutputPacketDataCnt = 0;
 		}
 		else{
-			DpaStoreCodeTaskSM = DPA_STORE_CODE_SUCCESS_END;// operation end
+			DpaStoreCodeTaskSM = DPA_STORE_CODE_SUCCESS_END;
 			return;
 		}
 	}
@@ -1128,12 +1035,11 @@ void dpaProcessIqrfCodeFile(T_DPA_CODE_FILE_INFO *CodeFileInfo){
 
 /**
  * Convert two ascii char to number
- *
  * @param - High and Low nibble in ascii
  * @return - number
- *
- **/
-uint8_t dpaConvertToNum(uint8_t DataByteHi, uint8_t DataByteLo){
+ */
+uint8_t dpaConvertToNum(uint8_t DataByteHi, uint8_t DataByteLo)
+{
 
 	uint8_t Result=0;
 
@@ -1149,15 +1055,11 @@ uint8_t dpaConvertToNum(uint8_t DataByteHi, uint8_t DataByteLo){
 
 /**
  * Read and process line from firmware file
- *
- * @param - none
- * @return - return code
- * 			 0 - HEX file line processed and ready in buffer
- *			 1 - end of file
- *			 2 - CRC error in HEX file line
- *
- **/
-uint8_t dpaReadHEXFileLine(void){
+ * @param none
+ * @return Return code (0 - HEX file line ready, 1 - end of file, 2 - CRC error in HEX file line)
+ */
+uint8_t dpaReadHEXFileLine(void)
+{
 
   uint8_t Znak;
 	uint8_t DataByteHi,DataByteLo;
@@ -1165,10 +1067,13 @@ uint8_t dpaReadHEXFileLine(void){
 	uint8_t CodeLineBufferPtr=0;
 	uint8_t CodeLineBufferCrc=0;
 
-	while (((Znak = dpaReadByteFromFile()) != 0) && (Znak != ':'));	// find start of line or end of file
-  if (Znak == 0) return(1);											                  // end of file
+  // find start of line or end of file
+	while (((Znak = dpaReadByteFromFile()) != 0) && (Znak != ':'));
+	// if end of file
+  if (Znak == 0) return(1);
 
-	for (;;){															                          // read data to end of line and convert if to numbers
+	// read data to end of line and convert if to numbers
+	for (;;){
 		DataByteHi = tolower(dpaReadByteFromFile());					        // read High nibble
     if (DataByteHi==0x0A || DataByteHi==0x0D){						        // check end of line
 			if (CodeLineBufferCrc != 0) return(2);						          // check line CRC
@@ -1184,40 +1089,43 @@ uint8_t dpaReadHEXFileLine(void){
 
 /**
  * Read and process line from plugin file
- *
- * @param - none
- * @return - return code
- * 			 0 - iqrf file line processed and ready in buffer
- *			 1 - end of file
- *			 2 - input file format error
- **/
-uint8_t dpaReadIQRFFileLine(void){
+ * @param none
+ * @return Return code (0 - iqrf file line ready, 1 - end of file, 2 - input file format error)
+ */
+uint8_t dpaReadIQRFFileLine(void)
+{
 
 	uint8_t	FirstChar;
 	uint8_t	SecondChar;
 	uint8_t	CodeLineBufferPtr = 0;
 
 	repeat_read:
-	FirstChar = tolower(dpaReadByteFromFile());					                            // read one char from file
+	// read one char from file
+	FirstChar = tolower(dpaReadByteFromFile());
 
-	if (FirstChar == '#'){											                                    // line do not contain code
-		while (((FirstChar = dpaReadByteFromFile()) != 0) && (FirstChar != 0x0D));		// read data to end of line
+	// read one char from file
+	if (FirstChar == '#'){
+		// read data to end of line
+		while (((FirstChar = dpaReadByteFromFile()) != 0) && (FirstChar != 0x0D));
 	}
 
-	if (FirstChar == 0x0D){											                                    // end of line
-		dpaReadByteFromFile();										                                    // read secon code 0x0A
-		if (CodeLineBufferPtr == 0) goto repeat_read;				                          // read another line
-		if (CodeLineBufferPtr == 20) return(0);						                            // line with data readed successfully
-		else return(2);												                                        // wrong file format (error)
+	// if end of line
+	if (FirstChar == 0x0D){
+		dpaReadByteFromFile();										               // read second code 0x0A
+		if (CodeLineBufferPtr == 0) goto repeat_read;				     // read another line
+		if (CodeLineBufferPtr == 20) return(0);						       // line with data readed successfully
+		else return(2);												                   // wrong file format (error)
 	}
 
-	if (FirstChar == 0) return(1);									                                // end of file
+	// if end of file
+	if (FirstChar == 0) return(1);
 
-	SecondChar = tolower(dpaReadByteFromFile());					                          // read second character from code file
+	// read second character from code file
+	SecondChar = tolower(dpaReadByteFromFile());
+	// convert chars to number and store to buffer
+	DpaCodeLineBuffer[CodeLineBufferPtr++] = dpaConvertToNum(FirstChar, SecondChar);
 
-	DpaCodeLineBuffer[CodeLineBufferPtr++] = dpaConvertToNum(FirstChar, SecondChar);// convert chars to number and store to buffer
-
-	goto repeat_read;												                                        // read next data
+	goto repeat_read;		// read next data
 }
 
 #endif
