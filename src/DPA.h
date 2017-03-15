@@ -3,10 +3,11 @@
 // *********************************************************************
 //
 // File:    $RCSfile: DPA.h,v $
-// Version: $Revision: 1.185 $
-// Date:    $Date: 2016/09/29 13:15:36 $
+// Version: $Revision: 1.199 $
+// Date:    $Date: 2017/02/23 16:43:13 $
 //
 // Revision history:
+//   2017/xx/yy  Release for DPA 3.00
 //   2016/09/12  Release for DPA 2.28
 //   2016/04/14  Release for DPA 2.27
 //   2016/03/03  Release for DPA 2.26
@@ -30,22 +31,26 @@
 //############################################################################################
 
 // DPA version
-#define	DPA_VERSION_MASTER		0x0228
+#define	DPA_VERSION_MASTER		0x0300
 
 #ifdef __CC5X__
 // Compiled only at CC5X
-#if __CC5X__ < 3503
-#error Insufficient CC5X compiler version, V3.5C is minimum
+#if __CC5X__ < 3507
+#error Insufficient CC5X compiler version, V3.5G is minimum
+#endif
+
+#if IQRFOS < 400
+#error IQRF OS 4.00+ is required
 #endif
 
 // Bank for custom variables
-#pragma rambank = 11
+#pragma rambank = UserBank_01
 
 // Main DPA API entry address (also start of the licensed FLASH) 
-#define	DPA_API_ADDRESS			__LICENSED_FLASH
+#define	DPA_API_ADDRESS				__LICENSED_FLASH
 
 // Main DPA entry address
-#define	MAIN_DPA_ADDRESS		( DPA_API_ADDRESS + 4 )
+#define	MAIN_DPA_ADDRESS			( DPA_API_ADDRESS + 4 )
 
 // Main DPA API entry address stub
 #define	DPA_API_ADDRESS_ENTRY		0x3A08
@@ -54,13 +59,7 @@
 #define	CUSTOM_HANDLER_ADDRESS		0x3A20
 
 // Address of the DPA Custom Handler end + 1
-#if defined( TR7xD )
 #define	CUSTOM_HANDLER_ADDRESS_END	0x3D80
-#elif defined ( TR5xD )
-#define	CUSTOM_HANDLER_ADDRESS_END	0x3D00
-#else
-#error Unsupported DCTR type
-#endif
 
 // DPA API entry function
 uns8  DpaApiEntry( uns8 par1, uns8 par2, uns8 apiIndex );
@@ -95,7 +94,7 @@ typedef uint16_t  uns16;
 
 #endif
 
-// Indices of configuration bytes used by DpaApiReadConfigByte( index )
+// Indexes of configuration bytes used by DpaApiReadConfigByte( index )
 // Checksum
 #define	CFGIND_CHECKSUM			0x00
 // Standard peripherals
@@ -143,8 +142,8 @@ typedef struct
   uns16	HWPID;
 } STRUCTATTR TDpaIFaceHeader;
 
-// Maximum command PCMD value
-#define	MAX_PCMD					0x3f
+// Maximum command PCMD value (except reserved 0x3F = CMD_GET_PER_INFO)
+#define	PCMD_MAX					0x7f
 // Bit mask at PCMD that indicates DPA Response message
 #define	RESPONSE_FLAG				0x80
 
@@ -158,19 +157,13 @@ typedef struct
 #define LOCAL_ADDRESS				0xfc
 // Maximum IQMESH network device address
 #define MAX_ADDRESS					( 240 - 1 )
-// Maximum number of DPA peripherals per device
-#define MAX_PERIPHERALS				0x70
 
 // Time slots lengths in 10 ms
-#define	MIN_STD_TIMESLOT	3	
-#ifdef TR7xD
-#define	MAX_STD_TIMESLOT	5
-#else
+#define	MIN_STD_TIMESLOT	4	
 #define	MAX_STD_TIMESLOT	6
-#endif
 
 #define	MIN_LP_TIMESLOT		8
-#define	MAX_LP_TIMESLOT		10
+#define	MAX_LP_TIMESLOT		11
 
 #ifdef DPA_STD
 #define	MIN_TIMESLOT		MIN_STD_TIMESLOT	
@@ -187,29 +180,35 @@ typedef struct
 #define DPA_MAX_DATA_LENGTH			( sizeofBufferCOM - sizeof( TDpaIFaceHeader ) - 2 * sizeof( uns8 ) )
 
 // Maximum number of peripherals info that can fit in the message
-#define MAX_PERIPHERALS_PER_BLOCK_INFO	( DPA_MAX_DATA_LENGTH / sizeof( TPeripheralInfoAnswer ) )
+#define	MAX_PERIPHERALS_PER_BLOCK_INFO	( DPA_MAX_DATA_LENGTH / sizeof( TPeripheralInfoAnswer ) )
 
 // Standard peripheral numbers
-#define  PNUM_COORDINATOR	0x00
-#define  PNUM_NODE			0x01
-#define  PNUM_OS			0x02
-#define  PNUM_EEPROM		0x03
-#define  PNUM_EEEPROM		0x04
-#define  PNUM_RAM			0x05
-#define  PNUM_LEDR			0x06
-#define  PNUM_LEDG			0x07
-#define  PNUM_SPI			0x08
-#define  PNUM_IO			0x09
-#define  PNUM_THERMOMETER	0x0A
-#define  PNUM_PWM			0x0B
-#define  PNUM_UART			0x0C
-#define  PNUM_FRC			0x0D
+#define	PNUM_COORDINATOR	0x00
+#define	PNUM_NODE			0x01
+#define	PNUM_OS				0x02
+#define	PNUM_EEPROM			0x03
+#define	PNUM_EEEPROM		0x04
+#define	PNUM_RAM			0x05
+#define	PNUM_LEDR			0x06
+#define	PNUM_LEDG			0x07
+#define	PNUM_SPI			0x08
+#define	PNUM_IO				0x09
+#define	PNUM_THERMOMETER	0x0A
+#define	PNUM_PWM			0x0B
+#define	PNUM_UART			0x0C
+#define	PNUM_FRC			0x0D
 
 // Number of the 1st user peripheral
-#define  PNUM_USER			0x20
+#define	PNUM_USER			0x20
+// Number of the last user peripheral
+#define	PNUM_USER_MAX		0x3E
+// Maximum peripheral number
+#define	PNUM_MAX			0x7F
+
 // Fake peripheral number used to flag DPA response with error sent by RF
-#define  PNUM_ERROR_FLAG	0xfe
-#define  PNUM_ENUMERATION	0xff
+#define	PNUM_ERROR_FLAG	0xFE
+// Special peripheral used for enumeration
+#define	PNUM_ENUMERATION	0xFF
 
 // DPA Commands for predefined peripherals
 #define	CMD_COORDINATOR_ADDR_INFO  0
@@ -246,8 +245,7 @@ typedef struct
 #define	CMD_OS_RFPGM 3
 #define	CMD_OS_SLEEP 4
 #define	CMD_OS_BATCH 5
-#define	CMD_OS_SET_USEC 6
-#define	CMD_OS_SET_MID 7
+#define	CMD_OS_SET_SECURITY 6
 #define	CMD_OS_RESTART 8
 #define	CMD_OS_WRITE_CFG_BYTE 9
 #define	CMD_OS_LOAD_CODE 10
@@ -259,8 +257,6 @@ typedef struct
 #define	CMD_EEPROM_READ CMD_RAM_READ
 #define	CMD_EEPROM_WRITE CMD_RAM_WRITE
 
-#define	CMD_EEEPROM_READ CMD_RAM_READ
-#define	CMD_EEEPROM_WRITE CMD_RAM_WRITE
 #define	CMD_EEEPROM_XREAD ( CMD_RAM_READ + 2 )
 #define	CMD_EEEPROM_XWRITE ( CMD_RAM_WRITE + 2 )
 
@@ -326,6 +322,7 @@ typedef enum
 {
   // No error
   STATUS_NO_ERROR = 0,
+
   // General fail
   ERROR_FAIL = 1,
   // Incorrect PCMD
@@ -348,9 +345,14 @@ typedef enum
   ERROR_MISSING_CUSTOM_DPA_HANDLER = 10,
 
   // Beginning of the user code error interval
-  ERROR_USER_FROM = 0x80,
+  ERROR_USER_FROM = 0x20,
   // End of the user code error interval
-  ERROR_USER_TO = 0xfe,
+  ERROR_USER_TO = 0x3f,
+
+  // Bit/flag reserved for a future use
+  STATUS_RESERVED_FLAG = 0x40,
+  // Bit to flag asynchronous response from [N]
+  STATUS_ASYNC_RESPONSE = 0x80,
   // Error code used to mark confirmation
   STATUS_CONFIRMATION = 0xff
 } TErrorCodes;
@@ -388,37 +390,25 @@ typedef enum
 // RAM peripheral block definitions
 #define	PERIPHERAL_RAM_LENGTH		48
 
-#ifndef COORDINATOR_CUSTOM_HANDLER
 // Start address of EEPROM peripheral in the real EEPROM
+#ifndef COORDINATOR_CUSTOM_HANDLER // Node
 #define	PERIPHERAL_EEPROM_START		( (uns8)0x00 )
-// Start address of EEEPROM peripheral in the real EEEPROM
-#define	PERIPHERAL_EEEPROM_START	0x0000
 #else // Coordinator
-// Start address of EEPROM peripheral in the real EEPROM
 #define	PERIPHERAL_EEPROM_START		( (uns8)0x80 )
-// Start address of EEEPROM peripheral in the real EEEPROM
-#define	PERIPHERAL_EEEPROM_START	0x0700
 #endif
 
-// Length of the real serial EEEPROM from the EEEPROM DPA peripheral point of view
-#define	EEEPROM_REAL_LENGTH					0x0800
+// Length of the real serial EEEPROM from the EEEPROM DPA peripheral write point of view
+#define	EEEPROM_REAL_LENGTH					0x4000
 
-// Length of the EEEPROM for extended read/write
-#if defined ( TR7xD )
-#define	EEEPROM_EXTENDED_SIZE				0x4000
-#endif
-
+// Starting address of the Autoexec DPA storage at external EEPROM
+#define	AUTOEXEC_EEEPROM_ADDR				0x0000
 // Length of the autoexec memory block
 #define	AUTOEXEC_LENGTH						sizeofBufferAUX
 
-// Starting address of the Autoexec DPA storage at external EEPROM
-#define	AUTOEXEC_EEEPROM_ADDR				( (uns16)( EEEPROM_REAL_LENGTH - AUTOEXEC_LENGTH ) )
-
-// Length of the IO setup memory block
-#define	IOSETUP_LENGTH						32
-
 // Starting address of the IO Setup DPA storage at external EEPROM
-#define	IOSETUP_EEEPROM_ADDR				( AUTOEXEC_EEEPROM_ADDR - IOSETUP_LENGTH )
+#define	IOSETUP_EEEPROM_ADDR				AUTOEXEC_LENGTH
+// Length of the IO setup memory block
+#define	IOSETUP_LENGTH						sizeofBufferAUX
 
 // ---------------------------------------------------------
 
@@ -431,7 +421,10 @@ typedef struct
   uns16	HWPID;
   uns16	HWPIDver;
   uns8	Flags;
+  uns8	UserPer[( PNUM_MAX - PNUM_USER + 1 + 7 ) / 8];
 } STRUCTATTR TEnumPeripheralsAnswer;
+
+#define	FlagUserPer(UserPerArray,UserPerNumber)	UserPerArray[((UserPerNumber)-PNUM_USER) / 8] |= (uns8)0x01 << (((UserPerNumber)-PNUM_USER) % 8);
 
 // Get peripheral info structure (CMD_GET_PER_INFO)
 typedef struct
@@ -440,109 +433,109 @@ typedef struct
   uns8	PerT;
   uns8	Par1;
   uns8	Par2;
-} TPeripheralInfoAnswer;
+} STRUCTATTR TPeripheralInfoAnswer;
 
 // Error DPA response (PNUM_ERROR_FLAG)
 typedef struct
 {
   uns8	ErrN;
   uns8	PNUMoriginal;
-} TErrorAnswer;
+} STRUCTATTR TErrorAnswer;
 
 // Structure returned by CMD_COORDINATOR_ADDR_INFO
 typedef struct
 {
   uns8	DevNr;
   uns8	DID;
-} TPerCoordinatorAddrInfo_Response;
+} STRUCTATTR TPerCoordinatorAddrInfo_Response;
 
 // Structure for CMD_COORDINATOR_BOND_NODE
 typedef struct
 {
   uns8	ReqAddr;
   uns8	BondingMask;
-} TPerCoordinatorBondNode_Request;
+} STRUCTATTR TPerCoordinatorBondNode_Request;
 
 // Structure returned by CMD_COORDINATOR_BOND_NODE
 typedef struct
 {
   uns8	BondAddr;
   uns8	DevNr;
-} TPerCoordinatorBondNode_Response;
+} STRUCTATTR TPerCoordinatorBondNode_Response;
 
 // Structure for CMD_COORDINATOR_REMOVE_BOND or CMD_COORDINATOR_REBOND_NODE
 typedef struct
 {
   uns8	BondAddr;
-} TPerCoordinatorRemoveRebondBond_Request;
+} STRUCTATTR TPerCoordinatorRemoveRebondBond_Request;
 
 // Structure returned by CMD_COORDINATOR_REMOVE_BOND or CMD_COORDINATOR_REBOND_NODE
 typedef struct
 {
   uns8	DevNr;
-} TPerCoordinatorRemoveRebondBond_Response;
+} STRUCTATTR TPerCoordinatorRemoveRebondBond_Response;
 
 // Structure for CMD_COORDINATOR_DISCOVERY
 typedef struct
 {
   uns8	TxPower;
   uns8	MaxAddr;
-} TPerCoordinatorDiscovery_Request;
+} STRUCTATTR TPerCoordinatorDiscovery_Request;
 
 // Structure returned by CMD_COORDINATOR_DISCOVERY
 typedef struct
 {
   uns8	DiscNr;
-} TPerCoordinatorDiscovery_Response;
+} STRUCTATTR TPerCoordinatorDiscovery_Response;
 
 // Structure for and also returned by CMD_COORDINATOR_SET_DPAPARAMS
 typedef struct
 {
   uns8	DpaParam;
-} TPerCoordinatorSetDpaParams_Request_Response;
+} STRUCTATTR TPerCoordinatorSetDpaParams_Request_Response;
 
 // Structure for and also returned by CMD_COORDINATOR_SET_HOPS
 typedef struct
 {
   uns8	RequestHops;
   uns8	ResponseHops;
-} TPerCoordinatorSetHops_Request_Response;
+} STRUCTATTR TPerCoordinatorSetHops_Request_Response;
 
 // Structure for CMD_COORDINATOR_DISCOVERY_DATA
 typedef struct
 {
-  uns8	Addr;
-} TPerCoordinatorDiscoveryData_Request;
+  uns16	Address;
+} STRUCTATTR TPerCoordinatorDiscoveryData_Request;
 
 // Structure returned by CMD_COORDINATOR_DISCOVERY_DATA
 typedef struct
 {
   uns8	DiscoveryData[48];
-} TPerCoordinatorDiscoveryData_Response;
+} STRUCTATTR TPerCoordinatorDiscoveryData_Response;
 
 // Structure for CMD_COORDINATOR_BACKUP and CMD_NODE_BACKUP
 typedef struct
 {
   uns8	Index;
-} TPerCoordinatorNodeBackup_Request;
+} STRUCTATTR TPerCoordinatorNodeBackup_Request;
 
 // Structure returned by CMD_COORDINATOR_BACKUP and CMD_NODE_BACKUP
 typedef struct
 {
-  uns8	NetworkData[19];
-} TPerCoordinatorNodeBackup_Response;
+  uns8	NetworkData[49];
+} STRUCTATTR TPerCoordinatorNodeBackup_Response;
 
 // Structure for CMD_COORDINATOR_RESTORE and CMD_NODE_RESTORE
 typedef struct
 {
-  uns8	NetworkData[19];
-} TPerCoordinatorNodeRestore_Request;
+  uns8	NetworkData[49];
+} STRUCTATTR TPerCoordinatorNodeRestore_Request;
 
 // Structure for CMD_COORDINATOR_AUTHORIZE_BOND
 typedef struct
 {
   uns8	ReqAddr;
-  uns16	MID;
+  uns8	MID[4];
 } STRUCTATTR TPerCoordinatorAuthorizeBond_Request;
 
 // Structure returned by CMD_COORDINATOR_AUTHORIZE_BOND
@@ -550,14 +543,14 @@ typedef struct
 {
   uns8	BondAddr;
   uns8	DevNr;
-} TPerCoordinatorAuthorizeBond_Response;
+} STRUCTATTR TPerCoordinatorAuthorizeBond_Response;
 
 // Structure for CMD_COORDINATOR_BRIDGE
 typedef struct
 {
   TDpaIFaceHeader subHeader;
   uns8	subPData[DPA_MAX_DATA_LENGTH - sizeof( TDpaIFaceHeader )];
-} TPerCoordinatorBridge_Request;
+} STRUCTATTR TPerCoordinatorBridge_Request;
 
 // Structure returned by CMD_COORDINATOR_BRIDGE
 typedef struct
@@ -566,21 +559,27 @@ typedef struct
   uns8	subRespCode;
   uns8	subDpaValue;
   uns8	subPData[DPA_MAX_DATA_LENGTH - sizeof( TDpaIFaceHeader ) - 2 * sizeof( uns8 )];
-} TPerCoordinatorBridge_Response;
+} STRUCTATTR TPerCoordinatorBridge_Response;
 
 // Structure for CMD_COORDINATOR_ENABLE_REMOTE_BONDING and CMD_NODE_ENABLE_REMOTE_BONDING
 typedef struct
 {
   uns8	BondingMask;
   uns8	Control;
-  uns16	UserData;
+  uns8	UserData[4];
 } STRUCTATTR TPerCoordinatorNodeEnableRemoteBonding_Request;
+
+// Structure for TPerCoordinatorNodeReadRemotelyBondedMID_Response
+typedef struct
+{
+  uns8	MID[4];
+  uns8	UserData[4];
+} STRUCTATTR TPrebondedNode;
 
 // Structure returned by CMD_COORDINATOR_READ_REMOTELY_BONDED_MID and CMD_NODE_READ_REMOTELY_BONDED_MID
 typedef struct
 {
-  uns8	MID[4];
-  uns16	UserData;
+  TPrebondedNode  PrebondedNodes[DPA_MAX_DATA_LENGTH / sizeof( TPrebondedNode )];
 } STRUCTATTR TPerCoordinatorNodeReadRemotelyBondedMID_Response;
 
 // Structure returned by CMD_NODE_READ
@@ -618,7 +617,7 @@ typedef struct
   uns8	Configuration[31];
   uns8	RFPGM;
   uns8	Undocumented[1];
-} TPerOSReadCfg_Response;
+} STRUCTATTR TPerOSReadCfg_Response;
 
 // Structure for CMD_OS_WRITE_CFG
 typedef struct
@@ -626,7 +625,7 @@ typedef struct
   uns8	Checksum;
   uns8	Configuration[31];
   uns8	RFPGM;
-} TPerOSWriteCfg_Request;
+} STRUCTATTR TPerOSWriteCfg_Request;
 
 // Structures for CMD_OS_WRITE_CFG_BYTE
 typedef struct
@@ -634,12 +633,20 @@ typedef struct
   uns8	Address;
   uns8	Value;
   uns8	Mask;
-} TPerOSWriteCfgByteTriplet;
+} STRUCTATTR TPerOSWriteCfgByteTriplet;
 
+// Structure for CMD_OS_WRITE_CFG_BYTE
 typedef struct
 {
   TPerOSWriteCfgByteTriplet Triplets[DPA_MAX_DATA_LENGTH / sizeof( TPerOSWriteCfgByteTriplet )];
-} TPerOSWriteCfgByte_Request;
+} STRUCTATTR TPerOSWriteCfgByte_Request;
+
+// Structure for CMD_OS_SET_SECURITY
+typedef struct
+{
+  uns8	Type;
+  uns8	Data[16];
+} STRUCTATTR TPerOSSetSecurity_Request;
 
 // Structure for CMD_OS_LOAD_CODE
 typedef struct
@@ -656,18 +663,6 @@ typedef struct
   uns16	Time;
   uns8	Control;
 } STRUCTATTR TPerOSSleep_Request;
-
-// Structure for CMD_OS_SET_USEC
-typedef struct
-{
-  uns16	USEC;
-} STRUCTATTR TPerOSSetUSEC_Request;
-
-// Structure for CMD_OS_SET_MID
-typedef struct
-{
-  uns8	Key[24];
-} TPerOSSetMID_Request;
 
 // Structure for general memory request
 typedef struct
@@ -694,7 +689,7 @@ typedef struct
 	} Write;
 
   } ReadWrite;
-} TPerMemoryRequest;
+} STRUCTATTR TPerMemoryRequest;
 
 // Structure for general extended memory request
 typedef struct
@@ -729,7 +724,7 @@ typedef struct
   uns8  Port;
   uns8  Mask;
   uns8  Value;
-} TPerIOTriplet;
+} STRUCTATTR TPerIOTriplet;
 
 typedef struct
 {
@@ -742,7 +737,7 @@ typedef union
 {
   TPerIOTriplet Triplets[DPA_MAX_DATA_LENGTH / sizeof( TPerIOTriplet )];
   TPerIODelay   Delays[DPA_MAX_DATA_LENGTH / sizeof( TPerIODelay )];
-} TPerIoDirectionAndSet_Request;
+} STRUCTATTR TPerIoDirectionAndSet_Request;
 
 // Structure returned by CMD_THERMOMETER_READ
 typedef struct
@@ -757,27 +752,27 @@ typedef struct
   uns8  Prescaler;
   uns8  Period;
   uns8  Duty;
-} TPerPwmSet_Request;
+} STRUCTATTR TPerPwmSet_Request;
 
 // Structure for CMD_UART_OPEN
 typedef struct
 {
   uns8  BaudRate;
-} TPerUartOpen_Request;
+} STRUCTATTR TPerUartOpen_Request;
 
 // Structure for CMD_UART_WRITE_READ and CMD_SPI_WRITE_READ
 typedef struct
 {
   uns8  ReadTimeout;
   uns8	WrittenData[DPA_MAX_DATA_LENGTH - sizeof( uns8 )];
-} TPerUartSpiWriteRead_Request;
+} STRUCTATTR TPerUartSpiWriteRead_Request;
 
 // Structure for CMD_FRC_SEND
 typedef struct
 {
   uns8  FrcCommand;
   uns8	UserData[30];
-} TPerFrcSend_Request;
+} STRUCTATTR TPerFrcSend_Request;
 
 // Structure for CMD_FRC_SEND_SELECTIVE
 typedef struct
@@ -785,20 +780,20 @@ typedef struct
   uns8  FrcCommand;
   uns8	SelectedNodes[30];
   uns8	UserData[25];
-} TPerFrcSendSelective_Request;
+} STRUCTATTR TPerFrcSendSelective_Request;
 
 // Structure returned by CMD_FRC_SEND and CMD_FRC_SEND_SELECTIVE
 typedef struct
 {
   uns8  Status;
   uns8	FrcData[DPA_MAX_DATA_LENGTH - sizeof( uns8 )];
-} TPerFrcSend_Response;
+} STRUCTATTR TPerFrcSend_Response;
 
 // Structure for request and response of CMD_FRC_SET_PARAMS
 typedef struct
 {
   uns8	FRCresponseTime;
-} TPerFrcSetParams_RequestResponse;
+} STRUCTATTR TPerFrcSetParams_RequestResponse;
 
 // Interface and CMD_COORDINATOR_BRIDGE confirmation structure
 typedef struct
@@ -809,7 +804,7 @@ typedef struct
   uns8  TimeSlotLength;
   // Number of hops for response
   uns8  HopsResponse;
-} TIFaceConfirmation;
+} STRUCTATTR TIFaceConfirmation;
 
 // ---------------------------------------------------------
 
@@ -915,17 +910,14 @@ typedef union
   // Structure for CMD_OS_WRITE_CFG_BYTE
   TPerOSWriteCfgByte_Request PerOSWriteCfgByte_Request;
 
+  // Structure for CMD_OS_SET_SECURITY
+  TPerOSSetSecurity_Request PerOSSetSecurity_Request;
+
   // Structure for CMD_OS_LOAD_CODE
   TPerOSLoadCode_Request PerOSLoadCode_Request;
 
   // Structure for CMD_OS_SLEEP
   TPerOSSleep_Request PerOSSleep_Request;
-
-  // Structure for CMD_OS_SET_USEC
-  TPerOSSetUSEC_Request PerOSSetUSEC_Request;
-
-  // Structure for CMD_OS_SET_MID
-  TPerOSSetMID_Request PerOSSetMID_Request;
 
   // Structure for general memory request
   TPerMemoryRequest MemoryRequest;
@@ -1041,16 +1033,14 @@ typedef enum
 // DPA message at bufferRF
 TDpaMessage DpaRfMessage @bufferRF;
 
-// Actual allocation of the RAM Peripheral memory block
-#pragma rambank = 12
-uns8  PeripheralRam[PERIPHERAL_RAM_LENGTH];
-#pragma rambank = 11
+// Actual allocation of the RAM Peripheral memory block @ UserBank_02
+bank12 uns8  PeripheralRam[PERIPHERAL_RAM_LENGTH];
 
 // Actual DPA message parameters at memory
 #define	_NADR			RX
-#define _NADRhigh		RTDT3
-#define _PNUM			MPRW0
-#define _PCMD			MPRW1
+#define _NADRhigh		RTAUX
+#define _PNUM			PNUM
+#define _PCMD			PCMD
 #define _DpaDataLength	DLEN
 #define _DpaMessage		DpaRfMessage
 
@@ -1076,7 +1066,7 @@ uns8  PeripheralRam[PERIPHERAL_RAM_LENGTH];
 #endif
 
 // Stores DPA Params inside DPA request/response
-#define	_DpaParams					  MPRW2
+#define	_DpaParams					  PPAR
 // Get DPA Value type out of the DPA Params
 #define	DpaValueType()				  ( _DpaParams & 0b11 )
 
@@ -1092,6 +1082,5 @@ bit IsDpaLongTimeslot				  @_DpaParams.3;
 #pragma origin __APPLICATION_ADDRESS
 
 #endif
-
 #endif
 //############################################################################################

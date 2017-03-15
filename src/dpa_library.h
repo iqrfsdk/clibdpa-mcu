@@ -16,7 +16,7 @@
 
 /*****************************************************************************
  *
- * DPA support library ver.0.96
+ * DPA support library ver.1.00
  *
  *****************************************************************************
 */
@@ -30,13 +30,10 @@ extern "C" {
 #include <stdint.h>
 #include <stddef.h>
 
-#define __SPI_INTERFACE__				    // select for comunication via SPI
-// #define __UART_INTERFACE__			  // select for comunication via UART
+#define __SPI_INTERFACE__           // select for comunication via SPI
+// #define __UART_INTERFACE__       // select for comunication via UART
 
-// #define __STORE_CODE_SUPPORT__		// uncomment for TR7xD modules code upload support
-
-#define TR7xD							          // select for TR7xD module
-//#define TR5xD							          // select for TR5xD module
+#define __STORE_CODE_SUPPORT__      // uncomment for TR7xD modules code upload support
 
 #define systemDisableInt()  noInterrupts()        // disable Interrupts (Arduino platform)
 #define systemEnableInt()   interrupts()          // enable Interrupts (Arduino platform)
@@ -47,16 +44,7 @@ extern "C" {
 #define  CUSTOM_HANDLER_ADDRESS    0x3A20
 
 // Address of the DPA Custom Handler end + 1
-#if defined( TR7xD )
 #define CUSTOM_HANDLER_ADDRESS_END  0x3D80
-#elif defined ( TR5xD )
-#define CUSTOM_HANDLER_ADDRESS_END  0x3D00
-#else
-#error Unsupported DCTR type
-#endif
-
-typedef uint8_t  UINT8;				      // Define dpa_library data types
-typedef uint16_t UINT16;
 
 // dpaSendRequest(...  ) function return codes
 #define DPA_OPERATION_OK            0
@@ -67,225 +55,108 @@ typedef uint16_t UINT16;
 #define DPA_TR_MODULE_NOT_READY     5
 
 typedef struct{
-	UINT16  	NADR;
-  UINT8   	PNUM;
-  UINT8   	PCMD;
-  UINT16  	HWPID;
-  UINT8 		ResponseCode;
- 	UINT8 		DpaValue;
-	TDpaMessage	DpaMessage;
+  uint16_t    NADR;
+  uint8_t     PNUM;
+  uint8_t     PCMD;
+  uint16_t    HWPID;
+  uint8_t     ResponseCode;
+ 	uint8_t     DpaValue;
+  TDpaMessage	DpaMessage;
 } T_DPA_PACKET;
 
-typedef void (*T_DPA_ANSWER_HANDLER)(T_DPA_PACKET *DpaAnswer);			// DPA response callback function type
+typedef void (*T_DPA_ANSWER_HANDLER)(T_DPA_PACKET *DpaAnswer);      // DPA response callback function type
 typedef void (*T_DPA_TIMEOUT_HANDLER)(void);                        // DPA timeout callback function type
 
 typedef struct{
-	volatile UINT8	Status;
-  UINT8 SuspendFlag;
-  UINT8 TRmoduleSelected;
-	UINT8	TimeCnt;
-	UINT8	ExtraDataSize;
-	UINT8	TimeoutPrescaller;
-	UINT8	TimeoutModulator;
-	UINT16	TimeoutTimer;
-	UINT16	FileByteCounter;
-	T_DPA_ANSWER_HANDLER	DpaAnswerHandler;
-	T_DPA_TIMEOUT_HANDLER   DpaTimeoutHandler;
-	T_DPA_PACKET	*DpaRequestPacketPtr;
+  volatile uint8_t  Status;
+  uint8_t SuspendFlag;
+  uint8_t BroadcastRoutingFlag;
+  uint8_t TRmoduleSelected;
+  uint8_t TimeCnt;
+  uint8_t ExtraDataSize;
+  uint8_t TimeoutPrescaller;
+  uint8_t TimeoutModulator;
+  uint16_t  TimeoutTimer;
+  uint16_t  FileByteCounter;
+  T_DPA_ANSWER_HANDLER  DpaAnswerHandler;
+  T_DPA_TIMEOUT_HANDLER DpaTimeoutHandler;
+  T_DPA_PACKET  *DpaRequestPacketPtr;
 }T_DPA_CONTROL;
 
 extern T_DPA_CONTROL	DpaControl;
 
-#if defined (__STORE_CODE_SUPPORT__) && defined(TR7xD)
+#if defined (__STORE_CODE_SUPPORT__)
 
-#define DPA_CODE_FILE_NOT_DEFINED	0
-#define DPA_CODE_FILE_HEX			    1
-#define DPA_CODE_FILE_IQRF			  2
+#define DPA_CODE_FILE_NOT_DEFINED   0
+#define DPA_CODE_FILE_HEX           1
+#define DPA_CODE_FILE_IQRF          2
 
-#define	DPA_STORE_CODE_SUCCESS		111			// dpaStoreCodeToEeeprom return code (operation ended with success)
-#define	DPA_STORE_CODE_ERROR		  222			// dpaStoreCodeToEeeprom return code (operation ended with error)
+#define	DPA_STORE_CODE_SUCCESS    111     // dpaStoreCodeToEeeprom return code (operation ended with success)
+#define	DPA_STORE_CODE_ERROR      222     // dpaStoreCodeToEeeprom return code (operation ended with error)
 
 typedef struct{
-	UINT16	TrAddress;							  // DPA address of destination TR module
-	UINT16	ImageEeepromAdr;					// absolute address in TR eeeprom to store code
-	UINT16	ImageSize;							  // size of code image stored in eeeprom
-	UINT16	ImageCRC;							    // initial CRC value (before save) / CRC of code image (after save)
-	UINT16	FileSize;							    // size of code file on SD card
-	UINT8	FileType;							      // file type (HEX / IQRF)
+  uint16_t  TrAddress;                // DPA address of destination TR module
+  uint16_t  ImageEeepromAdr;          // absolute address in TR eeeprom to store code
+  uint16_t  ImageSize;                // size of code image stored in eeeprom
+  uint16_t  ImageCRC;                 // initial CRC value (before save) / CRC of code image (after save)
+  uint16_t  FileSize;                 // size of code file on SD card
+  uint8_t FileType;                   // file type (HEX / IQRF)
 }T_DPA_CODE_FILE_INFO;
 
-extern UINT16 DpaAditionalTimeout;
+extern uint16_t DpaAditionalTimeout;
 
 #endif
 
-/*
-***************************************************************************************************
-* Function: void dpaInit(T_DPA_ANSWER_HANDLER asyncPacketHandler)
-*
-* PreCondition: none
-*
-* Input: pointer to user call back function for asynchronous packet service
-*
-* Output: none
-*
-* Side Effects: none
-*
-* Overview: function initialize DPA support library
-*
-* Note: none
-*
-***************************************************************************************************
-*/
+/**
+ * Function initialize DPA support library
+ * @param  asyncPacketHandler pointer to user call back function for asynchronous packet service
+ * @return: none
+ */
 void dpaInit(T_DPA_ANSWER_HANDLER asyncPacketHandler);
 
-/*
-***************************************************************************************************
-* Function: void dpaLibraryDriver(void)
-*
-* PreCondition: dpaInit() for library initialization must be called before
-*
-* Input: none
-*
-* Output: none
-*
-* Side Effects: none
-*
-* Overview: function provides background communication with TR module
-*
-* Note: none
-*
-***************************************************************************************************
-*/
+/**
+ * Function provides background communication with TR module
+ */
 void dpaLibraryDriver(void);
 
-/*
-***************************************************************************************************
-* Function: UINT8 dpaSendRequest(T_DPA_PACKET *DpaRequest, UINT8 DataSize, UINT16 Timeout)
-*
-* PreCondition: dpaInit() for library initialization must be called before
-*
-* Input: DpaRequest	- pointer to DPA request packet
-*        DataSize  	- number of additional data bytes in DPA request packet
-*        Timeout    - operation timeout in ms
-*
-* Output: operation result
-*           - DPA_OPERATION_OK            0
-*           - DPA_OPERATION_IN_PROGRESS   1
-*           - DPA_OPERATION_TIMEOUT       2
-*           - DPA_CONFIRMATION_ERR        3
-*           - DPA_RESPONSE_ERR            4
-*           - DPA_TR_MODULE_NOT_READY     5
-*
-* Side Effects: none
-*
-* Overview: sends DPA request packet to desired destination address
-*
-* Note: none
-*
-***************************************************************************************************
-*/
-UINT8 dpaSendRequest(T_DPA_PACKET *DpaRequest, UINT8 DataSize, UINT16 Timeout);
+/**
+ * Sends DPA request packet to desired destination address
+ * @param DpaRequest  pointer to DPA request packet
+ * @param DataSize  number of additional data bytes in DPA request packet
+ * @param Timeout operation timeout in ms
+ * @return operation result (DPA_OPERATION_OK, DPA_OPERATION_IN_PROGRESS, DPA_OPERATION_TIMEOUT ... )
+ */
+uint8_t dpaSendRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Timeout);
 
-/*
-***************************************************************************************************
-* Function: UINT8 dpaMakeConfigurationCRC(T_DPA_PACKET *DpaRequest)
-*
-* PreCondition: dpaInit() for library initialization must be called before
-*
-* Input: DpaRequest	- pointer to DPA request packet
-*
-* Output: configuration data CRC
-*
-* Side Effects: none
-*
-* Overview: makes CRC from TR module configuration data
-*
-* Note: none
-*
-***************************************************************************************************
-*/
-UINT8 dpaMakeConfigurationCRC(T_DPA_PACKET *DpaRequest);
+/**
+ * Makes CRC from TR module configuration data
+ * @param DpaRequest	pointer to DPA request packet
+ * @return Configuration data CRC
+ */
+uint8_t dpaMakeConfigurationCRC(T_DPA_PACKET *DpaRequest);
 
-/*
-***************************************************************************************************
-* Function: void dpaSuspendDriver(void)
-*
-* PreCondition: dpaInit(.. ) for library initialization must be called before
-*
-* Input: none
-*
-* Output: none
-*
-* Side Effects: none
-*
-* Overview: temporary suspend DPA comunication driver
-*
-* Note: none
-*
-***************************************************************************************************
-*/
+/**
+ * Temporary suspend DPA comunication driver
+ */
 void dpaSuspendDriver(void);
 
-/*
-***************************************************************************************************
-* Function: void dpaRunDriver(void)
-*
-* PreCondition: dpaInit(.. ) for library initialization must be called before
-*
-* Input: none
-*
-* Output: none
-*
-* Side Effects: none
-*
-* Overview: run DPA comunication driver
-*
-* Note: none
-*
-***************************************************************************************************
-*/
+/**
+ * Run DPA comunication driver
+ */
 void dpaRunDriver(void);
 
-/*
-***************************************************************************************************
-* Function: UINT8 dpaStoreCodeToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo)
-*
-* PreCondition: dpaInit() for library initialization must be called before
-*               T_DPA_CODE_FILE_INFO *CodeFileInfo must be initialized
-*
-* Input: 		CodeFileInfo  pointer to T_DPA_CODE_FILE_INFO structure with code file image information
-*
-* Output:		Progress status or operation result
-*               0 - 100 -> progress status
-*							  DPA_STORE_CODE_SUCCESS   -> operation ended with success
-*               DPA_STORE_CODE_ERROR     -> operation ended with error
-*
-* Overview: Function for store HEX or IQRF code image to external EEPROM in TR module
-*
-* Note: function must be called periodicaly until DPA_STORE_CODE_SUCCESS or DPA_STORE_CODE_ERROR is returned
-*
-***************************************************************************************************
-*/
-#if defined (__STORE_CODE_SUPPORT__) && defined(TR7xD)
-UINT8 dpaStoreCodeToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo);
+/**
+ * Function for store HEX or IQRF code image to external EEPROM in TR module
+ * @param CodeFileInfo  pointer to T_DPA_CODE_FILE_INFO structure with code file image information
+ * @return  Proggess status or operation result (0 - 100 -> progress status, DPA_STORE_CODE_SUCCESS, DPA_STORE_CODE_ERROR)
+ */
+#if defined (__STORE_CODE_SUPPORT__)
+uint8_t dpaStoreCodeToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo);
 #endif
 
-/*
-***************************************************************************************************
-* Macro: dpaIncFileByteCounter(void)
-*
-* PreCondition: none
-*
-* Input: none
-*
-* Output: none
-*
-* Side Effects: increments value of file byte couter used in dpaStoreCodeToEeeprom(...) function
-*
-* Note: none
-*
-***************************************************************************************************
-*/
+/**
+ * Macro: increments value of file byte couter used in dpaStoreCodeToEeeprom(...) function
+ */
 #define dpaIncFileByteCounter()	DpaControl.FileByteCounter++
 
 #ifdef __cplusplus

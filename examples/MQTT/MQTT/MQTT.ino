@@ -146,41 +146,21 @@ void setup()
 	dpaInit(myAsyncPacketHandler);
 
 #if defined(__AVR__) || defined(CORE_TEENSY)
-#if defined(TR7xD) || defined(__UART_INTERFACE__)
 	// initialize Timer1, call DPA driver every 150us
 	Timer1.initialize(150);
 	// time 1.5s for DPA request sending
 	AppVars.SwTimer = AppVars.SwTimerPreset = 10000;
-#else
-	// initialize Timer1, call DPA driver every 1000us
-	Timer1.initialize(1000);
-	// time 1.5s for DPA request sending
-	AppVars.SwTimer = AppVars.SwTimerPreset = 1500;
-#endif
 	// attaches callback() as a timer overflow interrupt
 	Timer1.attachInterrupt(systemTimerIterruptHandler);
 #elif defined(__SAM3X8E__)
-#if defined(TR7xD) || defined(__UART_INTERFACE__)
 	// initialize DueTimer (6), call DPA driver every 150us
 	Timer6.attachInterrupt(systemTimerIterruptHandler).start(150);
 	// time 1.5s for DPA request sending
 	AppVars.SwTimer = AppVars.SwTimerPreset = 10000;
-#else
-	// initialize DueTimer (6), call DPA driver every 1000us
-	Timer6.attachInterrupt(systemTimerIterruptHandler).start(1000);
-	// time 1.5s for DPA request sending
-	AppVars.SwTimer = AppVars.SwTimerPreset = 1500;
-#endif
 #elif defined(__PIC32MX__)
-#if defined(TR7xD) || defined(__UART_INTERFACE__)
 	AppVars.SwTimerTimmingInterval = CORE_TICK_RATE / 6.7;
 	// time 1.5s for DPA request sending
 	AppVars.SwTimer = AppVars.SwTimerPreset = 10000;
-#else
-	AppVars.SwTimerTimmingInterval = CORE_TICK_RATE;
-	// time 1.5s for DPA request sending
-	AppVars.SwTimer = AppVars.SwTimerPreset = 1500;
-#endif
 	attachCoreTimerService(systemTimerIterruptHandlerPic32);
 #endif
 
@@ -320,13 +300,6 @@ uint8_t dpaSendSpiByte(uint8_t Tx_Byte)
 	}
 
 	Rx_Byte = SPI.transfer(Tx_Byte);
-
-#if defined(TR5xD)
-	delayMicroseconds(15);
-	digitalWrite(TR_SS, HIGH);
-	DpaControl.TRmoduleSelected = false;
-	SPI.endTransaction();
-#endif
 
 	return(Rx_Byte);
 }
