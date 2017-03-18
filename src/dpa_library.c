@@ -351,9 +351,10 @@ uint16_t dpaGetEstimatedTimeout(void)
  */
 uint8_t dpaMakeConfigurationCRC(T_DPA_PACKET *DpaRequest)
 {
+	uint8_t i;
 	uint8_t crc = 0x5F;
 
-	for (uint8_t i = 0; i < 31; i++) {
+	for (i = 0; i < 31; i++) {
 		crc ^= DpaRequest->DpaMessage.PerOSWriteCfg_Request.Configuration[i];
 	}
 	return(crc);
