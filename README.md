@@ -93,6 +93,7 @@ void dpaInit(T_DPA_ANSWER_HANDLER dpaAnswerHandler); // dpaAnswerHandler is user
 
 -   ```uint8_t dpaMakeConfigurationCRC(T_DPA_PACKET *DpaRequest)``` - Function calculates the CRC of the new configuration data for TR module
 -   ```void dpaIncFileByteCounter(void)``` - The brief description of this function is in the paragraph Integration.
+-   ```uint8_t dpaGetRxExtraDataSize(void)``` - Function returns size of additional data block in DPA response packet, received from TR module.
 -   ```uint8_t dpaStoreCodeToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo)``` - Function ensures the storing of code image from IQRF or HEX file with the new custom DPA handler, or firmware for DCTR-7xD module. The user fills the ```T_DPA_CODE_FILE_INFO``` struct, with the information necessary to store code image. Then the function must be called periodically, until returns ```DPA_STORE_CODE_SUCCESS```, or ```DPA_STORE_CODE_ERROR```.
 
 ## License
