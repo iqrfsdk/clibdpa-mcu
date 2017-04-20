@@ -3,11 +3,11 @@
 // *********************************************************************
 //
 // File:    $RCSfile: DPA.h,v $
-// Version: $Revision: 1.199 $
-// Date:    $Date: 2017/02/23 16:43:13 $
+// Version: $Revision: 1.201 $
+// Date:    $Date: 2017/03/13 09:58:43 $
 //
 // Revision history:
-//   2017/xx/yy  Release for DPA 3.00
+//   2017/03/13  Release for DPA 3.00
 //   2016/09/12  Release for DPA 2.28
 //   2016/04/14  Release for DPA 2.27
 //   2016/03/03  Release for DPA 2.26
@@ -71,14 +71,15 @@ uns8  DpaApiEntry( uns8 par1, uns8 par2, uns8 apiIndex );
 #define	DPA_API_COORDINATOR_RFTX_DPAPACKET	3
 #define	DPA_API_LOCAL_REQUEST				4
 #define	DPA_API_SET_PERIPHERAL_ERROR		5
+#define	DPA_API_SET_RF_DEFAULTS				6
 
 // Used buffer size symbols
-#define	sizeofBufferAUX sizeof( bufferAUX )
-#define	sizeofBufferCOM sizeof( bufferCOM )
+#define	sizeofBufferAUX						sizeof( bufferAUX )
+#define	sizeofBufferCOM						sizeof( bufferCOM )
 
 #define	STRUCTATTR
 
-#else
+#else //__CC5X__
 // Not compiled at CC5X
 
 // Define CC5X types
@@ -92,7 +93,7 @@ typedef uint16_t  uns16;
 // Disables alignment of members of structures
 #define	STRUCTATTR	__attribute__((packed))
 
-#endif
+#endif	// __CC5X__
 
 // Indexes of configuration bytes used by DpaApiReadConfigByte( index )
 // Checksum
@@ -165,12 +166,12 @@ typedef struct
 #define	MIN_LP_TIMESLOT		8
 #define	MAX_LP_TIMESLOT		11
 
-#ifdef DPA_STD
-#define	MIN_TIMESLOT		MIN_STD_TIMESLOT	
-#define	MAX_TIMESLOT		MAX_STD_TIMESLOT
-#else
+#ifdef DPA_LP
 #define	MIN_TIMESLOT		MIN_LP_TIMESLOT	
 #define	MAX_TIMESLOT		MAX_LP_TIMESLOT	
+#else
+#define	MIN_TIMESLOT		MIN_STD_TIMESLOT	
+#define	MAX_TIMESLOT		MAX_STD_TIMESLOT
 #endif
 
 // Long diagnostics slot time
@@ -406,7 +407,7 @@ typedef enum
 #define	AUTOEXEC_LENGTH						sizeofBufferAUX
 
 // Starting address of the IO Setup DPA storage at external EEPROM
-#define	IOSETUP_EEEPROM_ADDR				AUTOEXEC_LENGTH
+#define	IOSETUP_EEEPROM_ADDR				( AUTOEXEC_EEEPROM_ADDR + AUTOEXEC_LENGTH )
 // Length of the IO setup memory block
 #define	IOSETUP_LENGTH						sizeofBufferAUX
 
@@ -607,7 +608,7 @@ typedef struct
   uns8	Rssi;
   uns8	SupplyVoltage;
   uns8	Flags;
-  uns8	Reserved;
+  uns8	SlotLimits;
 } STRUCTATTR TPerOSRead_Response;
 
 // Structure returned by CMD_OS_READ_CFG
@@ -1045,7 +1046,7 @@ bank12 uns8  PeripheralRam[PERIPHERAL_RAM_LENGTH];
 #define _DpaMessage		DpaRfMessage
 
 // Return actual DPA user routine event
-#define	GetDpaEvent() userReg0
+#define	GetDpaEvent()	userReg0
 
 // To test for enum peripherals request
 #define IsDpaEnumPeripheralsRequestNoSize() ( _PNUM == PNUM_ENUMERATION && _PCMD == CMD_GET_PER_INFO )
@@ -1081,6 +1082,6 @@ bit IsDpaLongTimeslot				  @_DpaParams.3;
 // Next code must start at the IQRF APPLICATION routine entry point
 #pragma origin __APPLICATION_ADDRESS
 
-#endif
-#endif
+#endif	// __CC5X__
+#endif	// _DPA_HEADER_
 //############################################################################################
