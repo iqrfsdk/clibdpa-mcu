@@ -1,6 +1,6 @@
 /**
  * @file DPA support library
- * @version 1.00
+ * @version 1.01
  *
  * Copyright 2015-2017 MICRORISC s.r.o.
  *
@@ -567,6 +567,9 @@ void dpaSpiInterfaceDriver(void)
 			// CRC ok ?
 			if ((DpaSpiIfControl.SpiStat == SPI_CRCM_OK) && (DpaSpiIfControl.CRCS == DpaSpiIfControl.MyCRCS)) {
 				if (DpaSpiIfControl.Direction == SPI_TRANSFER_READ && DpaControl.DpaAnswerHandler != NULL) {
+          // remember size of received extra data
+          if (DpaSpiIfControl.PacketCnt >= 12) DpaControl.RdExtraDataSize = DpaSpiIfControl.PacketCnt - 12;
+          else DpaControl.RdExtraDataSize = 0;
 					// call user response handler
 					DpaControl.DpaAnswerHandler(DpaSpiIfControl.DpaPacketPtr);
 				}
@@ -719,6 +722,9 @@ void dpaUartInterfaceDriver(void)
 			// end of packet or DPA structure is full
 			if (TempData == HDLC_FRM_FLAG_SEQUENCE || DpaUartIfControl.PacketCnt == DpaUartIfControl.PacketLen) {
 				if (DpaUartIfControl.CRC == 0 && DpaControl.DpaAnswerHandler != NULL) {
+          // remember size of received extra data
+          if (DpaUartIfControl.PacketCnt >= 8) DpaControl.RdExtraDataSize = DpaUartIfControl.PacketCnt - 8;
+          else DpaControl.RdExtraDataSize = 0
 					// call user response handler
 					DpaControl.DpaAnswerHandler(DpaUartIfControl.DpaPacketPtr);
 				}

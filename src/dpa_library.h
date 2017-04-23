@@ -1,6 +1,6 @@
 /**
  * @file DPA support library
- * @version 1.00
+ * @version 1.01
  *
  * Copyright 2015-2017 MICRORISC s.r.o.
  *
@@ -72,6 +72,7 @@ typedef struct {
 	uint8_t TRmoduleSelected;
 	uint8_t TimeCnt;
 	uint8_t ExtraDataSize;
+  uint8_t RdExtraDataSize;
 	uint8_t TimeoutPrescaller;
 	uint8_t TimeoutModulator;
 	uint16_t TimeoutTimer;
@@ -156,6 +157,11 @@ uint8_t dpaStoreCodeToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo);
  * Macro: increments value of file byte couter used in dpaStoreCodeToEeeprom(...) function
  */
 #define dpaIncFileByteCounter() DpaControl.FileByteCounter++
+
+/**
+ * Macro: return size of extra data received from TR module
+ */
+#define dpaGetRxExtraDataSize() DpaControl.RdExtraDataSize
 
 #if defined(__cplusplus)
 }
