@@ -72,7 +72,6 @@ uint8_t authorizeBond(uint8_t ReqAddr, uint32_t MID);
 uint8_t removeBond(uint16_t Addr);
 uint8_t removeBondRestart(uint16_t Addr);
 uint8_t checkNewMID(uint32_t NewMID);
-uint8_t checkDuplicitMID(uint8_t Idx);
 void terminateProcess(void);
 
 
@@ -697,26 +696,6 @@ uint8_t checkNewMID(uint32_t NewMID)
 }
 
 /**
- * Check duplicite MID in MID list
- *
- * @param - Idx index to MID list
- * @return - AN_OK / AN_ERROR
- *
- */
-uint8_t checkDuplicitMID(uint8_t Idx)
-{
-    for (uint8_t Index = 0; Index < Prebonding.MIDcount; Index++){
-        if (Index == Idx) continue;
-
-        if ((Prebonding.MIDlist[Idx]) == (Prebonding.MIDlist[Index]))
-            return(AN_ERROR);
-    }
-
-    // MID OK
-    return(AN_OK);
-}
-
-/**
  * Remove all bond at nodes and coordinator
  *
  * @param - none
@@ -1011,24 +990,24 @@ uint8_t autonetwork(T_AN_PARAMS *Parameters)
         // Authorize prebonded nodes
         for (uint8_t Addr = 0; Addr < Prebonding.MIDcount; Addr++){
             Prebonding.MID = Prebonding.MIDlist[Addr];
-            if (checkDuplicitMID(Addr) == 0){
-                // OK, Get next free address
-                Prebonding.NextAddr = nextFreeAddr(Prebonding.NextAddr);
-                if (Prebonding.NextAddr == 0xff){
-                    // Error, no free address, terminate process
-                    notifyMainApp(EVT_NO_FREE_ADDRESS, EVT_WITHOUT_PARAM);
-                    terminateProcess();
-                    return(ERR_NO_FREE_ADDRESS);
-                }
 
-                // Authorize node
-                notifyMainApp(EVT_AUTHORIZE_BOND, EVT_WITH_PARAM);
-                if (authorizeBond(Prebonding.NextAddr, Prebonding.MIDlist[Addr]) == DPA_OPERATION_OK){
-                    setBitValue(Prebonding.NewNodesMap, Prebonding.NextAddr);
-                    Prebonding.NewNode = 0xff;
-                    notifyMainApp(EVT_AUTHORIZE_BOND_OK, EVT_WITH_PARAM);
-                }
+            // OK, Get next free address
+            Prebonding.NextAddr = nextFreeAddr(Prebonding.NextAddr);
+            if (Prebonding.NextAddr == 0xff){
+                // Error, no free address, terminate process
+                notifyMainApp(EVT_NO_FREE_ADDRESS, EVT_WITHOUT_PARAM);
+                terminateProcess();
+                return(ERR_NO_FREE_ADDRESS);
             }
+
+            // Authorize node
+            notifyMainApp(EVT_AUTHORIZE_BOND, EVT_WITH_PARAM);
+            if (authorizeBond(Prebonding.NextAddr, Prebonding.MIDlist[Addr]) == DPA_OPERATION_OK){
+                setBitValue(Prebonding.NewNodesMap, Prebonding.NextAddr);
+                Prebonding.NewNode = 0xff;
+                notifyMainApp(EVT_AUTHORIZE_BOND_OK, EVT_WITH_PARAM);
+            }
+
             delayMS(100);
         }
 
