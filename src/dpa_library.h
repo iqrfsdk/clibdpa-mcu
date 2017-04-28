@@ -26,7 +26,6 @@ extern "C" {
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
-#include <Arduino.h>
 
 #define __SPI_INTERFACE__       // select for comunication via SPI
 //#define __UART_INTERFACE__    // select for comunication via UART
