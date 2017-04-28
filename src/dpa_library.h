@@ -72,7 +72,7 @@ typedef struct {
 	uint8_t TRmoduleSelected;
 	uint8_t TimeCnt;
 	uint8_t ExtraDataSize;
-  uint8_t RdExtraDataSize;
+	uint8_t RdExtraDataSize;
 	uint8_t TimeoutPrescaller;
 	uint8_t TimeoutModulator;
 	uint16_t TimeoutTimer;
@@ -108,8 +108,8 @@ extern uint16_t DpaAditionalTimeout;
 
 /**
  * Function initialize DPA support library
- * @param  asyncPacketHandler pointer to user call back function for asynchronous packet service
- * @return: none
+ * @param asyncPacketHandler Pointer to user call back function for asynchronous packet service
+ * @return none
  */
 void dpaInit(T_DPA_ANSWER_HANDLER asyncPacketHandler);
 
@@ -129,7 +129,7 @@ uint8_t dpaSendRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Time
 
 /**
  * Makes CRC from TR module configuration data
- * @param DpaRequest	pointer to DPA request packet
+ * @param DpaRequest Pointer to DPA request packet
  * @return Configuration data CRC
  */
 uint8_t dpaMakeConfigurationCRC(T_DPA_PACKET *DpaRequest);

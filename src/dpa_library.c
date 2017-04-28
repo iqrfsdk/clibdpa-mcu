@@ -301,10 +301,11 @@ uint8_t dpaSendRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Time
 		break;
 		// operation timeout
 	case DPA_SM_TIMEOUT:
-	{
-		if (DpaControl.BroadcastRoutingFlag) OperationResult = DPA_OPERATION_OK;
-		else OperationResult = DPA_OPERATION_TIMEOUT;
-	}
+		if (DpaControl.BroadcastRoutingFlag) {
+			OperationResult = DPA_OPERATION_OK;
+		} else {
+			OperationResult = DPA_OPERATION_TIMEOUT;
+		}
 		break;
 	}
 
@@ -567,10 +568,12 @@ void dpaSpiInterfaceDriver(void)
 			// CRC ok ?
 			if ((DpaSpiIfControl.SpiStat == SPI_CRCM_OK) && (DpaSpiIfControl.CRCS == DpaSpiIfControl.MyCRCS)) {
 				if (DpaSpiIfControl.Direction == SPI_TRANSFER_READ && DpaControl.DpaAnswerHandler != NULL) {
-          // remember size of received extra data
-          if (DpaSpiIfControl.PacketCnt >= 12) DpaControl.RdExtraDataSize = DpaSpiIfControl.PacketCnt - 12;
-          else DpaControl.RdExtraDataSize = 0;
-					// call user response handler
+					// remember size of received extra data
+					if (DpaSpiIfControl.PacketCnt >= 12) {
+						DpaControl.RdExtraDataSize = DpaSpiIfControl.PacketCnt - 12;
+					} else {
+						DpaControl.RdExtraDataSize = 0;
+					}// call user response handler
 					DpaControl.DpaAnswerHandler(DpaSpiIfControl.DpaPacketPtr);
 				}
 				// library is ready for next packet
@@ -722,9 +725,12 @@ void dpaUartInterfaceDriver(void)
 			// end of packet or DPA structure is full
 			if (TempData == HDLC_FRM_FLAG_SEQUENCE || DpaUartIfControl.PacketCnt == DpaUartIfControl.PacketLen) {
 				if (DpaUartIfControl.CRC == 0 && DpaControl.DpaAnswerHandler != NULL) {
-          // remember size of received extra data
-          if (DpaUartIfControl.PacketCnt >= 8) DpaControl.RdExtraDataSize = DpaUartIfControl.PacketCnt - 8;
-          else DpaControl.RdExtraDataSize = 0
+					// remember size of received extra data
+					if (DpaUartIfControl.PacketCnt >= 8) {
+						DpaControl.RdExtraDataSize = DpaUartIfControl.PacketCnt - 8;
+					} else {
+						DpaControl.RdExtraDataSize = 0;
+					}
 					// call user response handler
 					DpaControl.DpaAnswerHandler(DpaUartIfControl.DpaPacketPtr);
 				}
