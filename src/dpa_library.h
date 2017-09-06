@@ -2,7 +2,7 @@
  * @file DPA support library
  * @version 1.01
  *
- * Copyright 2015-2017 MICRORISC s.r.o.
+ * Copyright 2015-2017 IQRF Tech s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

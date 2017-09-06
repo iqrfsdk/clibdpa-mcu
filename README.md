@@ -1,4 +1,4 @@
-# cLibDPA-MCU
+﻿# cLibDPA-MCU
 
 [![Build Status](https://travis-ci.org/iqrfsdk/clibdpa-mcu.svg?branch=develop)](https://travis-ci.org/iqrfsdk/clibdpa-mcu)
 [![Apache License](https://img.shields.io/badge/license-APACHE2-blue.svg)](https://github.com/iqrfsdk/clibdpa-mcu/blob/master/LICENSE)
@@ -99,7 +99,7 @@ void dpaInit(T_DPA_ANSWER_HANDLER dpaAnswerHandler); // dpaAnswerHandler is user
 ## License
 This library is licensed under Apache License 2.0:
 
- > Copyright 2015-2017 MICRORISC s.r.o.
+ > Copyright 2015-2017 IQRF Tech s.r.o.
  >
  > Licensed under the Apache License, Version 2.0 (the "License");
  > you may not use this file except in compliance with the License.
