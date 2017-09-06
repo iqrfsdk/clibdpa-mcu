@@ -1,6 +1,6 @@
 /**
  * @file DPA support library
- * @version 1.01
+ * @version 1.02
  *
  * Copyright 2015-2017 IQRF Tech s.r.o.
  *
@@ -34,6 +34,10 @@ extern "C" {
 
 #define systemDisableInt() noInterrupts() // disable Interrupts (Arduino platform)
 #define systemEnableInt()  interrupts()   // enable Interrupts (Arduino platform)
+
+// Define CC5X types
+typedef int8_t	  int8;
+typedef int16_t   int16;
 
 #include "DPA.h"
 
