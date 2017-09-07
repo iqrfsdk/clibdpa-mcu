@@ -131,25 +131,25 @@ void setup()
 	dpaInit(myAsyncPacketHandler);
 
 #if defined(__AVR__) || defined(CORE_TEENSY)
-	// initialize Timer1, call DPA driver every 150us
-	Timer1.initialize(150);
+	// initialize Timer1, call DPA driver every 200us
+	Timer1.initialize(200);
 	// time 1.5s for DPA request sending
-	AppVars.SwTimer = AppVars.SwTimerPreset = 10000;
+	AppVars.SwTimer = AppVars.SwTimerPreset = 7500;
 	// attaches callback() as a timer overflow interrupt
 	Timer1.attachInterrupt(systemTimerIterruptHandler);
 #endif
 
 #if defined(__SAM3X8E__)
-	// initialize DueTimer (6), call DPA driver every 150us
-	Timer6.attachInterrupt(systemTimerIterruptHandler).start(150);
+	// initialize DueTimer (6), call DPA driver every 200us
+	Timer6.attachInterrupt(systemTimerIterruptHandler).start(200);
 	// time 1.5s for DPA request sending
-	AppVars.SwTimer = AppVars.SwTimerPreset = 10000;
+	AppVars.SwTimer = AppVars.SwTimerPreset = 7500;
 #endif
 
 #if defined(__PIC32MX__)
-	AppVars.SwTimerTimmingInterval = CORE_TICK_RATE / 6.7;
+	AppVars.SwTimerTimmingInterval = CORE_TICK_RATE / 5;
 	// time 1.5s for DPA request sending
-	AppVars.SwTimer = AppVars.SwTimerPreset = 10000;
+	AppVars.SwTimer = AppVars.SwTimerPreset = 7500;
 	attachCoreTimerService(systemTimerIterruptHandlerPic32);
 #endif
 
@@ -198,7 +198,7 @@ void loop()
 }
 
 /**
- * System timer Interrupt handler (1ms or 150us)
+ * System timer Interrupt handler (200us)
  */
 void systemTimerIterruptHandler(void)
 {
@@ -216,7 +216,7 @@ void systemTimerIterruptHandler(void)
 #if defined(__PIC32MX__)
 
 /**
- * System timer Interrupt handler (1ms or 150us) for PIC32
+ * System timer Interrupt handler (200us) for PIC32
  * @param CurrentTime Current time
  * @return Time of next calling this function
  */

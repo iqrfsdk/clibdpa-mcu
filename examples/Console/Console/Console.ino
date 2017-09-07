@@ -118,7 +118,7 @@ void setup()
 
   dpaInit(myAsyncPacketHandler);        // initialize DPA library
 
-  Timer1.initialize(150);                             // initialize timer1, call dpa driver every 150us
+  Timer1.initialize(200);                             // initialize timer1, call dpa driver every 200us
   Timer1.attachInterrupt(dpaLibraryDriver);           // attaches callback() as a timer overflow interrupt
 }
 

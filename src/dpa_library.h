@@ -1,6 +1,6 @@
 /**
  * @file DPA support library
- * @version 1.02
+ * @version 1.01.2
  *
  * Copyright 2015-2017 IQRF Tech s.r.o.
  *
@@ -77,7 +77,6 @@ typedef struct {
 	uint8_t ExtraDataSize;
 	uint8_t RdExtraDataSize;
 	uint8_t TimeoutPrescaller;
-	uint8_t TimeoutModulator;
 	uint16_t TimeoutTimer;
 	uint16_t FileByteCounter;
 	T_DPA_ANSWER_HANDLER DpaAnswerHandler;

@@ -1,6 +1,6 @@
 /**
  * @file DPA support library
- * @version 1.01
+ * @version 1.01.2
  *
  * Copyright 2015-2017 IQRF Tech s.r.o.
  *
@@ -169,8 +169,7 @@ void dpaInit(T_DPA_ANSWER_HANDLER asyncPacketHandler)
 	DpaControl.DpaAnswerHandler = asyncPacketHandler;
 	DpaControl.DpaTimeoutHandler = dpaTimeoutHandler;
 	DpaControl.TimeoutTimer = 0;
-	DpaControl.TimeoutModulator = 0;
-	DpaControl.TimeoutPrescaller = 7;
+	DpaControl.TimeoutPrescaller = 5;
 
 #if defined(__SPI_INTERFACE__)
 	DpaControl.TRmoduleSelected = false;
@@ -195,24 +194,16 @@ void dpaLibraryDriver(void)
 #if defined(__SPI_INTERFACE__)
 	if (DpaControl.Status == DPA_BUSY || !DpaControl.TimeCnt) {
 		dpaSpiInterfaceDriver();
-		DpaControl.TimeCnt = (SPI_STATUS_POOLING_TIME * 7) + 1;
+		DpaControl.TimeCnt = (SPI_STATUS_POOLING_TIME * 5) + 1;
 	}
 	DpaControl.TimeCnt--;
 #elif defined(__UART_INTERFACE__)
 	dpaUartInterfaceDriver();
 #endif
 
-	// prescaler 7 = 1050us , prescaler 6 = 900us
+	// prescaler 5 = 1000us
 	if (--DpaControl.TimeoutPrescaller) return;
-
-	// every third round do timeout timer correction
-	if (++DpaControl.TimeoutModulator <= 2) {
-		DpaControl.TimeoutPrescaller = 7;
-	} else {
-		// 2 * 1050us + 900us = 3000us
-		DpaControl.TimeoutModulator = 0;
-		DpaControl.TimeoutPrescaller = 6;
-	}
+  DpaControl.TimeoutPrescaller = 5;
 
 	// service timeout timer
 	if (DpaControl.TimeoutTimer) {
