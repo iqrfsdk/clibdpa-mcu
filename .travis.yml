@@ -29,8 +29,8 @@ install:
     - platformio lib -g install TimerOne DueTimer PubSubClient 872
     # Tmp fix for Microchip gcc-pic32
     - sudo apt-get install lib32z1 lib32ncurses5 lib32bz2-1.0
-    - if [[ "$INTERFACE" == "UART" ]]; then sed -e "s/#define __SPI_INTERFACE__/\/\/#define __SPI_INTERFACE__/" src/dpa_library.h > src/dpa_library.h; fi
-    - if [[ "$INTERFACE" == "UART" ]]; then sed -e "s/\/\/#define __UART_INTERFACE__/#define __UART_INTERFACE__/" src/dpa_library.h > src/dpa_library.h; fi
+    - if [[ "$INTERFACE" == "UART" ]]; then sed -i "s/#define __SPI_INTERFACE__/\/\/#define __SPI_INTERFACE__/" src/dpa_library.h; fi
+    - if [[ "$INTERFACE" == "UART" ]]; then sed -i "s/\/\/#define __UART_INTERFACE__/#define __UART_INTERFACE__/" src/dpa_library.h; fi
 script:
     - if [[ "$PLATFORMIO_CI_SRC" == "examples/Autonetwork/Autonetwork/" ]]; then platformio ci --lib="." --project-conf examples/Autonetwork/platformio.ini; fi
     - if [[ "$PLATFORMIO_CI_SRC" == "examples/Blink/Blink/" ]]; then platformio ci --lib="." --project-conf examples/Blink/platformio.ini; fi
