@@ -1,8 +1,8 @@
 /**
  * @file DPA support library
- * @version 1.01
+ * @version 1.01.2
  *
- * Copyright 2015-2017 MICRORISC s.r.o.
+ * Copyright 2015-2017 IQRF Tech s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,10 @@ extern "C" {
 
 #define systemDisableInt() noInterrupts() // disable Interrupts (Arduino platform)
 #define systemEnableInt()  interrupts()   // enable Interrupts (Arduino platform)
+
+// Define CC5X types
+typedef int8_t	  int8;
+typedef int16_t   int16;
 
 #include "DPA.h"
 
@@ -73,7 +77,6 @@ typedef struct {
 	uint8_t ExtraDataSize;
 	uint8_t RdExtraDataSize;
 	uint8_t TimeoutPrescaller;
-	uint8_t TimeoutModulator;
 	uint16_t TimeoutTimer;
 	uint16_t FileByteCounter;
 	T_DPA_ANSWER_HANDLER DpaAnswerHandler;
