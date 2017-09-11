@@ -1,12 +1,12 @@
 {
-  "name": "IQRF DPA",
+  "name": "cLibDPA-MCU",
   "keywords": "IQRF, DPA, communication, spi, uart, rf, radio, wireless",
   "description": "IQRF DPA library",
   "repository": {
     "type": "git",
     "url": "https://github.com/iqrfsdk/clibdpa-mcu.git"
   },
-  "version": "1.01.2",
+  "version": "1.2.0",
   "license": "Apache-2.0",
   "authors": [{
     "name": "Dusan Machut",
@@ -21,7 +21,7 @@
   },
   {
     "name": "Roman Ondracek",
-    "email": "ondracek.roman@centrum.cz",
+    "email": "roman.ondracek@iqrf.com",
     "url": "https://github.com/Roman3349"
   }],
   "frameworks": [

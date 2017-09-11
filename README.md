@@ -24,7 +24,7 @@ These boards [1](http://iqrf.org/weben/index.php?sekce=products&id=iqrf-bb-01&ot
 The best way how to install this library is to [download a latest package](https://github.com/iqrfsdk/clibdpa-mcu/releases) or use a [platformio](http://platformio.org/lib/show/1169/IQRF%20DPA):
 
 ```bash
-platformio lib install "IQRF DPA"
+platformio lib install "cLibDPA-MCU"
 ```
 
 

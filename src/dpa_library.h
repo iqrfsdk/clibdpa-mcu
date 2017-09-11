@@ -1,6 +1,6 @@
 /**
  * @file DPA support library
- * @version 1.01.2
+ * @version 1.2.0
  *
  * Copyright 2015-2017 IQRF Tech s.r.o.
  *
