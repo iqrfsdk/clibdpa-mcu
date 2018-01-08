@@ -1,8 +1,8 @@
 /**
  * @file DPA support library
- * @version 1.2.0
+ * @version 1.3.0
  *
- * Copyright 2015-2017 IQRF Tech s.r.o.
+ * Copyright 2015-2018 IQRF Tech s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,6 +72,7 @@ typedef struct {
 	volatile uint8_t Status;
 	uint8_t SuspendFlag;
 	uint8_t BroadcastRoutingFlag;
+  uint8_t WasConfirmed;
 	uint8_t TRmoduleSelected;
 	uint8_t TimeCnt;
 	uint8_t ExtraDataSize;
@@ -79,12 +80,17 @@ typedef struct {
 	uint8_t TimeoutPrescaller;
 	uint16_t TimeoutTimer;
 	uint16_t FileByteCounter;
+  uint32_t RequestTs;
+  uint32_t ConfirmationTs;
+  uint32_t ResponseTs;
 	T_DPA_ANSWER_HANDLER DpaAnswerHandler;
 	T_DPA_TIMEOUT_HANDLER DpaTimeoutHandler;
 	T_DPA_PACKET *DpaRequestPacketPtr;
 } T_DPA_CONTROL;
 
 extern T_DPA_CONTROL DpaControl;
+extern uint8_t LastConfirmationData[11];
+
 
 #if defined(__STORE_CODE_SUPPORT__)
 
@@ -147,6 +153,14 @@ void dpaSuspendDriver(void);
 void dpaRunDriver(void);
 
 /**
+ * Convetr two ASCII chars tu number
+ * @param dataByteHi High nibble in ASCII
+ * @param dataByteLo Low nibble in ASCII
+ * @return Number
+ */
+uint8_t dpaConvertToNum(uint8_t dataByteHi, uint8_t dataByteLo);
+
+/**
  * Function for store HEX or IQRF code image to external EEPROM in TR module
  * @param CodeFileInfo  pointer to T_DPA_CODE_FILE_INFO structure with code file image information
  * @return  Proggess status or operation result (0 - 100 -> progress status, DPA_STORE_CODE_SUCCESS, DPA_STORE_CODE_ERROR)
@@ -164,6 +178,37 @@ uint8_t dpaStoreCodeToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo);
  * Macro: return size of extra data received from TR module
  */
 #define dpaGetRxExtraDataSize() DpaControl.RdExtraDataSize
+
+/**
+ * Macro: return last dpa packet confirmation state
+ */
+#define dpaWasConfirmed() DpaControl.WasConfirmed
+
+/**
+ * Macro: return last dpa packet response state
+ */
+#define dpaWasResponsed() (DpaControl.BroadcastRoutingFlag != true)
+
+/**
+ * Macro: return pointer to buffer with last confirmation data
+ */
+#define dpaGetConfirmationData()  LastConfirmationData
+
+/**
+ * Macro: return dpa request time stamp in [ms]
+ */
+#define dpaGetRequestTs() DpaControl.RequestTs
+
+/**
+ * Macro: return dpa confirmation time stamp in [ms]
+ */
+#define dpaGetConfirmationTs() DpaControl.ConfirmationTs
+
+/**
+ * Macro: return dpa response time stamp in [ms]
+ */
+#define dpaGetResponseTs() DpaControl.ResponseTs
+
 
 #if defined(__cplusplus)
 }

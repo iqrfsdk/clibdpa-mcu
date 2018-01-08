@@ -1,8 +1,8 @@
 /**
  * @file DPA support library
- * @version 1.2.0
+ * @version 1.3.0
  *
- * Copyright 2015-2017 IQRF Tech s.r.o.
+ * Copyright 2015-2018 IQRF Tech s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,6 @@ uint16_t dpaFlatcherCRC16(uint8_t *DataAddress, uint8_t DataLen, uint16_t Seed);
 void dpaSendDataToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo, uint8_t DataSize);
 void dpaProcessHexCodeFile(T_DPA_CODE_FILE_INFO *CodeFileInfo);
 void dpaProcessIqrfCodeFile(T_DPA_CODE_FILE_INFO *CodeFileInfo);
-uint8_t dpaConvertToNum(uint8_t DataByteHi, uint8_t DataByteLo);
 uint8_t dpaReadHEXFileLine(void);
 uint8_t dpaReadIQRFFileLine(void);
 extern uint8_t dpaReadByteFromFile(void);
@@ -154,6 +153,7 @@ uint16_t dpaGetEstimatedTimeout(void);
 T_DPA_CONTROL DpaControl;
 T_DPA_PACKET DpaLibDpaAnswer;
 T_DPA_ANSWER_HANDLER tempReceiverHandler;
+uint8_t LastConfirmationData[11];
 
 volatile uint8_t DpaApplicationSM = DPA_SM_PREPARE_REQUEST;
 uint16_t DpaAditionalTimeout;
@@ -248,6 +248,10 @@ uint8_t dpaSendRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Time
 		// initialize transfer parameters
 		DpaControl.DpaRequestPacketPtr = DpaRequest;
 		DpaControl.ExtraDataSize = DataSize;
+    DpaControl.RequestTs = millis();
+    DpaControl.WasConfirmed = false;
+    DpaControl.ConfirmationTs = 0;
+    DpaControl.ResponseTs = 0;
 		// set operation timeout
 		dpaSetTimeoutTimer(Timeout);
 		// enable interrupts
@@ -275,8 +279,8 @@ uint8_t dpaSendRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Time
 
 		// response received OK
 	case DPA_SM_PROCESS_RESPONSE:
-		// copy received DPA packet to user DPA packet structure
-		memcpy((uint8_t *) DpaRequest, (uint8_t *) & DpaLibDpaAnswer, sizeof(T_DPA_PACKET));
+		// copy received DPA response packet to user DPA packet structure
+		memcpy((uint8_t *) DpaRequest, (uint8_t *) &DpaLibDpaAnswer, sizeof(T_DPA_PACKET));
 		OperationResult = DPA_OPERATION_OK;
 		break;
 
@@ -289,9 +293,12 @@ uint8_t dpaSendRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Time
 		// confirmation error
 	case DPA_SM_CONFIRMATION_ERR: OperationResult = DPA_CONFIRMATION_ERR;
 		break;
+
 		// response error
 	case DPA_SM_RESPONSE_ERR: OperationResult = DPA_RESPONSE_ERR;
+    memcpy((uint8_t *) DpaRequest, (uint8_t *) &DpaLibDpaAnswer, sizeof(T_DPA_PACKET));
 		break;
+
 		// operation timeout
 	case DPA_SM_TIMEOUT:
 		if (DpaControl.BroadcastRoutingFlag) {
@@ -386,6 +393,9 @@ void dpaAnswerHandler(T_DPA_PACKET *dpaAnswerPkt)
 	switch (DpaApplicationSM) {
 		// waiting for confirmation
 	case DPA_SM_WAIT_CONFIRMATION:
+    memcpy(LastConfirmationData, dpaAnswerPkt, 11);
+    DpaControl.ConfirmationTs = millis();
+    DpaControl.WasConfirmed = true;
 		// if confirmation received
 		if (dpaAnswerPkt->ResponseCode == STATUS_CONFIRMATION) {
 			// process confirmation
@@ -404,6 +414,7 @@ void dpaAnswerHandler(T_DPA_PACKET *dpaAnswerPkt)
 
 		// waiting for response
 	case DPA_SM_WAIT_RESPONSE:
+    DpaControl.ResponseTs = millis();
 		// if no error received, process response
 		if (dpaAnswerPkt->ResponseCode == STATUS_NO_ERROR) {
 			DpaApplicationSM = DPA_SM_PROCESS_RESPONSE;
@@ -421,6 +432,35 @@ void dpaAnswerHandler(T_DPA_PACKET *dpaAnswerPkt)
 void dpaTimeoutHandler(void)
 {
 	DpaApplicationSM = DPA_SM_TIMEOUT;
+}
+
+/**
+ * Convetr two ASCII chars tu number
+ * @param dataByteHi High nibble in ASCII
+ * @param dataByteLo Low nibble in ASCII
+ * @return Number
+ */
+uint8_t dpaConvertToNum(uint8_t dataByteHi, uint8_t dataByteLo)
+{
+	uint8_t result = 0;
+
+  dataByteHi = tolower(dataByteHi);
+  dataByteLo = tolower(dataByteLo);
+
+	/* convert High nibble */
+	if (dataByteHi >= '0' && dataByteHi <= '9') {
+		result = (dataByteHi - '0') << 4;
+	} else if (dataByteHi >= 'a' && dataByteHi <= 'f') {
+		result = (dataByteHi - 87) << 4;
+	}
+	/* convert Low nibble */
+	if (dataByteLo >= '0' && dataByteLo <= '9') {
+		result |= (dataByteLo - '0');
+	} else if (dataByteLo >= 'a' && dataByteLo <= 'f') {
+		result |= (dataByteLo - 87);
+	}
+
+	return(result);
 }
 
 #ifdef __SPI_INTERFACE__
@@ -1221,32 +1261,6 @@ void dpaProcessIqrfCodeFile(T_DPA_CODE_FILE_INFO *CodeFileInfo)
 			return;
 		}
 	}
-}
-
-/**
- * Convetr two ASCII chars tu number
- * @param dataByteHi High nibble in ASCII
- * @param dataByteLo Low nibble in ASCII
- * @return Number
- */
-uint8_t dpaConvertToNum(uint8_t dataByteHi, uint8_t dataByteLo)
-{
-	uint8_t result = 0;
-
-	/* convert High nibble */
-	if (dataByteHi >= '0' && dataByteHi <= '9') {
-		result = (dataByteHi - '0') << 4;
-	} else if (dataByteHi >= 'a' && dataByteHi <= 'f') {
-		result = (dataByteHi - 87) << 4;
-	}
-	/* convert Low nibble */
-	if (dataByteLo >= '0' && dataByteLo <= '9') {
-		result |= (dataByteLo - '0');
-	} else if (dataByteLo >= 'a' && dataByteLo <= 'f') {
-		result |= (dataByteLo - 87);
-	}
-
-	return(result);
 }
 
 /**
