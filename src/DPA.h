@@ -4,10 +4,11 @@
 // Copyright (c) IQRF Tech s.r.o.
 //
 // File:    $RCSfile: DPA.h,v $
-// Version: $Revision: 1.208 $
-// Date:    $Date: 2017/08/09 12:24:46 $
+// Version: $Revision: 1.212 $
+// Date:    $Date: 2017/11/15 14:24:43 $
 //
 // Revision history:
+//   2017/11/16  Release for DPA 3.02
 //   2017/08/14  Release for DPA 3.01
 //   2017/03/13  Release for DPA 3.00
 //   2016/09/12  Release for DPA 2.28
@@ -33,7 +34,7 @@
 //############################################################################################
 
 // DPA version
-#define	DPA_VERSION_MASTER		0x0301
+#define	DPA_VERSION_MASTER			0x0302
 
 #ifdef __CC5X__
 // Compiled only at CC5X
@@ -185,7 +186,7 @@ typedef struct
 // Maximum number of peripherals info that can fit in the message
 #define	MAX_PERIPHERALS_PER_BLOCK_INFO	( DPA_MAX_DATA_LENGTH / sizeof( TPeripheralInfoAnswer ) )
 
-// Standard peripheral numbers
+// Embedded peripheral numbers
 #define	PNUM_COORDINATOR	0x00
 #define	PNUM_NODE			0x01
 #define	PNUM_OS				0x02
@@ -209,7 +210,7 @@ typedef struct
 #define	PNUM_MAX			0x7F
 
 // Fake peripheral number used to flag DPA response with error sent by RF
-#define	PNUM_ERROR_FLAG	0xFE
+#define	PNUM_ERROR_FLAG		0xFE
 // Special peripheral used for enumeration
 #define	PNUM_ENUMERATION	0xFF
 
