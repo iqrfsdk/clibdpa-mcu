@@ -45,7 +45,9 @@ platformio lib install "cLibDPA-MCU"
 
 ## Integration
 
-The pointer to struct ```T_DPA_PACKET``` is used for communication between user's application and the library. The definition of ```T_DPA_PACKET``` can be found in the file [```dpa_library.h```](https://github.com/iqrfsdk/clibdpa-mcu/blob/develop/src/dpa_library.h). If the user wishes to use the services of the library the files [```dpa_library.c```](https://github.com/iqrfsdk/clibdpa-mcu/blob/develop/src/dpa_library.c), [```dpa_library.h```](https://github.com/iqrfsdk/clibdpa-mcu/blob/develop/src/dpa_library.h) and [```dpa.h```](https://github.com/iqrfsdk/clibdpa-mcu/blob/develop/src/DPA.h) must be included in user's project and following conditions must be met.
+The pointer to struct ```T_DPA_PACKET``` is used for communication between user's application and the library. The definition of ```T_DPA_PACKET``` can be found in the file [```dpa_library.h```](/src/dpa_library.h). If the user wishes to use the services of the library, the files [```dpa_library.c```](/src/dpa_library.c), [```dpa_library.h```](/src/dpa_library.h) and [```dpa.h```](/src/DPA.h) must be included in user's project. If the user wishes to use Arduino like a gateway from Ethernet to IQRF network, and use of JSON communication structure defined in [```JsonStructureDpa-v1```](https://github.com/iqrfsdk/iqrf-daemon/wiki/JsonStructureDpa-v1) (support for "raw" and "raw-hdp" format), it also needs to include [```dpa_json.c```](/src/dpa_json.c) and [```dpa_json.h```](/src/dpa_json.h) files into his project. Use of the support of JSON extension, we can see in MQTT example [```MQTT.ino```](/examples/MQTT/MQTT/MQTT.ino). 
+
+To proper function of library, the following conditions must be met.
 
 -   select the communication interface in the dpa_library.h header file
 
@@ -59,6 +61,17 @@ The pointer to struct ```T_DPA_PACKET``` is used for communication between user'
 | Extension   | Macro                                |
 | :---------: | ------------------------------------ |
 |  STORE CODE | ```#define __STORE_CODE_SUPPORT__``` |
+
+-   in case of using support of JSON extension, you should define  in [```dpa_json.h```](/src/dpa_json.h) file, size of three buffers.
+
+| Macro                                 | Function                                                |
+| :-----------------------------------: | ------------------------------------------------------- |
+|  ```#define JSON_MSG_ID_BUFF_SIZE```  | Defines size of buffer, to store msgid string           |
+|  ```#define JSON_REQUEST_BUFF_SIZE``` | Defines size of buffer, to store DPA request from user  |
+|  ```#define JSON_OBJECT_BUFF_SIZE```  | Defines size of buffer for creating of JSON response    |
+
+Due to small size of RAM memory of Arduino UNO, the defauls set of ```JSON_OBJECT_BUFF_SIZE``` is 384 bytes. It allows us, use of simple DPA packets with limited size of additional data bytes. In case of use of Arduino Leonardo or MEGA you can change the setting to 512 or 640 bytes, and it allows us to use full set of possibilities defined in [```JsonStructureDpa-v1```](https://github.com/iqrfsdk/iqrf-daemon/wiki/JsonStructureDpa-v1).
+If we also using the library [```PubSubClient```](https://github.com/knolleary/pubsubclient), for communication with MQTT broker (mosquitto for example), you must set the value  ```MQTT_MAX_PACKET_SIZE```, in ```PubSubClient.h``` file, same like in ```JSON_OBJECT_BUFF_SIZE```.
 
 -   implement functions to transfer of 1B to TR module via selected communication interface and deselect module if using SPI interface
 
