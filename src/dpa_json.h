@@ -29,8 +29,10 @@ extern "C" {
 #define JSON_REQUEST_BUFF_SIZE  32
 #define JSON_OBJECT_BUFF_SIZE   384
 
-#define JSON_PARSE_OK       0
-#define JSON_PARSE_ERROR    1
+typedef enum{
+  JSON_PARSE_OK = 0,
+  JSON_PARSE_ERROR
+} PARSE_RESULT;
 
 /**
  * Initialize support of JSON format in DPA library
@@ -44,7 +46,7 @@ void jsonInit(void);
  * @param DataBufferSize size of MQTT JSON message
  * @return operation result (JSON_PARSE_OK or JSON_PARSE_ERROR)
  */
-uint8_t jsonParse(T_DPA_PACKET *DpaPacket, uint8_t *DataBuffer, uint8_t DataBufferSize);
+PARSE_RESULT jsonParse(T_DPA_PACKET *DpaPacket, uint8_t *DataBuffer, uint8_t DataBufferSize);
 
 /**
  * Create JSON message from received DPA packet
@@ -53,7 +55,7 @@ uint8_t jsonParse(T_DPA_PACKET *DpaPacket, uint8_t *DataBuffer, uint8_t DataBuff
  * @param DpaOperationResult - result of dpaSendRequest(... ) function
  * @return size of created JSON message (0 = message was not created, due to its size is over the size of DataBuffer)
  */
-uint16_t jsonCreate(uint8_t *DataBuffer, T_DPA_PACKET *DpaResponse, uint8_t DpaOperationResult);
+uint16_t jsonCreate(uint8_t *DataBuffer, T_DPA_PACKET *DpaResponse, DPA_OPERATION_RESULT DpaOperationResult);
 
 /**
  * Get the timeout parameter from JSON message ( used in dpaSendRequest(... ) function )

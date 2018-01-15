@@ -48,44 +48,46 @@ typedef int16_t   int16;
 #define CUSTOM_HANDLER_ADDRESS_END  0x3D80
 
 // dpaSendRequest(...  ) function return codes
-#define DPA_OPERATION_OK            0
-#define DPA_OPERATION_IN_PROGRESS   1
-#define DPA_OPERATION_TIMEOUT       2
-#define DPA_CONFIRMATION_ERR        3
-#define DPA_RESPONSE_ERR            4
-#define DPA_TR_MODULE_NOT_READY     5
+typedef enum{
+  DPA_OPERATION_OK = 0,
+  DPA_OPERATION_IN_PROGRESS,
+  DPA_OPERATION_TIMEOUT,
+  DPA_CONFIRMATION_ERR,
+  DPA_RESPONSE_ERR,
+  DPA_TR_MODULE_NOT_READY
+} DPA_OPERATION_RESULT;
 
 typedef struct {
-	uint16_t NADR;
-	uint8_t PNUM;
-	uint8_t PCMD;
-	uint16_t HWPID;
-	uint8_t ResponseCode;
-	uint8_t DpaValue;
-	TDpaMessage DpaMessage;
+  uint16_t NADR;
+  uint8_t PNUM;
+  uint8_t PCMD;
+  uint16_t HWPID;
+  uint8_t ResponseCode;
+  uint8_t DpaValue;
+  TDpaMessage DpaMessage;
 } T_DPA_PACKET;
 
 typedef void (*T_DPA_ANSWER_HANDLER)(T_DPA_PACKET *DpaAnswer); // DPA response callback function type
 typedef void (*T_DPA_TIMEOUT_HANDLER)(void); // DPA timeout callback function type
 
 typedef struct {
-	volatile uint8_t Status;
-	uint8_t SuspendFlag;
-	uint8_t BroadcastRoutingFlag;
+  volatile uint8_t Status;
+  uint8_t SuspendFlag;
+  uint8_t BroadcastRoutingFlag;
   uint8_t WasConfirmed;
-	uint8_t TRmoduleSelected;
-	uint8_t TimeCnt;
-	uint8_t ExtraDataSize;
-	uint8_t RdExtraDataSize;
-	uint8_t TimeoutPrescaller;
-	uint16_t TimeoutTimer;
-	uint16_t FileByteCounter;
+  uint8_t TRmoduleSelected;
+  uint8_t TimeCnt;
+  uint8_t ExtraDataSize;
+  uint8_t RdExtraDataSize;
+  uint8_t TimeoutPrescaller;
+  uint16_t TimeoutTimer;
+  uint16_t FileByteCounter;
   uint32_t RequestTs;
   uint32_t ConfirmationTs;
   uint32_t ResponseTs;
-	T_DPA_ANSWER_HANDLER DpaAnswerHandler;
-	T_DPA_TIMEOUT_HANDLER DpaTimeoutHandler;
-	T_DPA_PACKET *DpaRequestPacketPtr;
+  T_DPA_ANSWER_HANDLER DpaAnswerHandler;
+  T_DPA_TIMEOUT_HANDLER DpaTimeoutHandler;
+  T_DPA_PACKET *DpaRequestPacketPtr;
 } T_DPA_CONTROL;
 
 extern T_DPA_CONTROL DpaControl;
@@ -102,12 +104,12 @@ extern uint8_t LastConfirmationData[11];
 #define DPA_STORE_CODE_ERROR      222     // dpaStoreCodeToEeeprom return code (operation ended with error)
 
 typedef struct {
-	uint16_t TrAddress; // DPA address of destination TR module
-	uint16_t ImageEeepromAdr; // absolute address in TR eeeprom to store code
-	uint16_t ImageSize; // size of code image stored in eeeprom
-	uint16_t ImageCRC; // initial CRC value (before save) / CRC of code image (after save)
-	uint16_t FileSize; // size of code file on SD card
-	uint8_t FileType; // file type (HEX / IQRF)
+  uint16_t TrAddress; // DPA address of destination TR module
+  uint16_t ImageEeepromAdr; // absolute address in TR eeeprom to store code
+  uint16_t ImageSize; // size of code image stored in eeeprom
+  uint16_t ImageCRC; // initial CRC value (before save) / CRC of code image (after save)
+  uint16_t FileSize; // size of code file on SD card
+  uint8_t FileType; // file type (HEX / IQRF)
 } T_DPA_CODE_FILE_INFO;
 
 extern uint16_t DpaAditionalTimeout;
@@ -133,7 +135,7 @@ void dpaLibraryDriver(void);
  * @param Timeout operation timeout in ms
  * @return operation result (DPA_OPERATION_OK, DPA_OPERATION_IN_PROGRESS, DPA_OPERATION_TIMEOUT ... )
  */
-uint8_t dpaSendRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Timeout);
+ DPA_OPERATION_RESULT dpaSendRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Timeout);
 
 /**
  * Makes CRC from TR module configuration data

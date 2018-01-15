@@ -137,18 +137,18 @@ void setup()
  */
 void loop()
 {
+  DPA_OPERATION_RESULT OpResult;
   uint16_t TempValue;
-  uint8_t OpResult;
 
   // release SPI bus
-	dpaSuspendDriver();
-	// Run MQTT driver
-	if (!client.connected()) {
-		mqttReconnect();
-	}
-	client.loop();
-	// occupy SPI bus by DPA driver
-	dpaRunDriver();
+  dpaSuspendDriver();
+  // Run MQTT driver
+  if (!client.connected()) {
+    mqttReconnect();
+  }
+  client.loop();
+  // occupy SPI bus by DPA driver
+  dpaRunDriver();
 
   // MQTT received data processing
   if (DpaDataReady == true || AsyncPacketReceived == true){
@@ -171,13 +171,13 @@ void loop()
     Serial.println(TempValue);
 
     // release SPI bus
-  	dpaSuspendDriver();
+    dpaSuspendDriver();
     // send MQTT JSON data
     if (client.connected() && TempValue) {
       client.publish(MqttPublishTopic, MyMqttMessage, TempValue);
     }
     // occupy SPI bus by DPA driver
-  	dpaRunDriver();
+    dpaRunDriver();
   }
 }
 
@@ -186,7 +186,7 @@ void loop()
  */
 void systemTimerIterruptHandler(void)
 {
-	dpaLibraryDriver();
+  dpaLibraryDriver();
 }
 
 #if defined(__SPI_INTERFACE__)
@@ -198,18 +198,18 @@ void systemTimerIterruptHandler(void)
  */
 uint8_t dpaSendSpiByte(uint8_t Tx_Byte)
 {
-	uint8_t Rx_Byte;
+  uint8_t Rx_Byte;
 
-	if (!DpaControl.TRmoduleSelected) {
-		SPI.beginTransaction(SPISettings(250000, MSBFIRST, SPI_MODE0));
-		DpaControl.TRmoduleSelected = true;
-		digitalWrite(TR_SS, LOW);
-		delayMicroseconds(15);
-	}
+  if (!DpaControl.TRmoduleSelected) {
+    SPI.beginTransaction(SPISettings(250000, MSBFIRST, SPI_MODE0));
+    DpaControl.TRmoduleSelected = true;
+    digitalWrite(TR_SS, LOW);
+    delayMicroseconds(15);
+  }
 
-	Rx_Byte = SPI.transfer(Tx_Byte);
+  Rx_Byte = SPI.transfer(Tx_Byte);
 
-	return(Rx_Byte);
+  return(Rx_Byte);
 }
 
 /**
@@ -217,9 +217,9 @@ uint8_t dpaSendSpiByte(uint8_t Tx_Byte)
  */
 void dpaDeselectTRmodule(void)
 {
-	digitalWrite(TR_SS, HIGH);
-	DpaControl.TRmoduleSelected = false;
-	SPI.endTransaction();
+  digitalWrite(TR_SS, HIGH);
+  DpaControl.TRmoduleSelected = false;
+  SPI.endTransaction();
 }
 
 #elif defined(__UART_INTERFACE__)
@@ -230,7 +230,7 @@ void dpaDeselectTRmodule(void)
  */
 void dpaSendUartByte(uint8_t Tx_Byte)
 {
-	Serial1.write(Tx_Byte);
+  Serial1.write(Tx_Byte);
 }
 
 /**
@@ -240,11 +240,11 @@ void dpaSendUartByte(uint8_t Tx_Byte)
  */
 uint8_t dpaReceiveUartByte(uint8_t *Rx_Byte)
 {
-	if (Serial1.available() > 0) {
-		*Rx_Byte = Serial1.read();
-		return(true);
-	}
-	return(false);
+  if (Serial1.available() > 0) {
+    *Rx_Byte = Serial1.read();
+    return(true);
+  }
+  return(false);
 }
 #endif
 
@@ -267,13 +267,13 @@ void myAsyncPacketHandler(T_DPA_PACKET *dpaAnswerPkt)
  */
 void mqttCallback(char* Topic, byte* Payload, unsigned int Length)
 {
-	Serial.print(F("Message arrived ["));
-	Serial.print(Topic);
-	Serial.print("] ");
-	for (uint16_t i = 0; i < Length; i++) {
-		Serial.print((char) Payload[i]);
-	}
-	Serial.println();
+  Serial.print(F("Message arrived ["));
+  Serial.print(Topic);
+  Serial.print("] ");
+  for (uint16_t i = 0; i < Length; i++) {
+    Serial.print((char) Payload[i]);
+  }
+  Serial.println();
   if (jsonParse(&MyDpaPacket, Payload, Length) == JSON_PARSE_OK){
     Serial.println(F("Parse OK"));
     DpaDataReady = true;
@@ -286,17 +286,18 @@ void mqttCallback(char* Topic, byte* Payload, unsigned int Length)
  */
 void mqttReconnect()
 {
-	Serial.print(F("Attempting MQTT connection..."));
-	// Attempt to connect
-	if (client.connect("iqrfDpaGate")) {
-		Serial.println(F("connected"));
-		// Once connected, publish an announcement...
-		client.publish(MqttPublishTopic, "DPA gate ready");
-		// ... and resubscribe
-		client.subscribe(MqttSubscribeTopic);
-	} else {
-		Serial.print(F("failed, rc="));
-		Serial.println(client.state());
+  Serial.print(F("Attempting MQTT connection..."));
+  // Attempt to connect
+  if (client.connect("iqrfDpaGate")) {
+    Serial.println(F("connected"));
+    // Once connected, publish an announcement...
+    client.publish(MqttPublishTopic, "DPA gate ready");
+    // ... and resubscribe
+    client.subscribe(MqttSubscribeTopic);
+  }
+  else {
+    Serial.print(F("failed, rc="));
+    Serial.println(client.state());
     delay(1000);
-	}
+  }
 }

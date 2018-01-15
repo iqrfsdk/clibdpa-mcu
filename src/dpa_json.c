@@ -22,31 +22,33 @@
 #include <stdio.h>
 #include "dpa_json.h"
 
-/* Definitions */
-#define JSON_TYPE_NOT_DEFINED	  0
-#define JSON_TYPE_RAW           1
-#define JSON_TYPE_RAW_HDP       2
 
 /* Data types */
 typedef struct {
-	uint8_t Type;
-	uint8_t MsgIdSize;
-	uint16_t Timeout;
+  uint8_t Type;
+  uint8_t MsgIdSize;
+  uint16_t Timeout;
   uint8_t Rdata;
   uint8_t Request;
-	uint8_t RequestSize;
-	uint8_t RequestTs;
-	uint8_t Confirmation;
-	uint8_t ConfirmationTs;
-	uint8_t Response;
-	uint8_t ResponseTs;
+  uint8_t RequestSize;
+  uint8_t RequestTs;
+  uint8_t Confirmation;
+  uint8_t ConfirmationTs;
+  uint8_t Response;
+  uint8_t ResponseTs;
   uint16_t DataSize;
 } T_JSON_CONTROL;
 
+enum{
+  JSON_TYPE_NOT_DEFINED = 0,
+  JSON_TYPE_RAW,
+  JSON_TYPE_RAW_HDP
+};
+
 /* Function prototypes */
-uint8_t jsonCheckFormat(uint8_t *DataBuffer, uint8_t DataBufferSize);
+PARSE_RESULT jsonCheckFormat(uint8_t *DataBuffer, uint8_t DataBufferSize);
 uint8_t jsonFindString(char *FindingString, uint8_t *DataBuffer, uint8_t DataBufferSize);
-uint16_t jsonReadValue(char *FindingString, uint8_t *DataBuffer, uint8_t DataBufferSize, uint8_t *ReadingStatus);
+uint16_t jsonReadValue(char *FindingString, uint8_t *DataBuffer, uint8_t DataBufferSize, PARSE_RESULT *ReadingStatus);
 uint16_t jsonReadHexaField(uint8_t *DataBuffer, uint8_t *JsonBuffer, uint16_t JsonBufferSize);
 uint16_t jsonWriteHexaField(uint8_t *JsonBuffer, uint8_t *DataBuffer, uint8_t DataSize);
 void jsonWriteAsciiByte(uint8_t *JsonBuffer, uint8_t DataByte);
@@ -98,7 +100,7 @@ void jsonInit(void)
  * @param DataBufferSize size of MQTT JSON message
  * @return operation result (JSON_PARSE_OK or JSON_PARSE_ERROR)
  */
-uint8_t jsonCheckFormat(uint8_t *DataBuffer, uint8_t DataBufferSize)
+PARSE_RESULT jsonCheckFormat(uint8_t *DataBuffer, uint8_t DataBufferSize)
 {
   uint8_t Index;
   uint8_t LeftBracketCnt, RightBracketCnt;
@@ -163,7 +165,7 @@ uint8_t jsonFindString(char *FindingString, uint8_t *DataBuffer, uint8_t DataBuf
  * @param ReadingStatus pointer to variable with status of operation (JSON_PARSE_ERROR = variable not found)
  * @return content of value
  */
-uint16_t jsonReadValue(char *FindingString, uint8_t *DataBuffer, uint8_t DataBufferSize, uint8_t *ReadingStatus)
+uint16_t jsonReadValue(char *FindingString, uint8_t *DataBuffer, uint8_t DataBufferSize, PARSE_RESULT *ReadingStatus)
 {
   uint16_t Result = 0;
   uint16_t Index;
@@ -247,10 +249,10 @@ void jsonWriteAsciiByte(uint8_t *JsonBuffer, uint8_t DataByte)
  * @param DataBufferSize size of MQTT JSON message
  * @return operation result (JSON_PARSE_OK or JSON_PARSE_ERROR)
  */
-uint8_t jsonParse(T_DPA_PACKET *DpaPacket, uint8_t *DataBuffer, uint8_t DataBufferSize)
+PARSE_RESULT jsonParse(T_DPA_PACKET *DpaPacket, uint8_t *DataBuffer, uint8_t DataBufferSize)
 {
+  PARSE_RESULT ParseResult = JSON_PARSE_OK;
   uint8_t Index, Cnt;
-  uint8_t ParseResult = JSON_PARSE_OK;
   uint16_t TempValue;
   char *TempPtr;
 
@@ -357,7 +359,7 @@ uint8_t jsonParse(T_DPA_PACKET *DpaPacket, uint8_t *DataBuffer, uint8_t DataBuff
  * @param DpaOperationResult - result of dpaSendRequest(... ) function
  * @return size of created JSON message (0 = message was not created, due to its size is over the size of DataBuffer)
  */
-uint16_t jsonCreate(uint8_t *DataBuffer, T_DPA_PACKET *DpaResponse, uint8_t DpaOperationResult)
+uint16_t jsonCreate(uint8_t *DataBuffer, T_DPA_PACKET *DpaResponse, DPA_OPERATION_RESULT DpaOperationResult)
 {
   uint16_t TempData;
 
