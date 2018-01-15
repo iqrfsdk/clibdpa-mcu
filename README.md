@@ -45,7 +45,9 @@ platformio lib install "cLibDPA-MCU"
 
 ## Integration
 
-The pointer to struct ```T_DPA_PACKET``` is used for communication between user's application and the library. The definition of ```T_DPA_PACKET``` can be found in the file [```dpa_library.h```](https://github.com/iqrfsdk/clibdpa-mcu/blob/develop/src/dpa_library.h). If the user wishes to use the services of the library the files [```dpa_library.c```](https://github.com/iqrfsdk/clibdpa-mcu/blob/develop/src/dpa_library.c), [```dpa_library.h```](https://github.com/iqrfsdk/clibdpa-mcu/blob/develop/src/dpa_library.h) and [```dpa.h```](https://github.com/iqrfsdk/clibdpa-mcu/blob/develop/src/DPA.h) must be included in user's project and following conditions must be met.
+The pointer to struct ```T_DPA_PACKET``` is used for communication between user's application and the library. The definition of ```T_DPA_PACKET``` can be found in the file [```dpa_library.h```](/src/dpa_library.h). If the user wishes to use the services of the library, the files [```dpa_library.c```](/src/dpa_library.c), [```dpa_library.h```](/src/dpa_library.h) and [```dpa.h```](/src/DPA.h) must be included in user's project. If the user wishes to use Arduino like a gateway from Ethernet to IQRF network, and use of JSON communication structure defined in [```JsonStructureDpa-v1```](https://github.com/iqrfsdk/iqrf-daemon/wiki/JsonStructureDpa-v1) (support for "raw" and "raw-hdp" format), it also needs to include [```dpa_json.c```](/src/dpa_json.c) and [```dpa_json.h```](/src/dpa_json.h) files into his project. Use of the support of JSON extension, we can see in MQTT example [```MQTT.ino```](/examples/MQTT/MQTT/MQTT.ino). 
+
+To proper function of library, the following conditions must be met.
 
 -   select the communication interface in the dpa_library.h header file
 
@@ -59,6 +61,18 @@ The pointer to struct ```T_DPA_PACKET``` is used for communication between user'
 | Extension   | Macro                                |
 | :---------: | ------------------------------------ |
 |  STORE CODE | ```#define __STORE_CODE_SUPPORT__``` |
+
+-   in case of using support of JSON extension, we should define  in [```dpa_json.h```](/src/dpa_json.h) file, size of three buffers.
+
+| Macro                                 | Function                                                |
+| :-----------------------------------: | ------------------------------------------------------- |
+|  ```#define JSON_MSG_ID_BUFF_SIZE```  | Defines size of buffer, to store msgid string           |
+|  ```#define JSON_REQUEST_BUFF_SIZE``` | Defines size of buffer, to store DPA request from user  |
+|  ```#define JSON_OBJECT_BUFF_SIZE```  | Defines size of buffer for creating of JSON response    |
+
+Due to small size of RAM memory of Arduino UNO, the defauls set of ```JSON_OBJECT_BUFF_SIZE``` is 384 bytes. It allows us, use of simple DPA packets with limited size of additional data bytes. In case of use of Arduino Leonardo or MEGA we can change the setting to 512 or 640 bytes, and it allows us to use full set of possibilities defined in [```JsonStructureDpa-v1```](https://github.com/iqrfsdk/iqrf-daemon/wiki/JsonStructureDpa-v1).
+
+If we also using the library [```PubSubClient```](https://github.com/knolleary/pubsubclient), for communication with MQTT broker (mosquitto for example), we must set the value  ```MQTT_MAX_PACKET_SIZE```, in ```PubSubClient.h``` file, equal to ```JSON_OBJECT_BUFF_SIZE```.
 
 -   implement functions to transfer of 1B to TR module via selected communication interface and deselect module if using SPI interface
 
@@ -82,7 +96,7 @@ void dpaInit(T_DPA_ANSWER_HANDLER dpaAnswerHandler); // dpaAnswerHandler is user
 ```
 
 ## API functions
--   ```void dpaInit(T_DPA_ANSWER_HANDLER dpaAnswerHandler)``` - ```dpaAnswerHandler``` is user's function which is called by the library after asynchronous packet reception from DPA framework
+-   ```void dpaInit(T_DPA_ANSWER_HANDLER dpaAnswerHandler)``` - ```dpaAnswerHandler``` is user's function which is called by the library after asynchronous packet reception from DPA framework.
 -   ```void dpaLibraryDriver(void)``` - The brief description of this function is in the paragraph Integration.
 -   ```uint8_t dpaSendRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Timeout)``` - The function sends DPA request to TR module via selected interface. The user fills the ```T_DPA_PACKET``` struct, defines size of additional data in the DPA request (if any) and Timeout of opperation in ms. By additional data are meant bytes which follows after DPA request header NAdr, PNum, PCmd and HwProfile. Some DPA requests require the additional data. The function must be called periodically, if returns code ```DPA_OPERATION_IN_PROGRESS```. Periodically function calling is necessary end, when returns one of the following return codes:
     -   ```DPA_OPERATION_OK``` - operation OK, answer to our request is in ```T_DPA_PACKET``` struct
@@ -91,10 +105,27 @@ void dpaInit(T_DPA_ANSWER_HANDLER dpaAnswerHandler); // dpaAnswerHandler is user
     -   ```DPA_RESPONSE_ERR```  - operation ERROR, TR module returned an unexpected response
     -   ```DPA_TR_MODULE_NOT_READY```  - operation ERROR, TR module is not ready    
 
--   ```uint8_t dpaMakeConfigurationCRC(T_DPA_PACKET *DpaRequest)``` - Function calculates the CRC of the new configuration data for TR module
+-   ```uint8_t dpaMakeConfigurationCRC(T_DPA_PACKET *DpaRequest)``` - Function calculates the CRC of the new configuration data for TR module.
+-   ```void dpaSuspendDriver(void)``` - Temporary suspend DPA comunication driver. Function is used, if we need to temporary suspend DPA communication driver, in case of sharing the SPI bus between TR module and other device (SD card for example).
+-   ```void dpaRunDriver(void)``` - Run temporary suspended DPA communication driver again.
 -   ```void dpaIncFileByteCounter(void)``` - The brief description of this function is in the paragraph Integration.
 -   ```uint8_t dpaGetRxExtraDataSize(void)``` - Function returns size of additional data block in DPA response packet, received from TR module.
+-   ```bool dpaWasConfirmed(void)``` - The function returns ```true```, if the last DPA request was confirmed by DPA coordinator.
+-   ```bool dpaWasResponsed(void)``` - The function returns ```true```, if the library received DPA response to last DPA request.
+-   ```bool dpaGetConfirmationData(void)``` - The function returns pointer to buffer, which contains 11 bytes of last DPA confimation packet.
+-   ```uint32_t dpaGetRequestTs(void) ``` - The function returns content of 32 bit system timer (number of ms from device start), captured in time of sending DPA request packet.
+-   ```uint32_t dpaGetConfirmationTs(void) ``` - The function returns content of 32 bit system timer (number of ms from device start), captured in time of receiving DPA confirmation packet.
+-   ```uint32_t dpaGetResponseTs(void) ``` - The function returns content of 32 bit system timer (number of ms from device start), captured in time of receiving DPA response packet.
 -   ```uint8_t dpaStoreCodeToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo)``` - Function ensures the storing of code image from IQRF or HEX file with the new custom DPA handler, or firmware for DCTR-7xD module. The user fills the ```T_DPA_CODE_FILE_INFO``` struct, with the information necessary to store code image. Then the function must be called periodically, until returns ```DPA_STORE_CODE_SUCCESS```, or ```DPA_STORE_CODE_ERROR```.
+
+## API functions (JSON support module)
+-   ```void jsonInit(void)``` - Initialize of JSON support module in DPA library.
+-   ```uint8_t jsonParse(T_DPA_PACKET *DpaPacket, uint8_t *DataBuffer, uint8_t DataBufferSize)``` - Parse DPA request packet from JSON message. Function fills the ```T_DPA_PACKET``` struct, with data from JSON message in buffer ```DataBuffer```. Size of JSON message is defined in variable ```DataBufferSize```. Function returns result of the operation.
+    -   ```JSON_PARSE_OK``` - operation OK, DPA request is ready in ```T_DPA_PACKET``` struct
+    -   ```JSON_PARSE_ERROR```  - in case of wrong format of JSON message
+-   ```uint16_t jsonCreate(uint8_t *DataBuffer, T_DPA_PACKET *DpaResponse, uint8_t DpaOperationResult)``` - Create JSON message from received DPA packet. ```DataBuffer``` is pointer to buffer with generated JSON message. ```T_DPA_PACKET``` structure contains DPA notification or response data. ```DpaOperationResult``` contains result of ```dpaSendRequest(... )``` function. Function returns size of created JSON message. If function ```jsonCreate``` returns ```0```, the JSON message was not created, due to its size is bigger then size of ```DataBuffer``` defined in the ```JSON_OBJECT_BUFF_SIZE``` macro.
+-   ```uint16_t jsonGetTimeout(void)``` - Get the timeout parameter from JSON message ( used in ```dpaSendRequest(... )``` function ).
+-   ```uint8_t jsonGetDataSize(void)``` - Get the number of additional data bytes of DPA request in JSON message ( used in ```dpaSendRequest(... )``` function ).
 
 ## License
 This library is licensed under Apache License 2.0:
