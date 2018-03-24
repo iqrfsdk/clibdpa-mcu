@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2017 IQRF Tech s.r.o.
+ * Copyright 2015-2018 IQRF Tech s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ volatile uint8_t Terminate = 0;
 uint8_t getBitValue(uint8_t *BitField, uint8_t BitAddr);
 void setBitValue(uint8_t *BitField, uint8_t BitAddr);
 uint8_t isNodeBonded(uint8_t Addr);
-uint8_t nextFreeAddr(uint8_t From);
+uint8_t nextFreeAddr(void);
 void delayMS(uint32_t Time);
 void notifyMainApp(uint8_t EventCode, uint8_t Param);
 uint8_t sendMyDpaRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Timeout);
@@ -119,17 +119,16 @@ uint8_t isNodeBonded(uint8_t Addr)
  * @return - next free address to bond new node
  *
  */
-uint8_t nextFreeAddr(uint8_t From)
+uint8_t nextFreeAddr(void)
 {
-    uint8_t OrigAddr = From;
+    uint8_t CheckAddr;
 
-    for( ; ; ){
-        if(++From > MAX_ADDRESS) From = 1;
-        if(isNodeBonded(From) == 0) return From;
-
-        // No free address
-        if(OrigAddr == From) return(ERR_NO_FREE_ADDRESS);
+    for(CheckAddr=1; CheckAddr<MAX_ADDRESS; CheckAddr++){
+        if(isNodeBonded(CheckAddr) == 0) return CheckAddr;
     }
+
+    // No free address
+    return(ERR_NO_FREE_ADDRESS);
 }
 
 /**
@@ -991,7 +990,7 @@ uint8_t autonetwork(T_AN_PARAMS *Parameters)
             Prebonding.MID = Prebonding.MIDlist[Addr];
 
             // OK, Get next free address
-            Prebonding.NextAddr = nextFreeAddr(Prebonding.NextAddr);
+            Prebonding.NextAddr = nextFreeAddr();
             if (Prebonding.NextAddr == 0xff){
                 // Error, no free address, terminate process
                 notifyMainApp(EVT_NO_FREE_ADDRESS, EVT_WITHOUT_PARAM);
