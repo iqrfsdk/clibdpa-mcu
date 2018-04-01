@@ -1,6 +1,6 @@
 /**
  * @file DPA support library (JSON support)
- * @version 1.3.1
+ * @version 1.3.2
  *
  * Copyright 2015-2018 IQRF Tech s.r.o.
  *
@@ -46,9 +46,9 @@ enum{
 };
 
 /* Function prototypes */
-PARSE_RESULT jsonCheckFormat(uint8_t *DataBuffer, uint8_t DataBufferSize);
-uint8_t jsonFindString(char *FindingString, uint8_t *DataBuffer, uint8_t DataBufferSize);
-uint16_t jsonReadValue(char *FindingString, uint8_t *DataBuffer, uint8_t DataBufferSize, PARSE_RESULT *ReadingStatus);
+PARSE_RESULT jsonCheckFormat(uint8_t *DataBuffer, uint16_t DataBufferSize);
+uint16_t jsonFindString(char *FindingString, uint8_t *DataBuffer, uint16_t DataBufferSize);
+uint16_t jsonReadValue(char *FindingString, uint8_t *DataBuffer, uint16_t DataBufferSize, PARSE_RESULT *ReadingStatus);
 uint16_t jsonReadHexaField(uint8_t *DataBuffer, uint8_t *JsonBuffer, uint16_t JsonBufferSize);
 uint16_t jsonWriteHexaField(uint8_t *JsonBuffer, uint8_t *DataBuffer, uint8_t DataSize);
 void jsonWriteAsciiByte(uint8_t *JsonBuffer, uint8_t DataByte);
@@ -100,9 +100,9 @@ void jsonInit(void)
  * @param DataBufferSize size of MQTT JSON message
  * @return operation result (JSON_PARSE_OK or JSON_PARSE_ERROR)
  */
-PARSE_RESULT jsonCheckFormat(uint8_t *DataBuffer, uint8_t DataBufferSize)
+PARSE_RESULT jsonCheckFormat(uint8_t *DataBuffer, uint16_t DataBufferSize)
 {
-  uint8_t Index;
+  uint16_t Index;
   uint8_t LeftBracketCnt, RightBracketCnt;
   uint8_t TempData;
 
@@ -129,6 +129,7 @@ PARSE_RESULT jsonCheckFormat(uint8_t *DataBuffer, uint8_t DataBufferSize)
     if (jsonFindString(JsonFindStringBuffer, DataBuffer, DataBufferSize) == 0) return(JSON_PARSE_ERROR);
     else JsonControl.Type = JSON_TYPE_RAW_HDP;
   }
+  else JsonControl.Type = JSON_TYPE_RAW;
 
   return(JSON_PARSE_OK);
 }
@@ -140,10 +141,10 @@ PARSE_RESULT jsonCheckFormat(uint8_t *DataBuffer, uint8_t DataBufferSize)
  * @param DataBufferSize size of MQTT JSON message
  * @return 0 = string not found, xxx = index to DataBuffer, pointing to last char of finding string
  */
-uint8_t jsonFindString(char *FindingString, uint8_t *DataBuffer, uint8_t DataBufferSize)
+uint16_t jsonFindString(char *FindingString, uint8_t *DataBuffer, uint16_t DataBufferSize)
 {
-  uint8_t Index, CntS;
-  uint8_t Len;
+  uint16_t Index;
+  uint8_t Len, CntS;
 
   Len = strlen(FindingString);
   CntS = 0;
@@ -165,7 +166,7 @@ uint8_t jsonFindString(char *FindingString, uint8_t *DataBuffer, uint8_t DataBuf
  * @param ReadingStatus pointer to variable with status of operation (JSON_PARSE_ERROR = variable not found)
  * @return content of value
  */
-uint16_t jsonReadValue(char *FindingString, uint8_t *DataBuffer, uint8_t DataBufferSize, PARSE_RESULT *ReadingStatus)
+uint16_t jsonReadValue(char *FindingString, uint8_t *DataBuffer, uint16_t DataBufferSize, PARSE_RESULT *ReadingStatus)
 {
   uint16_t Result = 0;
   uint16_t Index;
@@ -188,7 +189,6 @@ uint16_t jsonReadValue(char *FindingString, uint8_t *DataBuffer, uint8_t DataBuf
  * @param DataBuffer pointer to buffer to store the read data
  * @param JsonBuffer pointer to specific position in buffer, with received MQTT JSON message
  * @param DataBufferSize size of MQTT JSON message
- * @param ReadingStatus pointer to variable with status of operation (JSON_PARSE_ERROR = variable not found)
  * @return number of readed values
  */
 uint16_t jsonReadHexaField(uint8_t *DataBuffer, uint8_t *JsonBuffer, uint16_t JsonBufferSize)
@@ -249,10 +249,10 @@ void jsonWriteAsciiByte(uint8_t *JsonBuffer, uint8_t DataByte)
  * @param DataBufferSize size of MQTT JSON message
  * @return operation result (JSON_PARSE_OK or JSON_PARSE_ERROR)
  */
-PARSE_RESULT jsonParse(T_DPA_PACKET *DpaPacket, uint8_t *DataBuffer, uint8_t DataBufferSize)
+PARSE_RESULT jsonParse(T_DPA_PACKET *DpaPacket, uint8_t *DataBuffer, uint16_t DataBufferSize)
 {
   PARSE_RESULT ParseResult = JSON_PARSE_OK;
-  uint8_t Index, Cnt;
+  uint16_t Index, Cnt;
   uint16_t TempValue;
   char *TempPtr;
 
@@ -279,27 +279,34 @@ PARSE_RESULT jsonParse(T_DPA_PACKET *DpaPacket, uint8_t *DataBuffer, uint8_t Dat
 
     /* Request_ts */
     strcpy_P(JsonFindStringBuffer, JsonRequestTsStr);
-    JsonControl.RequestTs = jsonFindString(JsonFindStringBuffer, DataBuffer, DataBufferSize);
+    if (jsonFindString(JsonFindStringBuffer, DataBuffer, DataBufferSize)) JsonControl.RequestTs = 1;
+    else JsonControl.RequestTs = 0;
 
     /* Confirmation */
     strcpy_P(JsonFindStringBuffer, JsonConfirmationStr);
-    JsonControl.Confirmation = jsonFindString(JsonFindStringBuffer, DataBuffer, DataBufferSize);
+    if (jsonFindString(JsonFindStringBuffer, DataBuffer, DataBufferSize)) JsonControl.Confirmation = 1;
+    else JsonControl.Confirmation = 0;
 
     /* Confirmation_ts */
     strcpy_P(JsonFindStringBuffer, JsonConfirmationTsStr);
-    JsonControl.ConfirmationTs = jsonFindString(JsonFindStringBuffer, DataBuffer, DataBufferSize);
+    if (jsonFindString(JsonFindStringBuffer, DataBuffer, DataBufferSize)) JsonControl.ConfirmationTs = 1;
+    else JsonControl.ConfirmationTs = 0;
 
     /* Response */
     strcpy_P(JsonFindStringBuffer, JsonResponseStr);
-    JsonControl.Response = jsonFindString(JsonFindStringBuffer, DataBuffer, DataBufferSize);
+    if (jsonFindString(JsonFindStringBuffer, DataBuffer, DataBufferSize)) JsonControl.Response = 1;
+    else JsonControl.Response = 0;
 
     /* Response_ts */
     strcpy_P(JsonFindStringBuffer, JsonResponseTsStr);
-    JsonControl.ResponseTs = jsonFindString(JsonFindStringBuffer, DataBuffer, DataBufferSize);
+    if (jsonFindString(JsonFindStringBuffer, DataBuffer, DataBufferSize)) JsonControl.ResponseTs = 1;
+    else JsonControl.ResponseTs = 0;
 
     /* Request */
     strcpy_P(JsonFindStringBuffer, JsonRequestStr);
-    JsonControl.Request = jsonFindString(JsonFindStringBuffer, DataBuffer, DataBufferSize);
+    Index = jsonFindString(JsonFindStringBuffer, DataBuffer, DataBufferSize);
+    if (Index == 0) JsonControl.Request = 0;
+    else JsonControl.Request = 1;
 
     if (JsonControl.Type == JSON_TYPE_RAW){
       if (JsonControl.Request == 0) ParseResult = JSON_PARSE_ERROR;

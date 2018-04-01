@@ -1,6 +1,6 @@
 /**
  * @file DPA support library (JSON support)
- * @version 1.3.1
+ * @version 1.3.2
  *
  * Copyright 2015-2018 IQRF Tech s.r.o.
  *
@@ -46,7 +46,7 @@ void jsonInit(void);
  * @param DataBufferSize size of MQTT JSON message
  * @return operation result (JSON_PARSE_OK or JSON_PARSE_ERROR)
  */
-PARSE_RESULT jsonParse(T_DPA_PACKET *DpaPacket, uint8_t *DataBuffer, uint8_t DataBufferSize);
+PARSE_RESULT jsonParse(T_DPA_PACKET *DpaPacket, uint8_t *DataBuffer, uint16_t DataBufferSize);
 
 /**
  * Create JSON message from received DPA packet
