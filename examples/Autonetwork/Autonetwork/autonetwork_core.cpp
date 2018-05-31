@@ -1011,7 +1011,7 @@ uint8_t autonetwork(T_AN_PARAMS *Parameters)
 
         // Any new node ?
         if(Prebonding.NewNode){
-          delayMS(500);
+          delayMS(1000);
             // Send FRC command Prebonding to check the new nodes
             notifyMainApp(EVT_FRC_CHECK_NEW_NODES, EVT_WITHOUT_PARAM);
             MyDpaPacket.DpaMessage.Request.PData[0] = 0;       // Command 0 - Prebonding
