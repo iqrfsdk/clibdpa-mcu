@@ -110,6 +110,7 @@ typedef struct
 {
     uint8_t BondedNodesMap[NODE_BITMAP_SIZE];
     uint8_t BondedNodesCount;
+    uint8_t BondedMaxAddress;
     uint8_t DiscoveredNodesMap[NODE_BITMAP_SIZE];
     uint8_t DiscoveredNodesCount;
     uint8_t DID;
