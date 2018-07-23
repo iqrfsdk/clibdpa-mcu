@@ -790,9 +790,14 @@ uint8_t autonetwork(T_AN_PARAMS *Parameters)
         memset((uint8_t *)Prebonding.MIDlist, 0, MID_BUFFER_SIZE * sizeof(uint32_t));
 
         // Set bonding mask
+        NetworkInfo.BondedMaxAddress = MAX_ADDRESS;
+        do{
+            if (isNodeBonded(NetworkInfo.BondedMaxAddress) != 0) break;
+        } while (--NetworkInfo.BondedMaxAddress != COORDINATOR_ADDRESS);
+
         Prebonding.BondingMask = 0;                // Default value for 0 nodes
-        if(NetworkInfo.BondedNodesCount > 0){
-            uint8_t X = NetworkInfo.BondedNodesCount;
+        if(NetworkInfo.BondedMaxAddress > 0){
+            uint8_t X = NetworkInfo.BondedMaxAddress;
             Prebonding.BondingMask = 0xff;         // Default value for > 127 nodes
             while((X & 0x80) == 0){
                 X <<= 1;
