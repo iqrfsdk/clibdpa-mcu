@@ -4,10 +4,11 @@
 // Copyright (c) IQRF Tech s.r.o.
 //
 // File:    $RCSfile: DPA.h,v $
-// Version: $Revision: 1.212 $
-// Date:    $Date: 2017/11/15 14:24:43 $
+// Version: $Revision: 1.237 $
+// Date:    $Date: 2018/10/25 09:51:26 $
 //
 // Revision history:
+//   2018/10/25  Release for DPA 3.03
 //   2017/11/16  Release for DPA 3.02
 //   2017/08/14  Release for DPA 3.01
 //   2017/03/13  Release for DPA 3.00
@@ -34,16 +35,16 @@
 //############################################################################################
 
 // DPA version
-#define	DPA_VERSION_MASTER			0x0302
+#define	DPA_VERSION_MASTER			0x0303
 
 #ifdef __CC5X__
 // Compiled only at CC5X
-#if __CC5X__ < 3507
-#error Insufficient CC5X compiler version, V3.5G is minimum
+#if __CC5X__ < 3701
+#error Insufficient CC5X compiler version, V3.7A is minimum
 #endif
 
-#if IQRFOS < 400
-#error IQRF OS 4.00+ is required
+#if IQRFOS < 403
+#error IQRF OS 4.03+ is required
 #endif
 
 // Bank for custom variables
@@ -88,6 +89,12 @@ uns8  DpaApiEntry( uns8 par1, uns8 par2, uns8 apiIndex );
 // Define CC5X types
 typedef uint8_t	  uns8;
 typedef uint16_t  uns16;
+
+// Define some types missing at Arduino
+#ifdef Arduino_h
+typedef int8_t  int8;
+typedef int16_t int16;
+#endif
 
 // Fake buffer sizes
 #define	sizeofBufferAUX 64
@@ -167,7 +174,7 @@ typedef struct
 #define	MAX_STD_TIMESLOT	6
 
 #define	MIN_LP_TIMESLOT		8
-#define	MAX_LP_TIMESLOT		11
+#define	MAX_LP_TIMESLOT		10
 
 #ifdef DPA_LP
 #define	MIN_TIMESLOT		MIN_LP_TIMESLOT	
@@ -198,7 +205,6 @@ typedef struct
 #define	PNUM_SPI			0x08
 #define	PNUM_IO				0x09
 #define	PNUM_THERMOMETER	0x0A
-#define	PNUM_PWM			0x0B
 #define	PNUM_UART			0x0C
 #define	PNUM_FRC			0x0D
 
@@ -225,7 +231,7 @@ typedef struct
 #define	CMD_COORDINATOR_DISCOVERY 7
 #define	CMD_COORDINATOR_SET_DPAPARAMS 8
 #define	CMD_COORDINATOR_SET_HOPS 9
-#define	CMD_COORDINATOR_DISCOVERY_DATA 10
+#define	CMD_COORDINATOR_DISCOVERY_DATA 10 // (obsolete)
 #define	CMD_COORDINATOR_BACKUP 11
 #define	CMD_COORDINATOR_RESTORE 12
 #define	CMD_COORDINATOR_AUTHORIZE_BOND 13
@@ -233,6 +239,8 @@ typedef struct
 #define	CMD_COORDINATOR_READ_REMOTELY_BONDED_MID 15
 #define	CMD_COORDINATOR_CLEAR_REMOTELY_BONDED_MID 16
 #define	CMD_COORDINATOR_ENABLE_REMOTE_BONDING 17
+#define	CMD_COORDINATOR_SMART_CONNECT 18
+#define	CMD_COORDINATOR_SET_MID 19
 
 #define	CMD_NODE_READ 0
 #define	CMD_NODE_REMOVE_BOND 1
@@ -242,6 +250,7 @@ typedef struct
 #define	CMD_NODE_REMOVE_BOND_ADDRESS 5
 #define	CMD_NODE_BACKUP 6
 #define	CMD_NODE_RESTORE 7
+#define	CMD_NODE_VALIDATE_BONDS 8
 
 #define	CMD_OS_READ 0
 #define	CMD_OS_RESET 1
@@ -267,8 +276,8 @@ typedef struct
 
 #define	CMD_LED_SET_OFF 0
 #define	CMD_LED_SET_ON 1
-#define	CMD_LED_GET 2
 #define	CMD_LED_PULSE 3
+#define	CMD_LED_FLASHING 4
 
 #define	CMD_SPI_WRITE_READ 0
 
@@ -277,8 +286,6 @@ typedef struct
 #define	CMD_IO_GET	2
 
 #define	CMD_THERMOMETER_READ 0
-
-#define	CMD_PWM_SET 0
 
 #define	CMD_UART_OPEN 0
 #define	CMD_UART_CLOSE 1
@@ -317,9 +324,9 @@ typedef enum
 // Peripheral extended information
 typedef enum
 {
-  PERIPHERAL_TYPE_EXTENDED_DEFAULT = 0b00,
-  PERIPHERAL_TYPE_EXTENDED_READ = 0b01,
-  PERIPHERAL_TYPE_EXTENDED_WRITE = 0b10,
+  PERIPHERAL_TYPE_EXTENDED_DEFAULT = 0x00,
+  PERIPHERAL_TYPE_EXTENDED_READ = 0x01,
+  PERIPHERAL_TYPE_EXTENDED_WRITE = 0x02,
   PERIPHERAL_TYPE_EXTENDED_READ_WRITE = PERIPHERAL_TYPE_EXTENDED_READ | PERIPHERAL_TYPE_EXTENDED_WRITE
 } TDpaPeripheralTypeExtended;
 
@@ -369,12 +376,16 @@ typedef enum
   FRC_Prebonding = 0x00,
   FRC_UART_SPI_data = 0x01,
   FRC_AcknowledgedBroadcastBits = 0x02,
+  FRC_PrebondedAlive = 0x03,
 
   FRC_Temperature = 0x80,
   FRC_AcknowledgedBroadcastBytes = 0x81,
   FRC_MemoryRead = 0x82,
   FRC_MemoryReadPlus1 = 0x83,
   FRC_FrcResponseTime = 0x84,
+  FRC_TestRFsignal = 0x85,
+
+  FRC_PrebondedMemoryReadPlus1 = 0xF8
 } TFRCommands;
 
 // Intervals of user FRC codes
@@ -383,15 +394,14 @@ typedef enum
 #define	FRC_USER_BYTE_FROM	  0xC0
 #define	FRC_USER_BYTE_TO	  0xDF
 #define	FRC_USER_2BYTE_FROM	  0xF0
-#define	FRC_USER_2BYTE_TO	  0xFF
+#define	FRC_USER_2BYTE_TO	  0xF7
+#define	FRC_USER_4BYTE_FROM	  0xFC
+#define	FRC_USER_4BYTE_TO	  0xFF
 
-typedef enum
-{
-  // No HWPID specified
-  HWPID_Default = 0,
-  // Use this type to override HWPID check
-  HWPID_DoNotCheck = 0xFfFf
-} THWPIDs;
+// No HWPID specified
+#define HWPID_Default         0
+// Use this type to override HWPID check
+#define HWPID_DoNotCheck      0xFfFf
 
 // RAM peripheral block definitions
 #define	PERIPHERAL_RAM_LENGTH		48
@@ -462,18 +472,24 @@ typedef struct
   uns8	BondingMask;
 } STRUCTATTR TPerCoordinatorBondNode_Request;
 
-// Structure returned by CMD_COORDINATOR_BOND_NODE
+// Structure returned by CMD_COORDINATOR_BOND_NODE or CMD_COORDINATOR_SMART_CONNECT
 typedef struct
 {
   uns8	BondAddr;
   uns8	DevNr;
-} STRUCTATTR TPerCoordinatorBondNode_Response;
+} STRUCTATTR TPerCoordinatorBondNodeSmartConnect_Response;
 
-// Structure for CMD_COORDINATOR_REMOVE_BOND or CMD_COORDINATOR_REBOND_NODE
+// Structure for CMD_COORDINATOR_REMOVE_BOND
 typedef struct
 {
   uns8	BondAddr;
-} STRUCTATTR TPerCoordinatorRemoveRebondBond_Request;
+} STRUCTATTR TPerCoordinatorRemoveBond_Request;
+
+// Structure for CMD_COORDINATOR_REBOND_NODE
+typedef struct
+{
+  uns8	BondAddr;
+} STRUCTATTR TPerCoordinatorRebondNode_Request;
 
 // Structure returned by CMD_COORDINATOR_REMOVE_BOND or CMD_COORDINATOR_REBOND_NODE
 typedef struct
@@ -507,13 +523,13 @@ typedef struct
   uns8	ResponseHops;
 } STRUCTATTR TPerCoordinatorSetHops_Request_Response;
 
-// Structure for CMD_COORDINATOR_DISCOVERY_DATA
+// Structure for CMD_COORDINATOR_DISCOVERY_DATA (obsolete)
 typedef struct
 {
   uns16	Address;
 } STRUCTATTR TPerCoordinatorDiscoveryData_Request;
 
-// Structure returned by CMD_COORDINATOR_DISCOVERY_DATA
+// Structure returned by CMD_COORDINATOR_DISCOVERY_DATA (obsolete)
 typedef struct
 {
   uns8	DiscoveryData[48];
@@ -588,6 +604,26 @@ typedef struct
   TPrebondedNode  PrebondedNodes[DPA_MAX_DATA_LENGTH / sizeof( TPrebondedNode )];
 } STRUCTATTR TPerCoordinatorNodeReadRemotelyBondedMID_Response;
 
+// Structure for CMD_COORDINATOR_SMART_CONNECT
+typedef struct
+{
+  uns8  ReqAddr;
+  uns8  BondingTestRetries;
+  uns8  IBK[16];
+  uns8  MID[4];
+  uns8  reserved0[2];
+  uns8  VirtualDeviceAddress;
+  uns8  reserved1[9];
+  uns8	UserData[4];
+} STRUCTATTR TPerCoordinatorSmartConnect_Request;
+
+// Structure for CMD_COORDINATOR_SET_MID
+typedef struct
+{
+  uns8  MID[4];
+  uns8	BondAddr;
+} STRUCTATTR TPerCoordinatorSetMID_Request;
+
 // Structure returned by CMD_NODE_READ
 typedef struct
 {
@@ -603,10 +639,23 @@ typedef struct
   uns8  Flags;
 } STRUCTATTR TPerNodeRead_Response;
 
+// Structures for CMD_NODE_VALIDATE_BONDS
+typedef struct
+{
+  uns8	Address;
+  uns8  MID[4];
+} STRUCTATTR TPerNodeValidateBondsItem;
+
+// Structure for CMD_NODE_VALIDATE_BONDS
+typedef struct
+{
+  TPerNodeValidateBondsItem Bonds[DPA_MAX_DATA_LENGTH / sizeof( TPerNodeValidateBondsItem )];
+} STRUCTATTR TPerNodeValidateBonds_Request;
+
 // Structure returned by CMD_OS_READ
 typedef struct
 {
-  uns8	ModuleId[4];
+  uns8	MID[4];
   uns8	OsVersion;
   uns8	McuType;
   uns16	OsBuild;
@@ -614,6 +663,7 @@ typedef struct
   uns8	SupplyVoltage;
   uns8	Flags;
   uns8	SlotLimits;
+  uns8  IBK[16];
 } STRUCTATTR TPerOSRead_Response;
 
 // Structure returned by CMD_OS_READ_CFG
@@ -628,7 +678,7 @@ typedef struct
 // Structure for CMD_OS_WRITE_CFG
 typedef struct
 {
-  uns8	Checksum;
+  uns8	Undefined;
   uns8	Configuration[31];
   uns8	RFPGM;
 } STRUCTATTR TPerOSWriteCfg_Request;
@@ -685,21 +735,21 @@ typedef struct
 
   union
   {
-	// Memory read request
-	struct
-	{
-	  // Length of data to read
-	  uns8	Length;
-	} Read;
+    // Memory read request
+    struct
+    {
+      // Length of data to read
+      uns8	Length;
+    } Read;
 
-	// Size of Address field
+    // Size of Address field
 #define	MEMORY_WRITE_REQUEST_OVERHEAD	( sizeof( uns8 ) )
 
-	// Memory write request
-	struct
-	{
-	  uns8	PData[DPA_MAX_DATA_LENGTH - MEMORY_WRITE_REQUEST_OVERHEAD];
-	} Write;
+    // Memory write request
+    struct
+    {
+      uns8	PData[DPA_MAX_DATA_LENGTH - MEMORY_WRITE_REQUEST_OVERHEAD];
+    } Write;
 
   } ReadWrite;
 } STRUCTATTR TPerMemoryRequest;
@@ -712,21 +762,21 @@ typedef struct
 
   union
   {
-	// Memory read request
-	struct
-	{
-	  // Length of data to read
-	  uns8	Length;
-	} Read;
+    // Memory read request
+    struct
+    {
+      // Length of data to read
+      uns8	Length;
+    } Read;
 
-	// Size of Address field
+    // Size of Address field
 #define	XMEMORY_WRITE_REQUEST_OVERHEAD	( sizeof( uns16 ) )
 
-	// Memory write request
-	struct
-	{
-	  uns8	PData[DPA_MAX_DATA_LENGTH - XMEMORY_WRITE_REQUEST_OVERHEAD];
-	} Write;
+    // Memory write request
+    struct
+    {
+      uns8	PData[DPA_MAX_DATA_LENGTH - XMEMORY_WRITE_REQUEST_OVERHEAD];
+    } Write;
 
   } ReadWrite;
 } STRUCTATTR TPerXMemoryRequest;
@@ -758,14 +808,6 @@ typedef struct
   int8  IntegerValue;
   int16 SixteenthValue;
 } STRUCTATTR TPerThermometerRead_Response;
-
-// Structure for CMD_PWM_SET
-typedef struct
-{
-  uns8  Prescaler;
-  uns8  Period;
-  uns8  Duty;
-} STRUCTATTR TPerPwmSet_Request;
 
 // Structure for CMD_UART_OPEN
 typedef struct
@@ -827,13 +869,13 @@ typedef union
   // General DPA request
   struct
   {
-	uns8	PData[DPA_MAX_DATA_LENGTH];
+    uns8	PData[DPA_MAX_DATA_LENGTH];
   } Request;
 
   // General DPA response
   struct
   {
-	uns8	PData[DPA_MAX_DATA_LENGTH];
+    uns8	PData[DPA_MAX_DATA_LENGTH];
   } Response;
 
   // Enumerate peripherals structure
@@ -854,11 +896,14 @@ typedef union
   // Structure for CMD_COORDINATOR_BOND_NODE
   TPerCoordinatorBondNode_Request PerCoordinatorBondNode_Request;
 
-  // Structure returned by CMD_COORDINATOR_BOND_NODE
-  TPerCoordinatorBondNode_Response PerCoordinatorBondNode_Response;
+  // Structure returned by CMD_COORDINATOR_BOND_NODE or CMD_COORDINATOR_SMART_CONNECT
+  TPerCoordinatorBondNodeSmartConnect_Response PerCoordinatorBondNodeSmartConnect_Response;
 
-  // Structure for CMD_COORDINATOR_REMOVE_BOND or CMD_COORDINATOR_REBOND_NODE
-  TPerCoordinatorRemoveRebondBond_Request PerCoordinatorRemoveRebondBond_Request;
+  // Structure for CMD_COORDINATOR_REMOVE_BOND
+  TPerCoordinatorRemoveBond_Request PerCoordinatorRemoveBond_Request;
+
+  // Structure for CMD_COORDINATOR_REBOND_NODE
+  TPerCoordinatorRebondNode_Request PerCoordinatorRebondNode_Request;
 
   // Structure returned by CMD_COORDINATOR_REMOVE_BOND or CMD_COORDINATOR_REBOND_NODE
   TPerCoordinatorRemoveRebondBond_Response PerCoordinatorRemoveRebondBond_Response;
@@ -875,10 +920,10 @@ typedef union
   // Structure for and also returned by CMD_COORDINATOR_SET_HOPS
   TPerCoordinatorSetHops_Request_Response PerCoordinatorSetHops_Request_Response;
 
-  // Structure for CMD_COORDINATOR_DISCOVERY_DATA
+  // Structure for CMD_COORDINATOR_DISCOVERY_DATA (obsolete)
   TPerCoordinatorDiscoveryData_Request PerCoordinatorDiscoveryData_Request;
 
-  // Structure returned by CMD_COORDINATOR_DISCOVERY_DATA
+  // Structure returned by CMD_COORDINATOR_DISCOVERY_DATA (obsolete)
   TPerCoordinatorDiscoveryData_Response PerCoordinatorDiscoveryData_Response;
 
   // Structure for CMD_COORDINATOR_BACKUP and CMD_NODE_BACKUP
@@ -908,8 +953,17 @@ typedef union
   // Structure returned by CMD_COORDINATOR_READ_REMOTELY_BONDED_MID and CMD_NODE_READ_REMOTELY_BONDED_MID
   TPerCoordinatorNodeReadRemotelyBondedMID_Response PerCoordinatorNodeReadRemotelyBondedMID_Response;
 
+  // Structure for CMD_COORDINATOR_SMART_CONNECT
+  TPerCoordinatorSmartConnect_Request PerCoordinatorSmartConnect_Request;
+
+  // Structure for CMD_COORDINATOR_SET_MID
+  TPerCoordinatorSetMID_Request PerCoordinatorSetMID_Request;
+
   // Structure returned by CMD_NODE_READ
   TPerNodeRead_Response PerNodeRead_Response;
+
+  // Structure for CMD_NODE_VALIDATE_BONDS
+  TPerNodeValidateBonds_Request PerNodeValidateBonds_Request;
 
   // Structure returned by CMD_OS_READ
   TPerOSRead_Response PerOSRead_Response;
@@ -946,9 +1000,6 @@ typedef union
 
   // Structure returned by CMD_THERMOMETER_READ
   TPerThermometerRead_Response PerThermometerRead_Response;
-
-  // Structure for CMD_PWM_SET
-  TPerPwmSet_Request PerPwmSet_Request;
 
   // Structure for CMD_UART_OPEN
   TPerUartOpen_Request PerUartOpen_Request;
@@ -1042,28 +1093,8 @@ typedef enum
   PNUM_IO_PORTE = 0x04,
   PNUM_IO_TRISE = 0x04,
   PNUM_IO_WPUB = 0x11,
-  PNUM_IO_WPUE = 0x14,
   PNUM_IO_DELAY = 0xff
 } PNUM_IO_Definitions;
-
-#ifdef __CC5X__
-
-// DPA message at bufferRF
-TDpaMessage DpaRfMessage @bufferRF;
-
-// Actual allocation of the RAM Peripheral memory block @ UserBank_02
-bank12 uns8  PeripheralRam[PERIPHERAL_RAM_LENGTH];
-
-// Actual DPA message parameters at memory
-#define	_NADR			RX
-#define _NADRhigh		RTAUX
-#define _PNUM			PNUM
-#define _PCMD			PCMD
-#define _DpaDataLength	DLEN
-#define _DpaMessage		DpaRfMessage
-
-// Return actual DPA user routine event
-#define	GetDpaEvent()	userReg0
 
 // To test for enumeration peripherals request
 #define IsDpaEnumPeripheralsRequestNoSize() ( _PNUM == PNUM_ENUMERATION && _PCMD == CMD_GET_PER_INFO )
@@ -1091,6 +1122,25 @@ bank12 uns8  PeripheralRam[PERIPHERAL_RAM_LENGTH];
 #else
 #define	IfDpaEnumPeripherals_Else_PeripheralInfo_Else_PeripheralRequest() IfDpaEnumPeripherals_Else_PeripheralInfo_Else_PeripheralRequestNoSize()
 #endif
+
+#ifdef __CC5X__
+
+// DPA message at bufferRF
+TDpaMessage DpaRfMessage @bufferRF;
+
+// Actual allocation of the RAM Peripheral memory block @ UserBank_02
+bank12 uns8  PeripheralRam[PERIPHERAL_RAM_LENGTH] @ 0x620;
+
+// Actual DPA message parameters at memory
+#define	_NADR			RX
+#define _NADRhigh		RTAUX
+#define _PNUM			PNUM
+#define _PCMD			PCMD
+#define _DpaDataLength	DLEN
+#define _DpaMessage		DpaRfMessage
+
+// Return actual DPA user routine event
+#define	GetDpaEvent()	userReg0
 
 // Stores DPA Params inside DPA request/response
 #define	_DpaParams					  PPAR
