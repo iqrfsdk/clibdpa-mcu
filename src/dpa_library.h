@@ -30,7 +30,7 @@ extern "C" {
 #define __SPI_INTERFACE__       // select for comunication via SPI
 //#define __UART_INTERFACE__    // select for comunication via UART
 
-#define __STORE_CODE_SUPPORT__  // uncomment for TR7xD modules code upload support
+//#define __STORE_CODE_SUPPORT__  // uncomment for TR7xD modules code upload support
 
 #define systemDisableInt() noInterrupts() // disable Interrupts (Arduino platform)
 #define systemEnableInt()  interrupts()   // enable Interrupts (Arduino platform)
