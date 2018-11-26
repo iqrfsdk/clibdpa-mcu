@@ -35,11 +35,11 @@
  * C prototypes
  */
 #if defined(__SPI_INTERFACE__)
-  extern "C" uint8_t dpaSendSpiByte(uint8_t Tx_Byte);
-  extern "C" void dpaDeselectTRmodule(void);
+    extern "C" uint8_t dpaSendSpiByte(uint8_t Tx_Byte);
+    extern "C" void dpaDeselectTRmodule(void);
 #elif defined(__UART_INTERFACE__)
-  extern "C" void dpaSendUartByte(uint8_t Tx_Byte);
-  extern "C" uint8_t dpaReceiveUartByte(uint8_t *Rx_Byte);
+    extern "C" void dpaSendUartByte(uint8_t Tx_Byte);
+    extern "C" uint8_t dpaReceiveUartByte(uint8_t *Rx_Byte);
 #endif
 
 /*
@@ -77,7 +77,7 @@ const char EventStrings[21][80] PROGMEM = {
     // Event EVT_FRC_READ_NEW_NODES_MID
     "Running FRC to read new nodes MID\r\n\0",
     // Event EVT_FRC_CHECK_AUTHORIZED_NODES
-    "Running FRC to check new auhorized nodes\r\n\0",
+    "Running FRC to check new authorized nodes\r\n\0",
     // Event EVT_FRC_CHECK_NEW_NODES
     "Running FRC to check new nodes \r\n\0",
     // Event EVT_NO_FREE_ADDRESS
@@ -128,7 +128,7 @@ void setup()
     dpaInit(myAsyncPacketHandler);        // initialize DPA library
     autonetworkInit(autonetworkHandler);  // initialize autonetwork
 
-    Timer1.initialize(200);                             // initialize timer1, call dpa driver every 200us
+    Timer1.initialize(200);                             // initialize timer1, call DPA driver every 200us
     Timer1.attachInterrupt(dpaLibraryDriver);           // attaches callback() as a timer overflow interrupt
 }
 
@@ -210,7 +210,7 @@ uint8_t dpaReceiveUartByte(uint8_t *Rx_Byte)
 #endif
 
 /**
- * asynchronous packet service rutine
+ * asynchronous packet service routine
  *
  * @param - dpaAnswerPkt pointer to T_DPA_PACKET structure with data from TR module
  * @return - none
@@ -232,7 +232,7 @@ void myAsyncPacketHandler(T_DPA_PACKET *dpaAnswerPkt)
  */
 void autonetworkHandler(uint8_t EventCode, T_AN_STATE *State)
 {
-    // Cpoy event description string to serial_buffer_out
+    // Copy event description string to serial_buffer_out
     strcpy_P(SerialBufferOut, &EventStrings[EventCode][0]);
 
     // Event with parameters ?
@@ -272,7 +272,7 @@ void autonetworkHandler(uint8_t EventCode, T_AN_STATE *State)
 }
 
 /**
- * autontw commands service
+ * autonetwork commands service
  *
  * @param - CommandTabParameter command parameter from decode command table
  * @return - none
@@ -289,34 +289,38 @@ void ccpAutonetworkCmd (uint16_t CommandTabParameter)
     MyAutonetworkParams.DiscoveryTxPower = 1;
 
     // read first parameter
-    if (ccpFindCmdParameter(CcpCommandParameter)){
+    if (ccpFindCmdParameter(CcpCommandParameter)) {
         TempData = atoi(CcpCommandParameter);
-        if (TempData < 30) MyAutonetworkParams.BondingWaves = TempData;
+        if (TempData < 30)
+            MyAutonetworkParams.BondingWaves = TempData;
     }
 
     // read second parameter
-    if (ccpFindCmdParameter(CcpCommandParameter)){
+    if (ccpFindCmdParameter(CcpCommandParameter)) {
         TempData = atoi(CcpCommandParameter);
-        if (TempData < 30) MyAutonetworkParams.EmptyWaves = TempData;
+        if (TempData < 30)
+            MyAutonetworkParams.EmptyWaves = TempData;
     }
 
     // read third parameter
-    if (ccpFindCmdParameter(CcpCommandParameter)){
+    if (ccpFindCmdParameter(CcpCommandParameter)) {
         TempData = atoi(CcpCommandParameter);
-        if (TempData <= 3) MyAutonetworkParams.DiscoveryRetries = TempData;
+        if (TempData <= 3)
+            MyAutonetworkParams.DiscoveryRetries = TempData;
     }
 
     // read fourth parameter
-    if (ccpFindCmdParameter(CcpCommandParameter)){
+    if (ccpFindCmdParameter(CcpCommandParameter)) {
         TempData = atoi(CcpCommandParameter);
-        if (TempData <= 7) MyAutonetworkParams.DiscoveryTxPower = TempData;
+        if (TempData <= 7)
+            MyAutonetworkParams.DiscoveryTxPower = TempData;
     }
 
     autonetwork(&MyAutonetworkParams);
 }
 
 /**
- * clrbonds commands service
+ * clearbonds commands service
  *
  * @param - CommandTabParameter command parameter from decode command table
  * @return - none
@@ -341,17 +345,24 @@ void ccpLedCmd (uint16_t CommandTabParameter)
 
     // processing of command input parameters
     // read required operation
-    if (ccpFindCmdParameter(CcpCommandParameter)){
-        if (strcmp("on",CcpCommandParameter)==0) Cmd = CMD_LED_SET_ON;
-        else if (strcmp("off",CcpCommandParameter)==0) Cmd = CMD_LED_SET_OFF;
-             else Cmd = CMD_LED_PULSE;
+    if (ccpFindCmdParameter(CcpCommandParameter)) {
+        if (strcmp("on",CcpCommandParameter)==0) {
+            Cmd = CMD_LED_SET_ON;
+        }
+        else {
+            if (strcmp("off",CcpCommandParameter)==0)
+                Cmd = CMD_LED_SET_OFF;
+            else
+                Cmd = CMD_LED_PULSE;
+        }
     }
 
     // read destination address
-    if (ccpFindCmdParameter(CcpCommandParameter)){
+    if (ccpFindCmdParameter(CcpCommandParameter)) {
         Addr = atoi(CcpCommandParameter);         // set destination address
     }
-    else Addr = 0;
+    else
+        Addr = 0;
 
     ledR(Addr, Cmd);                              // send ledR DPA command
 }
