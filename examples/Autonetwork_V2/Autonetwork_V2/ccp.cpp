@@ -45,7 +45,7 @@ void ccpClsCmd (word CommandParameter);
 void ccpCommandNotFound (word CommandParameter);
 
 /* global variables */
-const COM Commands[] PROGMEM ={          // command decode table
+const COM Commands[] PROGMEM = {         // command decode table
     "rst", ccpClsCmd, 'H',
     "ledr", ccpLedCmd, PNUM_LEDR,
     "clearbonds", ccpClrBondsCmd, 0,
@@ -53,7 +53,7 @@ const COM Commands[] PROGMEM ={          // command decode table
 };
 
 #define HEADER_LINE_SIZE    75
-const char Header[][HEADER_LINE_SIZE] PROGMEM ={
+const char Header[][HEADER_LINE_SIZE] PROGMEM = {
     "--------------------------------------------------------------------------",
     "|                 Arduino console command processor                      |",
     "|                          IQRF Tech s.r.o                               |",
@@ -82,10 +82,9 @@ boolean Esc2 = false;
  */
 void ccp(void)
 {
-
     char ConsoleChar;
 
-    if (Serial.available() > 0){
+    if (Serial.available() > 0) {
         ConsoleChar = Serial.read();
 
         if (Esc2 == true) {                                       // previous chars has been ESC, 0x5B -> ignore received char & clear flags
@@ -121,8 +120,7 @@ void ccp(void)
             Serial.print(CmdPrompt);                              // print prompt
 
             RepeatInLine = true;                                  // repeat command if ENTER is pressed
-        }
-        else {
+        } else {
             if (RepeatInLine) {                                   // if first char of new command hes been received
                 RepeatInLine = false;
                 InLinePtr=0;                                      // set pointer to start of input buffer
@@ -132,8 +130,7 @@ void ccp(void)
                     InLinePtr--;                                  // one char back in input buffer
                     Serial.print(Back);                           // send string to clear last char on console
                 }
-            }
-            else{
+            } else {
                 if (InLinePtr<SIZE_OF_IN_BUFF) {                  // input buffer is not full
                     InLine[InLinePtr++] = ConsoleChar;            // write received char to input buffer
                     Serial.write(ConsoleChar);                    // loop back received char to console
@@ -173,7 +170,7 @@ void find_command(void)
         }
     }
 
-    err_find_out:
+err_find_out:
     run_func = ccpCommandNotFound;                                  // in case of error, run error service function
     ComEndPos = 0;
 }
@@ -190,11 +187,10 @@ uint8_t ccpFindCmdParameter(char *DestinationString)
 
     InLine[SIZE_OF_IN_BUFF-1] = 0;
 
-    do{
+    do {
         TempChar = InLine[ComEndPos];
-        if (TempChar == ' ') {
+        if (TempChar == ' ')
             ComEndPos++;
-        }
     } while (TempChar == ' ');
 
     if (TempChar == 0) {
@@ -202,7 +198,7 @@ uint8_t ccpFindCmdParameter(char *DestinationString)
         return(0);
     }
 
-    do{
+    do {
         TempChar = InLine[ComEndPos++];
         DestinationString[TempCnt++] = TempChar;
     } while(TempChar!=' ' && TempChar!=0 && ComEndPos<SIZE_OF_IN_BUFF && TempCnt<SIZE_OF_PARAM);
@@ -220,9 +216,8 @@ uint8_t ccpFindCmdParameter(char *DestinationString)
  */
 void memcpy_P (uint8_t *Destination, uint8_t *Source, uint16_t Count)
 {
-    while (Count--){
+    while (Count--)
         *Destination = pgm_read_byte_near(Source++);
-    }
 }
 
 /**

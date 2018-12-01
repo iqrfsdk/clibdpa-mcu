@@ -152,7 +152,7 @@ uint8_t dpaSendSpiByte(uint8_t Tx_Byte)
 {
     uint8_t Rx_Byte;
 
-    if (!DpaControl.TRmoduleSelected){
+    if (!DpaControl.TRmoduleSelected) {
         SPI.beginTransaction(SPISettings(250000, MSBFIRST, SPI_MODE0));
         DpaControl.TRmoduleSelected = true;
         digitalWrite(TR_SS, LOW);
@@ -161,7 +161,7 @@ uint8_t dpaSendSpiByte(uint8_t Tx_Byte)
 
     Rx_Byte = SPI.transfer(Tx_Byte);
 
-    return Rx_Byte;
+    return (Rx_Byte);
 }
 
 /**
@@ -236,36 +236,37 @@ void autonetworkHandler(uint8_t EventCode, T_AN_STATE *State)
     strcpy_P(SerialBufferOut, &EventStrings[EventCode][0]);
 
     // Event with parameters ?
-    if (State != NULL){
+    if (State != NULL) {
         // Yes, event with parameters
         char Buffer[SERIAL_BUFFER_SIZE];
-        switch (EventCode){
+        switch (EventCode) {
 
-            case EVT_ROUND_START:
-                sprintf(Buffer, SerialBufferOut, State->PrebondingInfo->WaveCnt, State->NewtorkInfo->BondedNodesCount, State->NewtorkInfo->BondedNodesCount - State->PrebondingInfo->OrigNodesCount);
-                break;
+        case EVT_ROUND_START:
+            sprintf(Buffer, SerialBufferOut,
+                State->PrebondingInfo->WaveCnt,
+                State->NewtorkInfo->BondedNodesCount,
+                State->NewtorkInfo->BondedNodesCount - State->PrebondingInfo->OrigNodesCount);
+            break;
 
-            case EVT_AUTHORIZE_BOND:
-                sprintf(Buffer, SerialBufferOut, State->PrebondingInfo->MID, State->PrebondingInfo->NextAddr);
-                break;
+        case EVT_AUTHORIZE_BOND:
+            sprintf(Buffer, SerialBufferOut, State->PrebondingInfo->MID, State->PrebondingInfo->NextAddr);
+            break;
 
-            case EVT_AUTHORIZE_BOND_OK:
-            case EVT_DISCOVERY_OK:
-            case EVT_COOR_REMOVING_BOND:
-            case EVT_NODE_REMOTE_UNBOND:
-            case EVT_PREBONDED_NEW_NODE:
-                sprintf(Buffer, SerialBufferOut, State->PrebondingInfo->Param);
-                break;
+        case EVT_AUTHORIZE_BOND_OK:
+        case EVT_DISCOVERY_OK:
+        case EVT_COOR_REMOVING_BOND:
+        case EVT_NODE_REMOTE_UNBOND:
+        case EVT_PREBONDED_NEW_NODE:
+            sprintf(Buffer, SerialBufferOut, State->PrebondingInfo->Param);
+            break;
 
-            // Unknown message
-            default:
-                strcpy(Buffer, "Unknown event\r\n");
-                break;
+        // Unknown message
+        default:
+            strcpy(Buffer, "Unknown event\r\n");
+            break;
         }
         Serial.print(Buffer);
-    }
-    else
-    {
+    } else {
         // No parameters, send text
         Serial.print(SerialBufferOut);
     }
@@ -346,21 +347,17 @@ void ccpLedCmd (uint16_t CommandTabParameter)
     // processing of command input parameters
     // read required operation
     if (ccpFindCmdParameter(CcpCommandParameter)) {
-        if (strcmp("on",CcpCommandParameter)==0) {
+        if (strcmp("on",CcpCommandParameter) == 0)
             Cmd = CMD_LED_SET_ON;
-        }
-        else {
-            if (strcmp("off",CcpCommandParameter)==0)
-                Cmd = CMD_LED_SET_OFF;
-            else
-                Cmd = CMD_LED_PULSE;
-        }
+        else if (strcmp("off",CcpCommandParameter) == 0)
+            Cmd = CMD_LED_SET_OFF;
+        else
+            Cmd = CMD_LED_PULSE;
     }
 
     // read destination address
-    if (ccpFindCmdParameter(CcpCommandParameter)) {
+    if (ccpFindCmdParameter(CcpCommandParameter))
         Addr = atoi(CcpCommandParameter);         // set destination address
-    }
     else
         Addr = 0;
 
