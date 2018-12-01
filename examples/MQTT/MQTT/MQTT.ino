@@ -79,57 +79,57 @@ char MqttPublishTopic[] = {"dpaGateOut"};
  */
 void setup()
 {
-  Serial.begin(9600);
+    Serial.begin(9600);
 
-  // MQTT Client library initialization
-  client.setServer(server, 1883);
-  client.setCallback(mqttCallback);
-  Ethernet.begin(mac, myIp);
-  SPI.end();
+    // MQTT Client library initialization
+    client.setServer(server, 1883);
+    client.setCallback(mqttCallback);
+    Ethernet.begin(mac, myIp);
+    SPI.end();
 
-  // Set TR power pin as output
-  pinMode(PWR, OUTPUT);
-  // TR module power off (make TR module RESET)
-  digitalWrite(PWR, HIGH);
-  #if defined(__SPI_INTERFACE__)
-  // Set SPI slave select pin as output
-  pinMode(TR_SS, OUTPUT);
-  digitalWrite(TR_SS, LOW);
-  // pause
-  delay(500);
-  // TR module power on
-  digitalWrite(PWR, LOW);
-  // deselect TR module
-  digitalWrite(TR_SS, HIGH);
-  // start SPI peripheral
-  SPI.begin();
-  // pause
-  delay(500);
+    // Set TR power pin as output
+    pinMode(PWR, OUTPUT);
+    // TR module power off (make TR module RESET)
+    digitalWrite(PWR, HIGH);
+#if defined(__SPI_INTERFACE__)
+    // Set SPI slave select pin as output
+    pinMode(TR_SS, OUTPUT);
+    digitalWrite(TR_SS, LOW);
+    // pause
+    delay(500);
+    // TR module power on
+    digitalWrite(PWR, LOW);
+    // deselect TR module
+    digitalWrite(TR_SS, HIGH);
+    // start SPI peripheral
+    SPI.begin();
+    // pause
+    delay(500);
 
-  #elif defined(__UART_INTERFACE__)
-  delay(500);
+#elif defined(__UART_INTERFACE__)
+    delay(500);
 
-  // TR module power on
-  digitalWrite(PWR, LOW);
-  // start UART1 peripheral
-  Serial1.begin(57600);
-  #endif
+    // TR module power on
+    digitalWrite(PWR, LOW);
+    // start UART1 peripheral
+    Serial1.begin(57600);
+#endif
 
-  // initialize DPA library
-  dpaInit(myAsyncPacketHandler);
+    // initialize DPA library
+    dpaInit(myAsyncPacketHandler);
 
-  #if defined(__AVR__) || defined(CORE_TEENSY)
-  // initialize Timer1, call DPA driver every 200us
-  Timer1.initialize(200);
-  // attaches callback() as a timer overflow interrupt
-  Timer1.attachInterrupt(systemTimerIterruptHandler);
-  #endif
+#if defined(__AVR__) || defined(CORE_TEENSY)
+    // initialize Timer1, call DPA driver every 200us
+    Timer1.initialize(200);
+    // attaches callback() as a timer overflow interrupt
+    Timer1.attachInterrupt(systemTimerIterruptHandler);
+#endif
 
-  // json initialization
-  jsonInit();
+    // JSON initialization
+    jsonInit();
 
-  delay(1000);
-  Serial.println(F("Initialization OK"));
+    delay(1000);
+    Serial.println(F("Initialization OK"));
 }
 
 /**
@@ -137,48 +137,51 @@ void setup()
  */
 void loop()
 {
-  DPA_OPERATION_RESULT OpResult;
-  uint16_t TempValue;
-
-  // release SPI bus
-  dpaSuspendDriver();
-  // Run MQTT driver
-  if (!client.connected()) {
-    mqttReconnect();
-  }
-  client.loop();
-  // occupy SPI bus by DPA driver
-  dpaRunDriver();
-
-  // MQTT received data processing
-  if (DpaDataReady == true || AsyncPacketReceived == true){
-    // send request and wait for result
-    if (AsyncPacketReceived == false){
-      TempValue = jsonGetTimeout();
-      if (TempValue == 0) TempValue = 1000;
-    	while ((OpResult = dpaSendRequest(&MyDpaPacket, jsonGetDataSize(), TempValue)) == DPA_OPERATION_IN_PROGRESS);
-      if (OpResult == DPA_OPERATION_OK) Serial.println(F("DPA operation OK"));
-      else Serial.println(F("DPA operation ERROR"));
-    }
-    else OpResult = DPA_OPERATION_OK;
-
-    AsyncPacketReceived = false;
-    DpaDataReady = false;
-
-    // create JSON answer or notification packet
-    TempValue = jsonCreate(MyMqttMessage, &MyDpaPacket, OpResult);
-    Serial.print(F("Size of JSON message - "));
-    Serial.println(TempValue);
+    DPA_OPERATION_RESULT OpResult;
+    uint16_t TempValue;
 
     // release SPI bus
     dpaSuspendDriver();
-    // send MQTT JSON data
-    if (client.connected() && TempValue) {
-      client.publish(MqttPublishTopic, MyMqttMessage, TempValue);
-    }
+    // Run MQTT driver
+    if (!client.connected())
+        mqttReconnect();
+    client.loop();
     // occupy SPI bus by DPA driver
     dpaRunDriver();
-  }
+
+    // MQTT received data processing
+    if (DpaDataReady == true || AsyncPacketReceived == true) {
+        // send request and wait for result
+        if (AsyncPacketReceived == false) {
+            TempValue = jsonGetTimeout();
+            if (TempValue == 0)
+                TempValue = 1000;
+          	while ((OpResult = dpaSendRequest(&MyDpaPacket, jsonGetDataSize(), TempValue)) == DPA_OPERATION_IN_PROGRESS)
+                ; /* void */
+            if (OpResult == DPA_OPERATION_OK)
+                Serial.println(F("DPA operation OK"));
+            else
+                Serial.println(F("DPA operation ERROR"));
+        } else {
+            OpResult = DPA_OPERATION_OK;
+        }
+
+        AsyncPacketReceived = false;
+        DpaDataReady = false;
+
+        // create JSON answer or notification packet
+        TempValue = jsonCreate(MyMqttMessage, &MyDpaPacket, OpResult);
+        Serial.print(F("Size of JSON message - "));
+        Serial.println(TempValue);
+
+        // release SPI bus
+        dpaSuspendDriver();
+        // send MQTT JSON data
+        if (client.connected() && TempValue)
+            client.publish(MqttPublishTopic, MyMqttMessage, TempValue);
+        // occupy SPI bus by DPA driver
+        dpaRunDriver();
+    }
 }
 
 /**
@@ -186,7 +189,7 @@ void loop()
  */
 void systemTimerIterruptHandler(void)
 {
-  dpaLibraryDriver();
+    dpaLibraryDriver();
 }
 
 #if defined(__SPI_INTERFACE__)
@@ -198,18 +201,18 @@ void systemTimerIterruptHandler(void)
  */
 uint8_t dpaSendSpiByte(uint8_t Tx_Byte)
 {
-  uint8_t Rx_Byte;
+    uint8_t Rx_Byte;
 
-  if (!DpaControl.TRmoduleSelected) {
-    SPI.beginTransaction(SPISettings(250000, MSBFIRST, SPI_MODE0));
-    DpaControl.TRmoduleSelected = true;
-    digitalWrite(TR_SS, LOW);
-    delayMicroseconds(15);
-  }
+    if (!DpaControl.TRmoduleSelected) {
+        SPI.beginTransaction(SPISettings(250000, MSBFIRST, SPI_MODE0));
+        DpaControl.TRmoduleSelected = true;
+        digitalWrite(TR_SS, LOW);
+        delayMicroseconds(15);
+    }
 
-  Rx_Byte = SPI.transfer(Tx_Byte);
+    Rx_Byte = SPI.transfer(Tx_Byte);
 
-  return(Rx_Byte);
+    return(Rx_Byte);
 }
 
 /**
@@ -217,9 +220,9 @@ uint8_t dpaSendSpiByte(uint8_t Tx_Byte)
  */
 void dpaDeselectTRmodule(void)
 {
-  digitalWrite(TR_SS, HIGH);
-  DpaControl.TRmoduleSelected = false;
-  SPI.endTransaction();
+    digitalWrite(TR_SS, HIGH);
+    DpaControl.TRmoduleSelected = false;
+    SPI.endTransaction();
 }
 
 #elif defined(__UART_INTERFACE__)
@@ -230,7 +233,7 @@ void dpaDeselectTRmodule(void)
  */
 void dpaSendUartByte(uint8_t Tx_Byte)
 {
-  Serial1.write(Tx_Byte);
+    Serial1.write(Tx_Byte);
 }
 
 /**
@@ -240,23 +243,23 @@ void dpaSendUartByte(uint8_t Tx_Byte)
  */
 uint8_t dpaReceiveUartByte(uint8_t *Rx_Byte)
 {
-  if (Serial1.available() > 0) {
-    *Rx_Byte = Serial1.read();
-    return(true);
-  }
-  return(false);
+    if (Serial1.available() > 0) {
+        *Rx_Byte = Serial1.read();
+        return(true);
+    }
+    return(false);
 }
 #endif
 
 /**
- * Asynchronous packet service rutine
+ * Asynchronous packet service routine
  * @param dpaAnswerPkt Pointer to DPA answer packet
  */
 void myAsyncPacketHandler(T_DPA_PACKET *dpaAnswerPkt)
 {
-  memcpy((uint8_t *)&MyDpaPacket, (uint8_t *)dpaAnswerPkt, sizeof(T_DPA_PACKET));
-  AsyncPacketReceived = true;
-  Serial.println(F("Async packet received"));
+    memcpy((uint8_t *)&MyDpaPacket, (uint8_t *)dpaAnswerPkt, sizeof(T_DPA_PACKET));
+    AsyncPacketReceived = true;
+    Serial.println(F("Async packet received"));
 }
 
 /**
@@ -267,18 +270,18 @@ void myAsyncPacketHandler(T_DPA_PACKET *dpaAnswerPkt)
  */
 void mqttCallback(char* Topic, byte* Payload, unsigned int Length)
 {
-  Serial.print(F("Message arrived ["));
-  Serial.print(Topic);
-  Serial.print("] ");
-  for (uint16_t i = 0; i < Length; i++) {
-    Serial.print((char) Payload[i]);
-  }
-  Serial.println();
-  if (jsonParse(&MyDpaPacket, Payload, Length) == JSON_PARSE_OK){
-    Serial.println(F("Parse OK"));
-    DpaDataReady = true;
-  }
-  else Serial.println(F("Parse ERROR"));
+    Serial.print(F("Message arrived ["));
+    Serial.print(Topic);
+    Serial.print("] ");
+    for (uint16_t i = 0; i < Length; i++)
+        Serial.print((char) Payload[i]);
+    Serial.println();
+    if (jsonParse(&MyDpaPacket, Payload, Length) == JSON_PARSE_OK) {
+        Serial.println(F("Parse OK"));
+        DpaDataReady = true;
+    } else {
+        Serial.println(F("Parse ERROR"));
+    }
 }
 
 /**
@@ -286,18 +289,17 @@ void mqttCallback(char* Topic, byte* Payload, unsigned int Length)
  */
 void mqttReconnect()
 {
-  Serial.print(F("Attempting MQTT connection..."));
-  // Attempt to connect
-  if (client.connect("iqrfDpaGate")) {
-    Serial.println(F("connected"));
-    // Once connected, publish an announcement...
-    client.publish(MqttPublishTopic, "DPA gate ready");
-    // ... and resubscribe
-    client.subscribe(MqttSubscribeTopic);
-  }
-  else {
-    Serial.print(F("failed, rc="));
-    Serial.println(client.state());
-    delay(1000);
-  }
+    Serial.print(F("Attempting MQTT connection..."));
+    // Attempt to connect
+    if (client.connect("iqrfDpaGate")) {
+        Serial.println(F("connected"));
+        // Once connected, publish an announcement...
+        client.publish(MqttPublishTopic, "DPA gate ready");
+        // ... and resubscribe
+        client.subscribe(MqttSubscribeTopic);
+    } else {
+        Serial.print(F("failed, rc="));
+        Serial.println(client.state());
+        delay(1000);
+    }
 }

@@ -1,6 +1,6 @@
 /**
  * @file DPA support library (JSON support)
- * @version 1.3.2
+ * @version 1.4.0
  *
  * Copyright 2015-2018 IQRF Tech s.r.o.
  *
@@ -30,8 +30,8 @@ extern "C" {
 #define JSON_OBJECT_BUFF_SIZE   384
 
 typedef enum{
-  JSON_PARSE_OK = 0,
-  JSON_PARSE_ERROR
+    JSON_PARSE_OK = 0,
+    JSON_PARSE_ERROR
 } PARSE_RESULT;
 
 /**
@@ -50,7 +50,7 @@ PARSE_RESULT jsonParse(T_DPA_PACKET *DpaPacket, uint8_t *DataBuffer, uint16_t Da
 
 /**
  * Create JSON message from received DPA packet
- * @param DataBuffer  - pointer to buffer with gererated JSON message
+ * @param DataBuffer  - pointer to buffer with generated JSON message
  * @param DpaResponse - pointer to T_DPA_PACKET with DPA notification or response data
  * @param DpaOperationResult - result of dpaSendRequest(... ) function
  * @return size of created JSON message (0 = message was not created, due to its size is over the size of DataBuffer)
