@@ -1,6 +1,6 @@
 /**
  * @file DPA support library
- * @version 1.3.2
+ * @version 1.4.0
  *
  * Copyright 2015-2018 IQRF Tech s.r.o.
  *
@@ -27,10 +27,10 @@ extern "C" {
 #include <stddef.h>
 #include <stdbool.h>
 
-#define __SPI_INTERFACE__       // select for comunication via SPI
-//#define __UART_INTERFACE__    // select for comunication via UART
+#define __SPI_INTERFACE__       // select for communication via SPI
+//#define __UART_INTERFACE__    // select for communication via UART
 
-//#define __STORE_CODE_SUPPORT__  // uncomment for TR7xD modules code upload support
+#define __STORE_CODE_SUPPORT__  // uncomment for TR7xD modules code upload support
 
 #define systemDisableInt() noInterrupts() // disable Interrupts (Arduino platform)
 #define systemEnableInt()  interrupts()   // enable Interrupts (Arduino platform)
@@ -49,50 +49,49 @@ typedef int16_t   int16;
 
 // dpaSendRequest(...  ) function return codes
 typedef enum{
-  DPA_OPERATION_OK = 0,
-  DPA_OPERATION_IN_PROGRESS,
-  DPA_OPERATION_TIMEOUT,
-  DPA_CONFIRMATION_ERR,
-  DPA_RESPONSE_ERR,
-  DPA_TR_MODULE_NOT_READY
+    DPA_OPERATION_OK = 0,
+    DPA_OPERATION_IN_PROGRESS,
+    DPA_OPERATION_TIMEOUT,
+    DPA_CONFIRMATION_ERR,
+    DPA_RESPONSE_ERR,
+    DPA_TR_MODULE_NOT_READY
 } DPA_OPERATION_RESULT;
 
 typedef struct {
-  uint16_t NADR;
-  uint8_t PNUM;
-  uint8_t PCMD;
-  uint16_t HWPID;
-  uint8_t ResponseCode;
-  uint8_t DpaValue;
-  TDpaMessage DpaMessage;
+    uint16_t NADR;
+    uint8_t PNUM;
+    uint8_t PCMD;
+    uint16_t HWPID;
+    uint8_t ResponseCode;
+    uint8_t DpaValue;
+    TDpaMessage DpaMessage;
 } T_DPA_PACKET;
 
 typedef void (*T_DPA_ANSWER_HANDLER)(T_DPA_PACKET *DpaAnswer); // DPA response callback function type
 typedef void (*T_DPA_TIMEOUT_HANDLER)(void); // DPA timeout callback function type
 
 typedef struct {
-  volatile uint8_t Status;
-  uint8_t SuspendFlag;
-  uint8_t BroadcastRoutingFlag;
-  uint8_t WasConfirmed;
-  uint8_t TRmoduleSelected;
-  uint8_t TimeCnt;
-  uint8_t ExtraDataSize;
-  uint8_t RdExtraDataSize;
-  uint8_t TimeoutPrescaller;
-  uint16_t TimeoutTimer;
-  uint16_t FileByteCounter;
-  uint32_t RequestTs;
-  uint32_t ConfirmationTs;
-  uint32_t ResponseTs;
-  T_DPA_ANSWER_HANDLER DpaAnswerHandler;
-  T_DPA_TIMEOUT_HANDLER DpaTimeoutHandler;
-  T_DPA_PACKET *DpaRequestPacketPtr;
+    volatile uint8_t Status;
+    uint8_t SuspendFlag;
+    uint8_t BroadcastRoutingFlag;
+    uint8_t WasConfirmed;
+    uint8_t TRmoduleSelected;
+    uint8_t TimeCnt;
+    uint8_t ExtraDataSize;
+    uint8_t RdExtraDataSize;
+    uint8_t TimeoutPrescaller;
+    uint16_t TimeoutTimer;
+    uint16_t FileByteCounter;
+    uint32_t RequestTs;
+    uint32_t ConfirmationTs;
+    uint32_t ResponseTs;
+    T_DPA_ANSWER_HANDLER DpaAnswerHandler;
+    T_DPA_TIMEOUT_HANDLER DpaTimeoutHandler;
+    T_DPA_PACKET *DpaRequestPacketPtr;
 } T_DPA_CONTROL;
 
 extern T_DPA_CONTROL DpaControl;
 extern uint8_t LastConfirmationData[11];
-
 
 #if defined(__STORE_CODE_SUPPORT__)
 
@@ -104,12 +103,12 @@ extern uint8_t LastConfirmationData[11];
 #define DPA_STORE_CODE_ERROR      222     // dpaStoreCodeToEeeprom return code (operation ended with error)
 
 typedef struct {
-  uint16_t TrAddress; // DPA address of destination TR module
-  uint16_t ImageEeepromAdr; // absolute address in TR eeeprom to store code
-  uint16_t ImageSize; // size of code image stored in eeeprom
-  uint16_t ImageCRC; // initial CRC value (before save) / CRC of code image (after save)
-  uint16_t FileSize; // size of code file on SD card
-  uint8_t FileType; // file type (HEX / IQRF)
+    uint16_t TrAddress;                   // DPA address of destination TR module
+    uint16_t ImageEeepromAdr;             // absolute address in TR eeeprom to store code
+    uint16_t ImageSize;                   // size of code image stored in eeeprom
+    uint16_t ImageCRC;                    // initial CRC value (before save) / CRC of code image (after save)
+    uint16_t FileSize;                    // size of code file on SD card
+    uint8_t FileType;                     // file type (HEX / IQRF)
 } T_DPA_CODE_FILE_INFO;
 
 extern uint16_t DpaAditionalTimeout;
@@ -145,17 +144,17 @@ void dpaLibraryDriver(void);
 uint8_t dpaMakeConfigurationCRC(T_DPA_PACKET *DpaRequest);
 
 /**
- * Temporary suspend DPA comunication driver
+ * Temporary suspend DPA communication driver
  */
 void dpaSuspendDriver(void);
 
 /**
- * Run DPA comunication driver
+ * Run DPA communication driver
  */
 void dpaRunDriver(void);
 
 /**
- * Convetr two ASCII chars tu number
+ * Convert two ASCII chars to number
  * @param dataByteHi High nibble in ASCII
  * @param dataByteLo Low nibble in ASCII
  * @return Number
@@ -165,14 +164,14 @@ uint8_t dpaConvertToNum(uint8_t dataByteHi, uint8_t dataByteLo);
 /**
  * Function for store HEX or IQRF code image to external EEPROM in TR module
  * @param CodeFileInfo  pointer to T_DPA_CODE_FILE_INFO structure with code file image information
- * @return  Proggess status or operation result (0 - 100 -> progress status, DPA_STORE_CODE_SUCCESS, DPA_STORE_CODE_ERROR)
+ * @return  Progress status or operation result (0 - 100 -> progress status, DPA_STORE_CODE_SUCCESS, DPA_STORE_CODE_ERROR)
  */
 #if defined(__STORE_CODE_SUPPORT__)
 uint8_t dpaStoreCodeToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo);
 #endif
 
 /**
- * Macro: increments value of file byte couter used in dpaStoreCodeToEeeprom(...) function
+ * Macro: increments value of file byte counter used in dpaStoreCodeToEeeprom(...) function
  */
 #define dpaIncFileByteCounter() DpaControl.FileByteCounter++
 
@@ -182,12 +181,12 @@ uint8_t dpaStoreCodeToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo);
 #define dpaGetRxExtraDataSize() DpaControl.RdExtraDataSize
 
 /**
- * Macro: return last dpa packet confirmation state
+ * Macro: return last DPA packet confirmation state
  */
 #define dpaWasConfirmed() DpaControl.WasConfirmed
 
 /**
- * Macro: return last dpa packet response state
+ * Macro: return last DPA packet response state
  */
 #define dpaWasResponsed() (DpaControl.BroadcastRoutingFlag != true)
 
@@ -197,17 +196,17 @@ uint8_t dpaStoreCodeToEeeprom(T_DPA_CODE_FILE_INFO *CodeFileInfo);
 #define dpaGetConfirmationData()  LastConfirmationData
 
 /**
- * Macro: return dpa request time stamp in [ms]
+ * Macro: return DPA request time stamp in [ms]
  */
 #define dpaGetRequestTs() DpaControl.RequestTs
 
 /**
- * Macro: return dpa confirmation time stamp in [ms]
+ * Macro: return DPA confirmation time stamp in [ms]
  */
 #define dpaGetConfirmationTs() DpaControl.ConfirmationTs
 
 /**
- * Macro: return dpa response time stamp in [ms]
+ * Macro: return DPA response time stamp in [ms]
  */
 #define dpaGetResponseTs() DpaControl.ResponseTs
 

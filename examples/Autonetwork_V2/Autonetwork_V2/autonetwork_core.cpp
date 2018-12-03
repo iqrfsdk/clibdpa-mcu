@@ -126,10 +126,9 @@ uint8_t nextFreeAddr(void)
 {
     uint8_t CheckAddr;
 
-    for(CheckAddr=1; CheckAddr<MAX_ADDRESS; CheckAddr++) {
+    for(CheckAddr=1; CheckAddr<MAX_ADDRESS; CheckAddr++)
         if(isNodeBonded(CheckAddr) == 0)
-            return CheckAddr;
-    }
+            return (CheckAddr);
 
     // No free address
     return(ERR_NO_FREE_ADDRESS);
@@ -162,9 +161,9 @@ void delayMS(uint32_t Time)
                         Prebonding.ReturnCode = ERR_PROCESS_TERMINATED;
                         return;
                     }
-                }
-                else
+                } else {
                     InputCharMem = InputChar;
+                }
             }
         }
     }
@@ -181,10 +180,10 @@ void delayMS(uint32_t Time)
 void notifyMainApp(uint8_t EventCode, uint8_t Param)
 {
     if(notify_cb != NULL) {
-      if(Param == EVT_WITHOUT_PARAM)
-          notify_cb(EventCode, NULL);
-      else
-          notify_cb(EventCode, &AutonetworkState);
+        if(Param == EVT_WITHOUT_PARAM)
+            notify_cb(EventCode, NULL);
+        else
+            notify_cb(EventCode, &AutonetworkState);
     }
 }
 
@@ -206,21 +205,22 @@ uint8_t sendMyDpaRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Ti
         NotifyException = true;
 
     // send request and wait for result
-    while((OpResult = dpaSendRequest(DpaRequest, DataSize, Timeout)) == DPA_OPERATION_IN_PROGRESS);
+    while((OpResult = dpaSendRequest(DpaRequest, DataSize, Timeout)) == DPA_OPERATION_IN_PROGRESS)
+        ; /* void */
 
     if (NotifyException == false) {
         switch (OpResult) {
-            case DPA_OPERATION_TIMEOUT:
-                notifyMainApp(EVT_DPA_OPERATION_TIMEOUT, EVT_WITHOUT_PARAM);
-                break;
+        case DPA_OPERATION_TIMEOUT:
+            notifyMainApp(EVT_DPA_OPERATION_TIMEOUT, EVT_WITHOUT_PARAM);
+            break;
 
-            case DPA_CONFIRMATION_ERR:
-                notifyMainApp(EVT_DPA_CONFIRMATION_TIMEOUT, EVT_WITHOUT_PARAM);
-                break;
+        case DPA_CONFIRMATION_ERR:
+            notifyMainApp(EVT_DPA_CONFIRMATION_TIMEOUT, EVT_WITHOUT_PARAM);
+            break;
 
-            case DPA_RESPONSE_ERR:
-                notifyMainApp(EVT_DPA_RESPONSE_TIMEOUT, EVT_WITHOUT_PARAM);
-                break;
+        case DPA_RESPONSE_ERR:
+            notifyMainApp(EVT_DPA_RESPONSE_TIMEOUT, EVT_WITHOUT_PARAM);
+            break;
         }
     }
 
@@ -271,9 +271,8 @@ uint8_t getDiscoveredNodes(void)
     MyDpaPacket.PCMD = CMD_COORDINATOR_DISCOVERED_DEVICES;
     OpResult = sendMyDpaRequest(&MyDpaPacket, 0, SHORT_TIMEOUT);
 
-    if (OpResult == DPA_OPERATION_OK) {
+    if (OpResult == DPA_OPERATION_OK)
         memcpy(NetworkInfo.DiscoveredNodesMap, (void*)&MyDpaPacket.DpaMessage.Response.PData[0], NODE_BITMAP_SIZE);
-    }
 
     return(OpResult);
 }
@@ -296,9 +295,8 @@ uint8_t getBondedNodes(void)
     MyDpaPacket.PCMD = CMD_COORDINATOR_BONDED_DEVICES;
     OpResult = sendMyDpaRequest(&MyDpaPacket, 0, SHORT_TIMEOUT);
 
-    if (OpResult == DPA_OPERATION_OK) {
+    if (OpResult == DPA_OPERATION_OK)
         memcpy(NetworkInfo.BondedNodesMap, (void*)&MyDpaPacket.DpaMessage.Response.PData[0], NODE_BITMAP_SIZE);
-    }
 
     return(OpResult);
 }
@@ -361,9 +359,8 @@ uint8_t discovery(uint8_t TxPower, uint8_t MaxAddr)
 
     OpResult = sendMyDpaRequest(&MyDpaPacket, sizeof(TPerCoordinatorDiscovery_Request), LONG_TIMEOUT);
 
-    if (OpResult == DPA_OPERATION_OK) {
+    if (OpResult == DPA_OPERATION_OK)
         Prebonding.Param = MyDpaPacket.DpaMessage.PerCoordinatorDiscovery_Response.DiscNr;
-    }
 
     return(OpResult);
 }
@@ -423,6 +420,7 @@ uint8_t sendBatch(uint16_t Addr, uint8_t Len)
     MyDpaPacket.HWPID = HWPID_DoNotCheck;
     MyDpaPacket.PNUM = PNUM_OS;
     MyDpaPacket.PCMD = CMD_OS_BATCH;
+
     return(sendMyDpaRequest(&MyDpaPacket, Len, LONG_TIMEOUT));
 }
 
@@ -447,9 +445,8 @@ uint8_t readPrebondedMID(void)
         TemporaryMID |= (uint32_t)Prebonding.FrcData[BufferPtr + 2] << 16;
         TemporaryMID |= (uint32_t)Prebonding.FrcData[BufferPtr + 3] << 24;
 
-        if (TemporaryMID != 0) {
+        if (TemporaryMID != 0)
             Prebonding.MIDlist[MIDcount++] = TemporaryMID - 1;
-        }
     }
 
     return (MIDcount);
@@ -470,6 +467,7 @@ uint8_t ledG(uint16_t Addr, uint8_t Cmd)
     MyDpaPacket.HWPID = HWPID_DoNotCheck;
     MyDpaPacket.PNUM = PNUM_LEDG;
     MyDpaPacket.PCMD = Cmd;
+
     return(sendMyDpaRequest(&MyDpaPacket, 0, SHORT_TIMEOUT));
 }
 
@@ -488,6 +486,7 @@ uint8_t ledR(uint16_t Addr, uint8_t Cmd)
     MyDpaPacket.HWPID = HWPID_DoNotCheck;
     MyDpaPacket.PNUM = PNUM_LEDR;
     MyDpaPacket.PCMD = Cmd;
+
     return(sendMyDpaRequest(&MyDpaPacket, 0, SHORT_TIMEOUT));
 }
 
@@ -559,9 +558,8 @@ uint8_t frcSelectiveSend(uint8_t Len)
 
     OpResult = sendMyDpaRequest(&MyDpaPacket, Len, LONG_TIMEOUT);
 
-    if (OpResult == DPA_OPERATION_OK) {
+    if (OpResult == DPA_OPERATION_OK)
         memcpy((void*)&Prebonding.FrcData[FRC_DATA_OFFSET], (void*)&MyDpaPacket.DpaMessage.PerFrcSend_Response.FrcData[0], FRC_DATA_SIZE);
-    }
 
     return(OpResult);
 }
@@ -723,9 +721,8 @@ uint8_t autonetwork(T_AN_PARAMS *Parameters)
 
     for(;;) {
         // check termination conditions of autonetwork process
-        if (Prebonding.WaveCnt >= ANparams.BondingWaves || Prebonding.EmtyWaveCnt >= ANparams.EmptyWaves) {
+        if (Prebonding.WaveCnt >= ANparams.BondingWaves || Prebonding.EmtyWaveCnt >= ANparams.EmptyWaves)
             break;
-        }
 
         Prebonding.WaveCnt++;
         Prebonding.NewNodesCount = 0;
@@ -753,14 +750,13 @@ uint8_t autonetwork(T_AN_PARAMS *Parameters)
             memcpy(&Prebonding.PrebondedNodesMap[0], &Prebonding.FrcData[0], NODE_BITMAP_SIZE);
             if (Prebonding.PrebondedNodesCount == 0) {
                 notifyMainApp(EVT_NO_NEW_NODE_PREBONDED, EVT_WITHOUT_PARAM);
-            }
-            else{
+            } else {
                 Prebonding.Param = Prebonding.PrebondedNodesCount;
                 notifyMainApp(EVT_PREBONDED_NEW_NODE, EVT_WITH_PARAM);
             }
-        }
-        else
+        } else {
             Prebonding.PrebondedNodesCount = 0;
+        }
 
         // if any new nodes are prebonded
         if (Prebonding.PrebondedNodesCount != 0) {
@@ -784,9 +780,9 @@ uint8_t autonetwork(T_AN_PARAMS *Parameters)
                     Prebonding.ReadedMIDCount = readPrebondedMID();
                     if (Prebonding.ReadedMIDCount > Prebonding.PrebondedNodesCount)
                         Prebonding.ReadedMIDCount = Prebonding.PrebondedNodesCount;
-                }
-                else
+                } else {
                     Prebonding.ReadedMIDCount = 0;
+                }
 
                 if (Prebonding.ReadedMIDCount != 0) {
                     Prebonding.PrebondedMIDcount += Prebonding.ReadedMIDCount;
@@ -807,13 +803,11 @@ uint8_t autonetwork(T_AN_PARAMS *Parameters)
                         ANparams.BondingWaves = 0;
                         Prebonding.ReturnCode = ERR_NO_FREE_ADDRESS;
                         break;
-                    }
-                    else{
+                    } else {
                         // Authorize node
                         notifyMainApp(EVT_AUTHORIZE_BOND, EVT_WITH_PARAM);
-                        if (authorizeBond(Prebonding.NextAddr, Prebonding.MID) == DPA_OPERATION_OK) {
+                        if (authorizeBond(Prebonding.NextAddr, Prebonding.MID) == DPA_OPERATION_OK)
                             notifyMainApp(EVT_AUTHORIZE_BOND_OK, EVT_WITH_PARAM);
-                        }
                     }
                     delayMS(100);
                 }
@@ -828,9 +822,8 @@ uint8_t autonetwork(T_AN_PARAMS *Parameters)
             MyDpaPacket.DpaMessage.PerFrcSendSelective_Request.UserData[0] = 0;
             MyDpaPacket.DpaMessage.PerFrcSendSelective_Request.UserData[1] = 0;
             if (frcSelectiveSend(sizeof(MyDpaPacket.DpaMessage.PerFrcSendSelective_Request) - sizeof(MyDpaPacket.DpaMessage.PerFrcSendSelective_Request.UserData) + 2) == DPA_OPERATION_OK) {
-                for (Cnt=0; Cnt<NODE_BITMAP_SIZE; Cnt++) {
+                for (Cnt=0; Cnt<NODE_BITMAP_SIZE; Cnt++)
                     Prebonding.NewNodesMap[Cnt] ^= Prebonding.FrcData[Cnt];
-                }
                 for (Cnt=1; Cnt<=MAX_ADDRESS; Cnt++) {
                     if (getBitValue(Prebonding.NewNodesMap, Cnt) == 1) {
                         if (Prebonding.NewNodesCount)
@@ -858,9 +851,8 @@ uint8_t autonetwork(T_AN_PARAMS *Parameters)
             // Run Discovery
             for (uint8_t DiscoveryRetry = ANparams.DiscoveryRetries; DiscoveryRetry != 0; DiscoveryRetry--) {
                 notifyMainApp(EVT_DISCOVERY, EVT_WITHOUT_PARAM);
-                if (discovery(ANparams.DiscoveryTxPower, 0) == DPA_OPERATION_OK) {
+                if (discovery(ANparams.DiscoveryTxPower, 0) == DPA_OPERATION_OK)
                     notifyMainApp(EVT_DISCOVERY_OK, EVT_WITH_PARAM);
-                }
                 // Get addressing info
                 getAddrInfo();
                 // Get bonded nodes bitmap
@@ -869,16 +861,14 @@ uint8_t autonetwork(T_AN_PARAMS *Parameters)
                 getDiscoveredNodes();
 
                 NetworkInfo.DiscoveredNodesCount = 0;
-                for (Cnt = 1; Cnt <= MAX_ADDRESS; Cnt++) {
+                for (Cnt = 1; Cnt <= MAX_ADDRESS; Cnt++)
                     if (getBitValue(NetworkInfo.DiscoveredNodesMap, Cnt) == 1)
                         NetworkInfo.DiscoveredNodesCount++;
-                }
 
                 if(NetworkInfo.DiscoveredNodesCount == NetworkInfo.BondedNodesCount)
                     break;
             }
-        }
-        else{
+        } else {
             Prebonding.EmtyWaveCnt++;
         }
     }
