@@ -1,6 +1,6 @@
 /**
  * @file DPA support library (JSON support)
- * @version 1.4.0
+ * @version 1.5.0
  *
  * Copyright 2015-2018 IQRF Tech s.r.o.
  *

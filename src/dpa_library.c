@@ -1,6 +1,6 @@
 /**
  * @file DPA support library
- * @version 1.4.0
+ * @version 1.5.0
  *
  * Copyright 2015-2018 IQRF Tech s.r.o.
  *
@@ -20,6 +20,18 @@
 #include <Arduino.h>
 #include <ctype.h>
 #include "dpa_library.h"
+
+#if defined (__DPA_DEVELOPER_MODE__)
+
+#define MSG_DATA_TO_SEND          0
+#define MSG_CONFIRMATION_OK       1
+#define MSG_CONFIRMATION_ERROR    2
+#define MSG_RESPONSE_OK           3
+#define MSG_RESPONSE_ERROR        4
+
+void packetPrinter(uint8_t Message, uint8_t *Buffer, uint8_t DataSize);
+
+#endif
 
 #if defined(__SPI_INTERFACE__)
 
@@ -249,6 +261,9 @@ DPA_OPERATION_RESULT dpaSendRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, 
         while (DpaControl.Status == DPA_BUSY)
             ; /* void */
 
+#if defined (__DPA_DEVELOPER_MODE__)
+        packetPrinter(MSG_DATA_TO_SEND, (uint8_t *)DpaRequest, 6 + DataSize);
+#endif
         systemDisableInt(); // disable interrupts
         // save pointer to async packet user service routine
         tempReceiverHandler = DpaControl.DpaAnswerHandler;
@@ -276,6 +291,9 @@ DPA_OPERATION_RESULT dpaSendRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, 
 
     // confirmation received OK
     case DPA_SM_PROCESS_CONFIRMATION:
+#if defined (__DPA_DEVELOPER_MODE__)
+        packetPrinter(MSG_CONFIRMATION_OK, (uint8_t *)LastConfirmationData, 11);
+#endif
         if (DpaControl.BroadcastRoutingFlag)
             DpaApplicationSM = DPA_SM_WAIT_BROADCAST_ROUTING;   // wait for broadcast routing
         else
@@ -284,8 +302,11 @@ DPA_OPERATION_RESULT dpaSendRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, 
 
     // response received OK
     case DPA_SM_PROCESS_RESPONSE:
+#if defined (__DPA_DEVELOPER_MODE__)
+        packetPrinter(MSG_RESPONSE_OK, (uint8_t *)&DpaLibDpaAnswer, 8 + DpaControl.RdExtraDataSize);
+#endif
         // copy received DPA response packet to user DPA packet structure
-        memcpy((uint8_t *) DpaRequest, (uint8_t *) &DpaLibDpaAnswer, sizeof(T_DPA_PACKET));
+        memcpy((uint8_t *)DpaRequest, (uint8_t *)&DpaLibDpaAnswer, sizeof(T_DPA_PACKET));
         OperationResult = DPA_OPERATION_OK;
         break;
 
@@ -297,14 +318,20 @@ DPA_OPERATION_RESULT dpaSendRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, 
 
     // confirmation error
     case DPA_SM_CONFIRMATION_ERR:
+#if defined (__DPA_DEVELOPER_MODE__)
+        packetPrinter(MSG_CONFIRMATION_ERROR, (uint8_t *)LastConfirmationData, 11);
+#endif
         OperationResult = DPA_CONFIRMATION_ERR;
         break;
 
     // response error
     case DPA_SM_RESPONSE_ERR:
-         OperationResult = DPA_RESPONSE_ERR;
-         memcpy((uint8_t *) DpaRequest, (uint8_t *) &DpaLibDpaAnswer, sizeof(T_DPA_PACKET));
-         break;
+#if defined (__DPA_DEVELOPER_MODE__)
+        packetPrinter(MSG_RESPONSE_ERROR, (uint8_t *)&DpaLibDpaAnswer, 8 + DpaControl.RdExtraDataSize);
+#endif
+        OperationResult = DPA_RESPONSE_ERR;
+        memcpy((uint8_t *)DpaRequest, (uint8_t *)&DpaLibDpaAnswer, sizeof(T_DPA_PACKET));
+        break;
 
     // operation timeout
     case DPA_SM_TIMEOUT:
