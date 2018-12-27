@@ -30,9 +30,8 @@ extern "C" {
 #define __SPI_INTERFACE__       // select for communication via SPI
 //#define __UART_INTERFACE__    // select for communication via UART
 
-#define __STORE_CODE_SUPPORT__  // uncomment for TR7xD modules code upload support
-
-#define __DPA_DEVELOPER_MODE__  // in developer mode prints DPA communication packets to console
+//#define __STORE_CODE_SUPPORT__  // uncomment for TR7xD modules code upload support
+//#define __DPA_DEVELOPER_MODE__  // in developer mode prints DPA communication packets to console
 
 #define systemDisableInt() noInterrupts() // disable Interrupts (Arduino platform)
 #define systemEnableInt()  interrupts()   // enable Interrupts (Arduino platform)
