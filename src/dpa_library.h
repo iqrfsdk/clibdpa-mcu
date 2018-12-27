@@ -1,6 +1,6 @@
 /**
  * @file DPA support library
- * @version 1.4.0
+ * @version 1.5.0
  *
  * Copyright 2015-2018 IQRF Tech s.r.o.
  *
@@ -31,6 +31,8 @@ extern "C" {
 //#define __UART_INTERFACE__    // select for communication via UART
 
 #define __STORE_CODE_SUPPORT__  // uncomment for TR7xD modules code upload support
+
+#define __DPA_DEVELOPER_MODE__  // in developer mode prints DPA communication packets to console
 
 #define systemDisableInt() noInterrupts() // disable Interrupts (Arduino platform)
 #define systemEnableInt()  interrupts()   // enable Interrupts (Arduino platform)

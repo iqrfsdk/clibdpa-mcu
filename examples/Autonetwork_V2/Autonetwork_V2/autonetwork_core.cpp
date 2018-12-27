@@ -775,6 +775,9 @@ uint8_t autonetwork(T_AN_PARAMS *Parameters)
                 MyDpaPacket.DpaMessage.PerFrcSendSelective_Request.UserData[4] = PNUM_OS;
                 MyDpaPacket.DpaMessage.PerFrcSendSelective_Request.UserData[5] = CMD_OS_READ;
                 MyDpaPacket.DpaMessage.PerFrcSendSelective_Request.UserData[6] = 0;
+#if defined (__DPA_DEVELOPER_MODE__)
+                notifyMainApp(EVT_FRC_READ_NEW_NODES_MID, EVT_WITHOUT_PARAM);
+#endif
                 if (frcSelectiveSend(sizeof(MyDpaPacket.DpaMessage.PerFrcSendSelective_Request) - sizeof(MyDpaPacket.DpaMessage.PerFrcSendSelective_Request.UserData) + 7) == DPA_OPERATION_OK) {
                     frcExtraResult();
                     Prebonding.ReadedMIDCount = readPrebondedMID();
@@ -785,8 +788,10 @@ uint8_t autonetwork(T_AN_PARAMS *Parameters)
                 }
 
                 if (Prebonding.ReadedMIDCount != 0) {
-                    Prebonding.PrebondedMIDcount += Prebonding.ReadedMIDCount;
+#if not defined (__DPA_DEVELOPER_MODE__)
                     notifyMainApp(EVT_FRC_READ_NEW_NODES_MID, EVT_WITHOUT_PARAM);
+#endif
+                    Prebonding.PrebondedMIDcount += Prebonding.ReadedMIDCount;
                 }
                 Prebonding.PrebondedMIDReadOffset += 15;
 
