@@ -52,9 +52,17 @@ void packetPrinter(uint8_t Message, uint8_t *Buffer, uint8_t DataSize)
     strcpy_P(MessageStr, &DebugMsg[Message][0]);
     Serial.println(MessageStr);
 
-    for (uint8_t Cnt=0; Cnt<DataSize; Cnt++){
+    // if "Data to send" are printed, 2 bytes after DPA header are skipped
+    // DataSize must be increased by 2
+    if (Message == 0)
+        DataSize += 2;
+
+    for (uint8_t Cnt=0; Cnt<DataSize; Cnt++) {
         Serial.print(Buffer[Cnt], HEX);
         Serial.print(" ");
+        // if "Data to send" are printed, 2 bytes after DPA header are skipped
+        if (Message==0 && Cnt==5)
+            Cnt += 2;
     }
     Serial.println();
 }
