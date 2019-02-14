@@ -515,7 +515,7 @@ void ccpCoordinatorCmd (uint16_t CommandTabParameter)
     uint8_t TxPower = 7;
     uint8_t MaxAddr = 32;
     uint8_t ErrFlag = 0;
-    uint8_t BondingMask = 0;
+    uint8_t BondingTestRetries = 0;
     char TempString[32];
 
     // DPA header
@@ -527,7 +527,6 @@ void ccpCoordinatorCmd (uint16_t CommandTabParameter)
     switch(CommandTabParameter) {
 
     case CMD_COORDINATOR_REMOVE_BOND:
-    case CMD_COORDINATOR_REBOND_NODE:
         MyDpaPacket.PCMD = CommandTabParameter;                    // set peripheral cmd
         if (ccpFindCmdParameter(CcpCommandParameter))              // is any command parameter ?
             ReqAddr = atoi(CcpCommandParameter);                   // read command parameter
@@ -541,7 +540,7 @@ void ccpCoordinatorCmd (uint16_t CommandTabParameter)
             if (sendMyDpaRequest(&MyDpaPacket, sizeof(TPerCoordinatorRemoveBond_Request), 2000) == DPA_OPERATION_OK) {
                 strcpy_P(TempString, CoordinatorNumBNodes);
                 Serial.print(TempString);
-                Serial.println(MyDpaPacket.DpaMessage.PerCoordinatorRemoveRebondBond_Response.DevNr);
+                Serial.println(MyDpaPacket.DpaMessage.PerCoordinatorRemoveBond_Response.DevNr);
             }
         }
         break;
@@ -597,7 +596,7 @@ void ccpCoordinatorCmd (uint16_t CommandTabParameter)
                 } else {
                     ReqAddr = atoi(CcpCommandParameter);
                     if (ccpFindCmdParameter(CcpCommandParameter))   // read bonding mask
-                        BondingMask = atoi(CcpCommandParameter);
+                        BondingTestRetries = atoi(CcpCommandParameter);
                 }
             }
         }
@@ -605,7 +604,7 @@ void ccpCoordinatorCmd (uint16_t CommandTabParameter)
         if (MyDpaPacket.PCMD == 0xFF) {                             // if command not defined
             MyDpaPacket.PCMD = CMD_COORDINATOR_BOND_NODE;
             MyDpaPacket.DpaMessage.PerCoordinatorBondNode_Request.ReqAddr = ReqAddr;   // Command parameters
-            MyDpaPacket.DpaMessage.PerCoordinatorBondNode_Request.BondingMask = BondingMask;
+            MyDpaPacket.DpaMessage.PerCoordinatorBondNode_Request.BondingTestRetries = BondingTestRetries;
             if (sendMyDpaRequest(&MyDpaPacket, sizeof(TPerCoordinatorBondNode_Request), 5000) == DPA_OPERATION_OK) {
                 strcpy_P(TempString, CoordinatorNodeAdr);
                 Serial.print(TempString);

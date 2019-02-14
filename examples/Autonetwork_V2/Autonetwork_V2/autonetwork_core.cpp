@@ -823,7 +823,7 @@ uint8_t autonetwork(T_AN_PARAMS *Parameters)
         if (Prebonding.NewNodesCount != 0) {
             notifyMainApp(EVT_FRC_CHECK_AUTHORIZED_NODES, EVT_WITHOUT_PARAM);
             memcpy((void*)&MyDpaPacket.DpaMessage.PerFrcSendSelective_Request.SelectedNodes, Prebonding.NewNodesMap, NODE_BITMAP_SIZE);
-            MyDpaPacket.DpaMessage.PerFrcSendSelective_Request.FrcCommand = FRC_Prebonding;
+            MyDpaPacket.DpaMessage.PerFrcSendSelective_Request.FrcCommand = FRC_Ping;
             MyDpaPacket.DpaMessage.PerFrcSendSelective_Request.UserData[0] = 0;
             MyDpaPacket.DpaMessage.PerFrcSendSelective_Request.UserData[1] = 0;
             if (frcSelectiveSend(sizeof(MyDpaPacket.DpaMessage.PerFrcSendSelective_Request) - sizeof(MyDpaPacket.DpaMessage.PerFrcSendSelective_Request.UserData) + 2) == DPA_OPERATION_OK) {

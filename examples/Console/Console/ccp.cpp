@@ -51,7 +51,6 @@ const COM Commands[] PROGMEM = {        // command decode table
     "ls", ccpLsCmd, 0,
     "bond", ccpCoordinatorCmd, 0,
     "unbondc", ccpCoordinatorCmd, CMD_COORDINATOR_REMOVE_BOND,
-    "rebondc", ccpCoordinatorCmd, CMD_COORDINATOR_REBOND_NODE,
     "discovery", ccpCoordinatorCmd, CMD_COORDINATOR_DISCOVERY,
     "ledr", ccpLedCmd, PNUM_LEDR,
     "ledg", ccpLedCmd, PNUM_LEDG,
