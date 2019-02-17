@@ -8,22 +8,15 @@ cache:
         - "~/.platformio"
 env:
     - PLATFORMIO_CI_SRC=examples/Autonetwork/Autonetwork/ INTERFACE=SPI
+    - PLATFORMIO_CI_SRC=examples/Autonetwork_V2/Autonetwork_V2/ INTERFACE=SPI
     - PLATFORMIO_CI_SRC=examples/Blink/Blink/ INTERFACE=SPI
     - PLATFORMIO_CI_SRC=examples/Console/Console/ INTERFACE=SPI
     - PLATFORMIO_CI_SRC=examples/MQTT/MQTT/ INTERFACE=SPI
     - PLATFORMIO_CI_SRC=examples/Autonetwork/Autonetwork/ INTERFACE=UART
+    - PLATFORMIO_CI_SRC=examples/Autonetwork_V2/Autonetwork_V2/ INTERFACE=UART
     - PLATFORMIO_CI_SRC=examples/Blink/Blink/ INTERFACE=UART
     - PLATFORMIO_CI_SRC=examples/Console/Console/ INTERFACE=UART
     - PLATFORMIO_CI_SRC=examples/MQTT/MQTT/ INTERFACE=UART
-matrix:
-    allow_failures:
-        - env: PLATFORMIO_CI_SRC=examples/Autonetwork/Autonetwork/ INTERFACE=SPI
-        - env: PLATFORMIO_CI_SRC=examples/Console/Console/ INTERFACE=SPI
-        - env: PLATFORMIO_CI_SRC=examples/MQTT/MQTT/ INTERFACE=SPI
-        - env: PLATFORMIO_CI_SRC=examples/Autonetwork/Autonetwork/ INTERFACE=UART
-        - env: PLATFORMIO_CI_SRC=examples/Blink/Blink/ INTERFACE=UART
-        - env: PLATFORMIO_CI_SRC=examples/Console/Console/ INTERFACE=UART
-        - env: PLATFORMIO_CI_SRC=examples/MQTT/MQTT/ INTERFACE=UART
 install:
     - pip install -U platformio
     - platformio lib -g install TimerOne DueTimer PubSubClient 872
@@ -33,6 +26,7 @@ install:
     - if [[ "$INTERFACE" == "UART" ]]; then sed -i "s/\/\/#define __UART_INTERFACE__/#define __UART_INTERFACE__/" src/dpa_library.h; fi
 script:
     - if [[ "$PLATFORMIO_CI_SRC" == "examples/Autonetwork/Autonetwork/" ]]; then platformio ci --lib="." --project-conf examples/Autonetwork/platformio.ini; fi
+    - if [[ "$PLATFORMIO_CI_SRC" == "examples/Autonetwork_V2/Autonetwork_V2/" ]]; then platformio ci --lib="." --project-conf examples/Autonetwork_V2/platformio.ini; fi
     - if [[ "$PLATFORMIO_CI_SRC" == "examples/Blink/Blink/" ]]; then platformio ci --lib="." --project-conf examples/Blink/platformio.ini; fi
     - if [[ "$PLATFORMIO_CI_SRC" == "examples/Console/Console/" ]]; then platformio ci --lib="." --project-conf examples/Console/platformio.ini; fi
     - if [[ "$PLATFORMIO_CI_SRC" == "examples/MQTT/MQTT/" ]]; then platformio ci --lib="." --project-conf examples/MQTT/platformio.ini; fi
