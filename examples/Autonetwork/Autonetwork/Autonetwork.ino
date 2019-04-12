@@ -35,11 +35,11 @@
  * C prototypes
  */
 #if defined(__SPI_INTERFACE__)
-  extern "C" uint8_t dpaSendSpiByte(uint8_t Tx_Byte);
-  extern "C" void dpaDeselectTRmodule(void);
+    extern "C" uint8_t dpaSendSpiByte(uint8_t Tx_Byte);
+    extern "C" void dpaDeselectTRmodule(void);
 #elif defined(__UART_INTERFACE__)
-  extern "C" void dpaSendUartByte(uint8_t Tx_Byte);
-  extern "C" uint8_t dpaReceiveUartByte(uint8_t *Rx_Byte);
+    extern "C" void dpaSendUartByte(uint8_t Tx_Byte);
+    extern "C" uint8_t dpaReceiveUartByte(uint8_t *Rx_Byte);
 #endif
 
 /*
@@ -53,7 +53,7 @@ void myAsyncPacketHandler(T_DPA_PACKET *dpaAnswerPkt);
 char SerialBufferOut[SERIAL_BUFFER_SIZE];
 T_AN_PARAMS MyAutonetworkParams;
 
-const char EventStrings[28][80] PROGMEM = {
+const char EventStrings[21][80] PROGMEM = {
     // Event EVT_AN_PROCESS_STARTED
     "Automatic network construction started\r\n\0",
     // Event EVT_AN_PROCESS_STOPPED
@@ -61,53 +61,39 @@ const char EventStrings[28][80] PROGMEM = {
     // Event EVT_GET_NETWORK_INFO
     "Getting initial network info\r\n\0",
     // Event EVT_ROUND_START
-    "\r\nRound=%u, Nodes=%u, New nodes=%u\r\n\0",
-    // Event EVT_COOR_ENABLE_PREBONDING
-    "Enable prebonding at coordinator, mask=%u, time=%u\r\n\0",
-    // Event EVT_COOR_DISABLE_PREBONDING
-    "Disable prebonding at coordinator\r\n\0",
-    // Event EVT_COOR_READ_MID
-    "Coordinator prebonded MID=%08lX, UserData=%08lX\r\n\0",
+    "\r\nWave=%u, Nodes=%u, New nodes=%u\r\n\0",
     // Event EVT_COOR_REMOVING_BOND
     "Removing node %u\r\n\0",
-    // Event EVT_NODE_ENABLE_PREBONDING
-    "Enable prebonding at nodes, mask=%u, time=%u, LEDR=1\r\n\0",
-    // Event EVT_NODE_DISABLE_PREBONDING
-    "Disable prebonding at nodes\r\n\0",
-    // Event EVT_NODE_READ_MID
-    "Node %u prebonded MID=%08lX, UserData=%08lX\r\n\0",
+    // Event EVT_SMART_CONNECT_PREBONDING
+    "Running Smart connect command\r\n\0",
     // Event EVT_AUTHORIZE_BOND
     "Authorizing node MID=%08lX, address %u\r\n\0",
     // Event EVT_AUTHORIZE_BOND_OK
     "OK, nodes count=%u\r\n\0",
     // Event EVT_DISCOVERY
     "Running discovery\r\n\0",
-    // Event EVT_DISCOVERY_WAIT
-    "Waiting for coordinator to finish discovery\r\n\0",
     // Event EVT_DISCOVERY_OK
     "Discovered nodes=%u\r\n\0",
-    // Event EVT_WAIT_PREBONDING
-    "Waiting for prebonding for %u seconds\r\n\0",
-    // Event EVT_FRC_DISABLE_PREBONDING
-    "Running FRC to disable and check for prebonding\r\n\0",
-    // Event EVT_FRC_DISABLE_PREBONDING_BIT0_ERR
-    "Error @ FRC bit.0 is set, but node %u not bonded\r\n\0",
-    // Event EVT_FRC_DISABLE_PREBONDING_BIT1_ERR
-    "Error @ FRC bit.1, set, but node %u is already bonded\r\n\0",
+    // Event EVT_FRC_READ_NEW_NODES_MID
+    "Running FRC to read new nodes MID\r\n\0",
+    // Event EVT_FRC_CHECK_AUTHORIZED_NODES
+    "Running FRC to check new authorized nodes\r\n\0",
     // Event EVT_FRC_CHECK_NEW_NODES
-    "Running FRC to check new nodes and removing 0xFE nodes\r\n\0",
+    "Running FRC to check new nodes \r\n\0",
     // Event EVT_NO_FREE_ADDRESS
     "No free address\r\n\0",
     // Event EVT_NO_NEW_NODE_PREBONDED
     "No new node prebonded\r\n\0",
+    // Event EVT_PREBONDED_NEW_NODE
+    "Prebonded %u new node(s) \r\n\0",
     // Event EVT_DPA_CONFIRMATION_TIMEOUT
-    "DPA confirmation timeout\r\n\0",
+    "DPA confirmation error\r\n\0",
     // Event EVT_DPA_RESPONSE_TIMEOUT
-    "DPA response timeout\r\n\0",
+    "DPA response error\r\n\0",
+    // Event EVT_DPA_OPERATION_TIMEOUT
+    "DPA operation timeout\r\n\0",
     // Event EVT_REMOVE_ALL_BONDS
     "Remove all bonds at nodes and coordinator, restart nodes\r\n\0",
-    // Event EVT_MAX_NODES_PREBONDED
-    "Maximum prebonded nodes reached\r\n\0",
     // Event EVT_NODE_REMOTE_UNBOND
     "Remote unbonding node %u\r\n\0"
 };
@@ -142,7 +128,7 @@ void setup()
     dpaInit(myAsyncPacketHandler);        // initialize DPA library
     autonetworkInit(autonetworkHandler);  // initialize autonetwork
 
-    Timer1.initialize(200);                             // initialize timer1, call dpa driver every 200us
+    Timer1.initialize(200);                             // initialize timer1, call DPA driver every 200us
     Timer1.attachInterrupt(dpaLibraryDriver);           // attaches callback() as a timer overflow interrupt
 }
 
@@ -166,7 +152,7 @@ uint8_t dpaSendSpiByte(uint8_t Tx_Byte)
 {
     uint8_t Rx_Byte;
 
-    if (!DpaControl.TRmoduleSelected){
+    if (!DpaControl.TRmoduleSelected) {
         SPI.beginTransaction(SPISettings(250000, MSBFIRST, SPI_MODE0));
         DpaControl.TRmoduleSelected = true;
         digitalWrite(TR_SS, LOW);
@@ -175,7 +161,7 @@ uint8_t dpaSendSpiByte(uint8_t Tx_Byte)
 
     Rx_Byte = SPI.transfer(Tx_Byte);
 
-    return Rx_Byte;
+    return (Rx_Byte);
 }
 
 /**
@@ -224,7 +210,7 @@ uint8_t dpaReceiveUartByte(uint8_t *Rx_Byte)
 #endif
 
 /**
- * asynchronous packet service rutine
+ * asynchronous packet service routine
  *
  * @param - dpaAnswerPkt pointer to T_DPA_PACKET structure with data from TR module
  * @return - none
@@ -246,68 +232,48 @@ void myAsyncPacketHandler(T_DPA_PACKET *dpaAnswerPkt)
  */
 void autonetworkHandler(uint8_t EventCode, T_AN_STATE *State)
 {
-    // Cpoy event description string to serial_buffer_out
+    // Copy event description string to serial_buffer_out
     strcpy_P(SerialBufferOut, &EventStrings[EventCode][0]);
 
     // Event with parameters ?
-    if (State != NULL){
+    if (State != NULL) {
         // Yes, event with parameters
         char Buffer[SERIAL_BUFFER_SIZE];
-        switch (EventCode){
+        switch (EventCode) {
 
-            case EVT_ROUND_START:
-                sprintf(Buffer, SerialBufferOut, State->PrebondingInfo->Round, State->NewtorkInfo->BondedNodesCount, State->NewtorkInfo->BondedNodesCount - State->PrebondingInfo->OrigNodesCount);
-                break;
+        case EVT_ROUND_START:
+            sprintf(Buffer, SerialBufferOut,
+                State->PrebondingInfo->WaveCnt,
+                State->NewtorkInfo->BondedNodesCount,
+                State->NewtorkInfo->BondedNodesCount - State->PrebondingInfo->OrigNodesCount);
+            break;
 
-            case EVT_COOR_ENABLE_PREBONDING:
-                sprintf(Buffer, SerialBufferOut, State->PrebondingInfo->BondingMask, State->Params->TemporaryAddressTimeout);
-                break;
+        case EVT_AUTHORIZE_BOND:
+            sprintf(Buffer, SerialBufferOut, State->PrebondingInfo->MID, State->PrebondingInfo->NextAddr);
+            break;
 
-            case EVT_NODE_ENABLE_PREBONDING:
-                sprintf(Buffer, SerialBufferOut, State->PrebondingInfo->BondingMask, State->Params->TemporaryAddressTimeout);
-                break;
+        case EVT_AUTHORIZE_BOND_OK:
+        case EVT_DISCOVERY_OK:
+        case EVT_COOR_REMOVING_BOND:
+        case EVT_NODE_REMOTE_UNBOND:
+        case EVT_PREBONDED_NEW_NODE:
+            sprintf(Buffer, SerialBufferOut, State->PrebondingInfo->Param);
+            break;
 
-            case EVT_WAIT_PREBONDING:
-                sprintf(Buffer, SerialBufferOut, State->PrebondingInfo->WaitBonding/*Delay*/);
-                break;
-
-            case EVT_COOR_READ_MID:
-                sprintf(Buffer, SerialBufferOut, State->PrebondingInfo->MID, State->PrebondingInfo->UserData);
-                break;
-
-            case EVT_NODE_READ_MID:
-                sprintf(Buffer, SerialBufferOut, State->PrebondingInfo->Param, State->PrebondingInfo->MID, State->PrebondingInfo->UserData);
-                break;
-
-            case EVT_AUTHORIZE_BOND:
-                sprintf(Buffer, SerialBufferOut, State->PrebondingInfo->MID, State->PrebondingInfo->NextAddr);
-                break;
-
-            case EVT_AUTHORIZE_BOND_OK:
-            case EVT_FRC_DISABLE_PREBONDING_BIT0_ERR:
-            case EVT_FRC_DISABLE_PREBONDING_BIT1_ERR:
-            case EVT_DISCOVERY_OK:
-            case EVT_COOR_REMOVING_BOND:
-            case EVT_NODE_REMOTE_UNBOND:
-                sprintf(Buffer, SerialBufferOut, State->PrebondingInfo->Param);
-                break;
-
-            // Unknown message
-            default:
-                strcpy(Buffer, "Unknown event\r\n");
-                break;
+        // Unknown message
+        default:
+            strcpy(Buffer, "Unknown event\r\n");
+            break;
         }
         Serial.print(Buffer);
-    }
-    else
-    {
+    } else {
         // No parameters, send text
         Serial.print(SerialBufferOut);
     }
 }
 
 /**
- * autontw commands service
+ * autonetwork commands service
  *
  * @param - CommandTabParameter command parameter from decode command table
  * @return - none
@@ -315,43 +281,47 @@ void autonetworkHandler(uint8_t EventCode, T_AN_STATE *State)
  */
 void ccpAutonetworkCmd (uint16_t CommandTabParameter)
 {
+    uint16_t  TempData;
+
     // set default autonetwork parametters
-    MyAutonetworkParams.TemporaryAddressTimeout = 60;
-    MyAutonetworkParams.AuthorizeRetries = 1;
+    MyAutonetworkParams.BondingWaves = 10;
+    MyAutonetworkParams.EmptyWaves = 2;
     MyAutonetworkParams.DiscoveryRetries = 1;
-    MyAutonetworkParams.PrebondingInterval = 35;
     MyAutonetworkParams.DiscoveryTxPower = 1;
 
     // read first parameter
-    if (ccpFindCmdParameter(CcpCommandParameter)){
-        MyAutonetworkParams.TemporaryAddressTimeout = atoi(CcpCommandParameter);
+    if (ccpFindCmdParameter(CcpCommandParameter)) {
+        TempData = atoi(CcpCommandParameter);
+        if (TempData < 30)
+            MyAutonetworkParams.BondingWaves = TempData;
     }
 
     // read second parameter
-    if (ccpFindCmdParameter(CcpCommandParameter)){
-        MyAutonetworkParams.AuthorizeRetries = atoi(CcpCommandParameter);
+    if (ccpFindCmdParameter(CcpCommandParameter)) {
+        TempData = atoi(CcpCommandParameter);
+        if (TempData < 30)
+            MyAutonetworkParams.EmptyWaves = TempData;
     }
 
     // read third parameter
-    if (ccpFindCmdParameter(CcpCommandParameter)){
-        MyAutonetworkParams.DiscoveryRetries = atoi(CcpCommandParameter);
+    if (ccpFindCmdParameter(CcpCommandParameter)) {
+        TempData = atoi(CcpCommandParameter);
+        if (TempData <= 3)
+            MyAutonetworkParams.DiscoveryRetries = TempData;
     }
 
     // read fourth parameter
-    if (ccpFindCmdParameter(CcpCommandParameter)){
-        MyAutonetworkParams.PrebondingInterval = atoi(CcpCommandParameter);
-    }
-
-    // read fifth parameter
-    if (ccpFindCmdParameter(CcpCommandParameter)){
-        MyAutonetworkParams.DiscoveryTxPower = atoi(CcpCommandParameter);
+    if (ccpFindCmdParameter(CcpCommandParameter)) {
+        TempData = atoi(CcpCommandParameter);
+        if (TempData <= 7)
+            MyAutonetworkParams.DiscoveryTxPower = TempData;
     }
 
     autonetwork(&MyAutonetworkParams);
 }
 
 /**
- * clrbonds commands service
+ * clearbonds commands service
  *
  * @param - CommandTabParameter command parameter from decode command table
  * @return - none
@@ -376,17 +346,20 @@ void ccpLedCmd (uint16_t CommandTabParameter)
 
     // processing of command input parameters
     // read required operation
-    if (ccpFindCmdParameter(CcpCommandParameter)){
-        if (strcmp("on",CcpCommandParameter)==0) Cmd = CMD_LED_SET_ON;
-        else if (strcmp("off",CcpCommandParameter)==0) Cmd = CMD_LED_SET_OFF;
-             else Cmd = CMD_LED_PULSE;
+    if (ccpFindCmdParameter(CcpCommandParameter)) {
+        if (strcmp("on",CcpCommandParameter) == 0)
+            Cmd = CMD_LED_SET_ON;
+        else if (strcmp("off",CcpCommandParameter) == 0)
+            Cmd = CMD_LED_SET_OFF;
+        else
+            Cmd = CMD_LED_PULSE;
     }
 
     // read destination address
-    if (ccpFindCmdParameter(CcpCommandParameter)){
+    if (ccpFindCmdParameter(CcpCommandParameter))
         Addr = atoi(CcpCommandParameter);         // set destination address
-    }
-    else Addr = 0;
+    else
+        Addr = 0;
 
     ledR(Addr, Cmd);                              // send ledR DPA command
 }

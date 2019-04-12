@@ -13,7 +13,7 @@ These boards [1](http://iqrf.org/weben/index.php?sekce=products&id=iqrf-bb-01&ot
 
 -   intended for communication with DCTR-7xD modules
 -   intended for both DPA coordinator and node
--   supported DPA frameworks: 3.x
+-   supported DPA frameworks: 4.x
 -   supported communication interfaces: SPI, UART
 -   supported programming languages: C for MCU
 -   lightweight and easy to use
@@ -62,6 +62,12 @@ To proper function of library, the following conditions must be met.
 | :---------: | ------------------------------------ |
 |  STORE CODE | ```#define __STORE_CODE_SUPPORT__``` |
 
+-   enable or disable the developer mode of the library, that prints  communication packets between the Arduino board and the DCTR-7xD module
+
+| Extension       | Macro                                |
+| :-------------: | ------------------------------------ |
+|  DEVELOPER MODE | ```#define __DPA_DEVELOPER_MODE__``` |
+
 -   in case of using support of JSON extension, we should define  in [```dpa_json.h```](/src/dpa_json.h) file, size of three buffers.
 
 | Macro                                 | Function                                                |
@@ -83,11 +89,17 @@ If we also using the library [```PubSubClient```](https://github.com/knolleary/p
 | UART | ```void dpaSendUartByte(uint8_t TxByte)```        |
 | UART | ```uint8_t dpaReceiveUartByte(uint8_t *RxByte)``` |
 
--   in case of using STORE CODE extension, implement function to read 1B from selected open file on storage media. Inside this function, user should call ```dpaIncFileByteCounter()``` macro, whenever a byte is read from the file.
+-   in case of using STORE CODE extension, implement the function to read 1B from selected open file on storage media. Inside this function, user should call ```dpaIncFileByteCounter()``` macro, whenever a byte is read from the file.
 
 | Extension   | Function                                |
 | :---------: | --------------------------------------- |
 |  STORE CODE | ```uint8_t dpaReadByteFromFile(void)``` |
+
+-   in case of using DEVELOPER MODE extension, implement the function to print content of the selected buffer. Example of this function you can see in [```packet_printer.cpp```](/examples/Console/Console/packet_printer.cpp) file.
+
+| Extension       | Function                                                                     |
+| :-------------: | ---------------------------------------------------------------------------- |
+|  DEVELOPER MODE | ```void packetPrinter(uint8_t Message, uint8_t *Buffer, uint8_t DataSize)``` |
 
 -   call the function ```void dpaLibraryDriver(void)``` with 150us period. It is recommended to call the function in the interrupt.
 -   initialize the library by calling following function first:

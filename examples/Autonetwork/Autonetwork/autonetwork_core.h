@@ -32,11 +32,6 @@
 #include <Arduino.h>
 #include <dpa_library.h>
 
-//----------------------
-// Autonetwork constants
-//----------------------
-#define AN_MIN_PREBONDING_TIME 15
-
 //------------------------
 // Autonetwork event codes
 //------------------------
@@ -44,47 +39,39 @@
 #define EVT_AN_PROCESS_STOPPED              0x01
 #define EVT_GET_NETWORK_INFO                0x02
 #define EVT_ROUND_START                     0x03
-#define EVT_COOR_ENABLE_PREBONDING          0x04
-#define EVT_COOR_DISABLE_PREBONDING         0x05
-#define EVT_COOR_READ_MID                   0x06
-#define EVT_COOR_REMOVING_BOND              0x07
-#define EVT_NODE_ENABLE_PREBONDING          0x08
-#define EVT_NODE_DISABLE_PREBONDING         0x09
-#define EVT_NODE_READ_MID                   0x0a
-#define EVT_AUTHORIZE_BOND                  0x0b
-#define EVT_AUTHORIZE_BOND_OK               0x0c
-#define EVT_DISCOVERY                       0x0d
-#define EVT_DISCOVERY_WAIT                  0x0e
-#define EVT_DISCOVERY_OK                    0x0f
-#define EVT_WAIT_PREBONDING                 0x10
-#define EVT_FRC_DISABLE_PREBONDING          0x11
-#define EVT_FRC_DISABLE_PREBONDING_BIT0_ERR 0x12
-#define EVT_FRC_DISABLE_PREBONDING_BIT1_ERR 0x13
-#define EVT_FRC_CHECK_NEW_NODES             0x14
-#define EVT_NO_FREE_ADDRESS                 0x15
-#define EVT_NO_NEW_NODE_PREBONDED           0x16
-#define EVT_DPA_CONFIRMATION_TIMEOUT        0x17
-#define EVT_DPA_RESPONSE_TIMEOUT            0x18
-#define EVT_REMOVE_ALL_BONDS                0x19
-#define EVT_MAX_NODES_PREBONDED             0x1a
-#define EVT_NODE_REMOTE_UNBOND              0x1b
+#define EVT_COOR_REMOVING_BOND              0x04
+#define EVT_SMART_CONNECT_PREBONDING        0x05
+#define EVT_AUTHORIZE_BOND                  0x06
+#define EVT_AUTHORIZE_BOND_OK               0x07
+#define EVT_DISCOVERY                       0x08
+#define EVT_DISCOVERY_OK                    0x09
+#define EVT_FRC_READ_NEW_NODES_MID          0x0a
+#define EVT_FRC_CHECK_AUTHORIZED_NODES      0x0b
+#define EVT_FRC_CHECK_NEW_NODES             0x0c
+#define EVT_NO_FREE_ADDRESS                 0x0d
+#define EVT_NO_NEW_NODE_PREBONDED           0x0e
+#define EVT_PREBONDED_NEW_NODE              0x0f
+#define EVT_DPA_CONFIRMATION_TIMEOUT        0x10
+#define EVT_DPA_RESPONSE_TIMEOUT            0x11
+#define EVT_DPA_OPERATION_TIMEOUT           0x12
+#define EVT_REMOVE_ALL_BONDS                0x13
+#define EVT_NODE_REMOTE_UNBOND              0x14
 #define EVT_WITH_PARAM                      0x01
 #define EVT_WITHOUT_PARAM                   0x00
 
 //-------------------------
 // Autonetwork return codes
 //-------------------------
-#define ERR_PROCESS_TERMINATED              0xff
 #define ERR_NO_FREE_ADDRESS                 0xfe
-#define ERR_MAX_NODES_PREBONDED             0xfd
+#define ERR_PROCESS_TERMINATED              0xfd
 #define AN_OK                               0x00
 #define AN_ERROR                            0xff
 
 //--------------------
 // Buffer size, offset
 //--------------------
-#define NODE_BITMAP_SIZE                    32        // Bitmap for 256 nodes
-#define MID_BUFFER_SIZE                     128       // Buffer for 128 MIDs
+#define NODE_BITMAP_SIZE                    30        // Bitmap for 239 nodes
+#define MID_BUFFER_SIZE                     15        // Buffer for 15 MIDs
 #define FRC_BUFFER_SIZE                     64
 #define FRC_DATA_OFFSET                     0
 #define FRC_DATA_SIZE                       55
@@ -96,11 +83,10 @@
 //-----------------------
 typedef struct
 {
-    uint16_t TemporaryAddressTimeout;
-    uint16_t AuthorizeRetries;
-    uint16_t DiscoveryRetries;
-    uint16_t PrebondingInterval;
-    uint16_t DiscoveryTxPower;
+    uint8_t BondingWaves;
+    uint8_t EmptyWaves;
+    uint8_t DiscoveryRetries;
+    uint8_t DiscoveryTxPower;
 }T_AN_PARAMS;
 
 //-------------
@@ -110,7 +96,6 @@ typedef struct
 {
     uint8_t BondedNodesMap[NODE_BITMAP_SIZE];
     uint8_t BondedNodesCount;
-    uint8_t BondedMaxAddress;
     uint8_t DiscoveredNodesMap[NODE_BITMAP_SIZE];
     uint8_t DiscoveredNodesCount;
     uint8_t DID;
@@ -122,24 +107,22 @@ typedef struct
 typedef struct
 {
     uint32_t MID;
-    uint32_t UserData;
-    uint32_t PrebondedMID[7];
-    uint32_t PrebondedUserData[7];
     uint32_t MIDlist[MID_BUFFER_SIZE];
-    uint16_t WTimeout;
-    uint16_t WaitBonding;
-    uint16_t WaitBonding10ms;
+    uint8_t Param;
+    uint8_t WaveCnt;
+    uint8_t EmtyWaveCnt;
+    uint8_t ReadedMIDCount;
     uint8_t PrebondedMIDcount;
-    uint8_t MIDcount;
+    uint8_t PrebondedMIDReadOffset;
+    uint8_t PrebondedNodesCount;
+    uint8_t PrebondedNodesMap[NODE_BITMAP_SIZE];
+    uint8_t NewNodesCount;
     uint8_t NewNodesMap[NODE_BITMAP_SIZE];
     uint8_t FrcData[FRC_BUFFER_SIZE];
-    uint8_t Round;
-    uint8_t Param;
     uint8_t OrigNodesCount;
-    uint8_t BondingMask;
     uint8_t NextAddr;
-    uint8_t NewNode;
     uint8_t DiscoveredNodesCount;
+    uint8_t ReturnCode;
 }T_PREBONDING_INFO;
 
 //------------------

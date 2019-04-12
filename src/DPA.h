@@ -4,10 +4,11 @@
 // Copyright (c) IQRF Tech s.r.o.
 //
 // File:    $RCSfile: DPA.h,v $
-// Version: $Revision: 1.237 $
-// Date:    $Date: 2018/10/25 09:51:26 $
+// Version: $Revision: 1.243.2.1 $
+// Date:    $Date: 2019/01/20 13:32:48 $
 //
 // Revision history:
+//   2019/01/20  Release for DPA 4.00
 //   2018/10/25  Release for DPA 3.03
 //   2017/11/16  Release for DPA 3.02
 //   2017/08/14  Release for DPA 3.01
@@ -35,12 +36,12 @@
 //############################################################################################
 
 // DPA version
-#define	DPA_VERSION_MASTER			0x0303
+#define	DPA_VERSION_MASTER			0x0400
 
 #ifdef __CC5X__
 // Compiled only at CC5X
-#if __CC5X__ < 3701
-#error Insufficient CC5X compiler version, V3.7A is minimum
+#if __CC5X__ < 3703
+#error Insufficient CC5X compiler version, V3.7C is minimum
 #endif
 
 #if IQRFOS < 403
@@ -162,7 +163,7 @@ typedef struct
 #define COORDINATOR_ADDRESS			0x00
 // IQMESH broadcast address
 #define BROADCAST_ADDRESS			0xff
-// IQMESH temporary address, assigned by remote bonding before authorization is done
+// IQMESH temporary address, assigned by pre-bonding before authorization is done
 #define TEMPORARY_ADDRESS			0xfe
 // Address of the local device addressed by IFace
 #define LOCAL_ADDRESS				0xfc
@@ -170,19 +171,11 @@ typedef struct
 #define MAX_ADDRESS					( 240 - 1 )
 
 // Time slots lengths in 10 ms
-#define	MIN_STD_TIMESLOT	4	
+#define	MIN_STD_TIMESLOT	4
 #define	MAX_STD_TIMESLOT	6
 
 #define	MIN_LP_TIMESLOT		8
 #define	MAX_LP_TIMESLOT		10
-
-#ifdef DPA_LP
-#define	MIN_TIMESLOT		MIN_LP_TIMESLOT	
-#define	MAX_TIMESLOT		MAX_LP_TIMESLOT	
-#else
-#define	MIN_TIMESLOT		MIN_STD_TIMESLOT	
-#define	MAX_TIMESLOT		MAX_STD_TIMESLOT
-#endif
 
 // Long diagnostics slot time
 #define	LONG_DIAG_TIMESLOT	20 
@@ -227,27 +220,17 @@ typedef struct
 #define	CMD_COORDINATOR_CLEAR_ALL_BONDS 3
 #define	CMD_COORDINATOR_BOND_NODE 4
 #define	CMD_COORDINATOR_REMOVE_BOND 5
-#define	CMD_COORDINATOR_REBOND_NODE 6
 #define	CMD_COORDINATOR_DISCOVERY 7
 #define	CMD_COORDINATOR_SET_DPAPARAMS 8
 #define	CMD_COORDINATOR_SET_HOPS 9
-#define	CMD_COORDINATOR_DISCOVERY_DATA 10 // (obsolete)
 #define	CMD_COORDINATOR_BACKUP 11
 #define	CMD_COORDINATOR_RESTORE 12
 #define	CMD_COORDINATOR_AUTHORIZE_BOND 13
-#define	CMD_COORDINATOR_BRIDGE 14
-#define	CMD_COORDINATOR_READ_REMOTELY_BONDED_MID 15
-#define	CMD_COORDINATOR_CLEAR_REMOTELY_BONDED_MID 16
-#define	CMD_COORDINATOR_ENABLE_REMOTE_BONDING 17
 #define	CMD_COORDINATOR_SMART_CONNECT 18
 #define	CMD_COORDINATOR_SET_MID 19
 
 #define	CMD_NODE_READ 0
 #define	CMD_NODE_REMOVE_BOND 1
-#define	CMD_NODE_READ_REMOTELY_BONDED_MID 2
-#define	CMD_NODE_CLEAR_REMOTELY_BONDED_MID 3
-#define	CMD_NODE_ENABLE_REMOTE_BONDING 4
-#define	CMD_NODE_REMOVE_BOND_ADDRESS 5
 #define	CMD_NODE_BACKUP 6
 #define	CMD_NODE_RESTORE 7
 #define	CMD_NODE_VALIDATE_BONDS 8
@@ -364,19 +347,20 @@ typedef enum
 
   // Bit/flag reserved for a future use
   STATUS_RESERVED_FLAG = 0x40,
-  // Bit to flag asynchronous response from [N]
+  // Bit to flag asynchronous DPA Response from [N]
   STATUS_ASYNC_RESPONSE = 0x80,
-  // Error code used to mark confirmation
+  // Error code used to mark DPA Confirmation
   STATUS_CONFIRMATION = 0xff
 } TErrorCodes;
 
 // Embedded FRC commands
 typedef enum
 {
-  FRC_Prebonding = 0x00,
+  FRC_Ping = 0x00,
   FRC_UART_SPI_data = 0x01,
   FRC_AcknowledgedBroadcastBits = 0x02,
   FRC_PrebondedAlive = 0x03,
+  FRC_SupplyVoltage = 0x04,
 
   FRC_Temperature = 0x80,
   FRC_AcknowledgedBroadcastBytes = 0x81,
@@ -469,7 +453,7 @@ typedef struct
 typedef struct
 {
   uns8	ReqAddr;
-  uns8	BondingMask;
+  uns8	BondingTestRetries;
 } STRUCTATTR TPerCoordinatorBondNode_Request;
 
 // Structure returned by CMD_COORDINATOR_BOND_NODE or CMD_COORDINATOR_SMART_CONNECT
@@ -485,17 +469,11 @@ typedef struct
   uns8	BondAddr;
 } STRUCTATTR TPerCoordinatorRemoveBond_Request;
 
-// Structure for CMD_COORDINATOR_REBOND_NODE
-typedef struct
-{
-  uns8	BondAddr;
-} STRUCTATTR TPerCoordinatorRebondNode_Request;
-
-// Structure returned by CMD_COORDINATOR_REMOVE_BOND or CMD_COORDINATOR_REBOND_NODE
+// Structure returned by CMD_COORDINATOR_REMOVE_BOND
 typedef struct
 {
   uns8	DevNr;
-} STRUCTATTR TPerCoordinatorRemoveRebondBond_Response;
+} STRUCTATTR TPerCoordinatorRemoveBond_Response;
 
 // Structure for CMD_COORDINATOR_DISCOVERY
 typedef struct
@@ -522,18 +500,6 @@ typedef struct
   uns8	RequestHops;
   uns8	ResponseHops;
 } STRUCTATTR TPerCoordinatorSetHops_Request_Response;
-
-// Structure for CMD_COORDINATOR_DISCOVERY_DATA (obsolete)
-typedef struct
-{
-  uns16	Address;
-} STRUCTATTR TPerCoordinatorDiscoveryData_Request;
-
-// Structure returned by CMD_COORDINATOR_DISCOVERY_DATA (obsolete)
-typedef struct
-{
-  uns8	DiscoveryData[48];
-} STRUCTATTR TPerCoordinatorDiscoveryData_Response;
 
 // Structure for CMD_COORDINATOR_BACKUP and CMD_NODE_BACKUP
 typedef struct
@@ -566,43 +532,6 @@ typedef struct
   uns8	BondAddr;
   uns8	DevNr;
 } STRUCTATTR TPerCoordinatorAuthorizeBond_Response;
-
-// Structure for CMD_COORDINATOR_BRIDGE
-typedef struct
-{
-  TDpaIFaceHeader subHeader;
-  uns8	subPData[DPA_MAX_DATA_LENGTH - sizeof( TDpaIFaceHeader )];
-} STRUCTATTR TPerCoordinatorBridge_Request;
-
-// Structure returned by CMD_COORDINATOR_BRIDGE
-typedef struct
-{
-  TDpaIFaceHeader subHeader;
-  uns8	subRespCode;
-  uns8	subDpaValue;
-  uns8	subPData[DPA_MAX_DATA_LENGTH - sizeof( TDpaIFaceHeader ) - 2 * sizeof( uns8 )];
-} STRUCTATTR TPerCoordinatorBridge_Response;
-
-// Structure for CMD_COORDINATOR_ENABLE_REMOTE_BONDING and CMD_NODE_ENABLE_REMOTE_BONDING
-typedef struct
-{
-  uns8	BondingMask;
-  uns8	Control;
-  uns8	UserData[4];
-} STRUCTATTR TPerCoordinatorNodeEnableRemoteBonding_Request;
-
-// Structure for TPerCoordinatorNodeReadRemotelyBondedMID_Response
-typedef struct
-{
-  uns8	MID[4];
-  uns8	UserData[4];
-} STRUCTATTR TPrebondedNode;
-
-// Structure returned by CMD_COORDINATOR_READ_REMOTELY_BONDED_MID and CMD_NODE_READ_REMOTELY_BONDED_MID
-typedef struct
-{
-  TPrebondedNode  PrebondedNodes[DPA_MAX_DATA_LENGTH / sizeof( TPrebondedNode )];
-} STRUCTATTR TPerCoordinatorNodeReadRemotelyBondedMID_Response;
 
 // Structure for CMD_COORDINATOR_SMART_CONNECT
 typedef struct
@@ -850,7 +779,7 @@ typedef struct
   uns8	FRCresponseTime;
 } STRUCTATTR TPerFrcSetParams_RequestResponse;
 
-// Interface and CMD_COORDINATOR_BRIDGE confirmation structure
+// Interface confirmation structure
 typedef struct
 {
   // Number of hops
@@ -902,11 +831,8 @@ typedef union
   // Structure for CMD_COORDINATOR_REMOVE_BOND
   TPerCoordinatorRemoveBond_Request PerCoordinatorRemoveBond_Request;
 
-  // Structure for CMD_COORDINATOR_REBOND_NODE
-  TPerCoordinatorRebondNode_Request PerCoordinatorRebondNode_Request;
-
-  // Structure returned by CMD_COORDINATOR_REMOVE_BOND or CMD_COORDINATOR_REBOND_NODE
-  TPerCoordinatorRemoveRebondBond_Response PerCoordinatorRemoveRebondBond_Response;
+  // Structure returned by CMD_COORDINATOR_REMOVE_BOND 
+  TPerCoordinatorRemoveBond_Response PerCoordinatorRemoveBond_Response;
 
   // Structure for CMD_COORDINATOR_DISCOVERY
   TPerCoordinatorDiscovery_Request PerCoordinatorDiscovery_Request;
@@ -919,12 +845,6 @@ typedef union
 
   // Structure for and also returned by CMD_COORDINATOR_SET_HOPS
   TPerCoordinatorSetHops_Request_Response PerCoordinatorSetHops_Request_Response;
-
-  // Structure for CMD_COORDINATOR_DISCOVERY_DATA (obsolete)
-  TPerCoordinatorDiscoveryData_Request PerCoordinatorDiscoveryData_Request;
-
-  // Structure returned by CMD_COORDINATOR_DISCOVERY_DATA (obsolete)
-  TPerCoordinatorDiscoveryData_Response PerCoordinatorDiscoveryData_Response;
 
   // Structure for CMD_COORDINATOR_BACKUP and CMD_NODE_BACKUP
   TPerCoordinatorNodeBackup_Request PerCoordinatorNodeBackup_Request;
@@ -940,18 +860,6 @@ typedef union
 
   // Structure returned by CMD_COORDINATOR_AUTHORIZE_BOND
   TPerCoordinatorAuthorizeBond_Response PerCoordinatorAuthorizeBond_Response;
-
-  // Structure for CMD_COORDINATOR_BRIDGE
-  TPerCoordinatorBridge_Request PerCoordinatorBridge_Request;
-
-  // Structure returned by CMD_COORDINATOR_BRIDGE
-  TPerCoordinatorBridge_Response PerCoordinatorBridge_Response;
-
-  // Structure for CMD_COORDINATOR_ENABLE_REMOTE_BONDING and CMD_NODE_ENABLE_REMOTE_BONDING
-  TPerCoordinatorNodeEnableRemoteBonding_Request PerCoordinatorNodeEnableRemoteBonding_Request;
-
-  // Structure returned by CMD_COORDINATOR_READ_REMOTELY_BONDED_MID and CMD_NODE_READ_REMOTELY_BONDED_MID
-  TPerCoordinatorNodeReadRemotelyBondedMID_Response PerCoordinatorNodeReadRemotelyBondedMID_Response;
 
   // Structure for CMD_COORDINATOR_SMART_CONNECT
   TPerCoordinatorSmartConnect_Request PerCoordinatorSmartConnect_Request;
@@ -1019,7 +927,7 @@ typedef union
   // Structure for request and response of CMD_FRC_SET_PARAMS
   TPerFrcSetParams_RequestResponse PerFrcSetParams_RequestResponse;
 
-  // Interface and CMD_COORDINATOR_BRIDGE confirmation structure
+  // Interface confirmation structure
   TIFaceConfirmation IFaceConfirmation;
 } TDpaMessage;
 
@@ -1040,7 +948,6 @@ typedef union
 #define	DpaEvent_ReceiveDpaRequest		  13
 #define	DpaEvent_BeforeSendingDpaResponse 14
 #define	DpaEvent_PeerToPeer				  15
-#define	DpaEvent_AuthorizePreBonding	  16
 #define	DpaEvent_UserDpaValue			  17
 #define	DpaEvent_FrcResponseTime		  18
 #define	DpaEvent_BondingButton			  19

@@ -15,15 +15,6 @@ env:
     - PLATFORMIO_CI_SRC=examples/Blink/Blink/ INTERFACE=UART
     - PLATFORMIO_CI_SRC=examples/Console/Console/ INTERFACE=UART
     - PLATFORMIO_CI_SRC=examples/MQTT/MQTT/ INTERFACE=UART
-matrix:
-    allow_failures:
-        - env: PLATFORMIO_CI_SRC=examples/Autonetwork/Autonetwork/ INTERFACE=SPI
-        - env: PLATFORMIO_CI_SRC=examples/Console/Console/ INTERFACE=SPI
-        - env: PLATFORMIO_CI_SRC=examples/MQTT/MQTT/ INTERFACE=SPI
-        - env: PLATFORMIO_CI_SRC=examples/Autonetwork/Autonetwork/ INTERFACE=UART
-        - env: PLATFORMIO_CI_SRC=examples/Blink/Blink/ INTERFACE=UART
-        - env: PLATFORMIO_CI_SRC=examples/Console/Console/ INTERFACE=UART
-        - env: PLATFORMIO_CI_SRC=examples/MQTT/MQTT/ INTERFACE=UART
 install:
     - pip install -U platformio
     - platformio lib -g install TimerOne DueTimer PubSubClient 872
