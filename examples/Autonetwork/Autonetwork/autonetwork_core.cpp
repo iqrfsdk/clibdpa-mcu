@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2018 IQRF Tech s.r.o.
+ * Copyright 2015-2020 IQRF Tech s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@
  * definitions
  */
 #define SHORT_TIMEOUT   2000
-#define LONG_TIMEOUT    60000
+#define LONG_TIMEOUT    3600000
 
 /*
  * Variables
@@ -59,7 +59,7 @@ uint8_t isNodeBonded(uint8_t Addr);
 uint8_t nextFreeAddr(void);
 void delayMS(uint32_t Time);
 void notifyMainApp(uint8_t EventCode, uint8_t Param);
-uint8_t sendMyDpaRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Timeout);
+uint8_t sendMyDpaRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint32_t Timeout);
 uint8_t getAddrInfo(void);
 uint8_t getDiscoveredNodes(void);
 uint8_t getBondedNodes(void);
@@ -196,7 +196,7 @@ void notifyMainApp(uint8_t EventCode, uint8_t Param)
  * @return Operation result
  *
  */
-uint8_t sendMyDpaRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Timeout)
+uint8_t sendMyDpaRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint32_t Timeout)
 {
     uint8_t OpResult;
     uint8_t NotifyException = false;

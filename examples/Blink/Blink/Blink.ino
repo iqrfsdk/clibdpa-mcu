@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2018 IQRF Tech s.r.o.
+ * Copyright 2015-2020 IQRF Tech s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ extern "C" uint8_t dpaReceiveUartByte(uint8_t *Rx_Byte);
  * C++ prototypes
  */
 void myAsyncPacketHandler(T_DPA_PACKET *dpaAnswerPkt);
-uint8_t sendMyDpaRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Timeout);
+uint8_t sendMyDpaRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint32_t Timeout);
 void simpleDpaCmd(uint16_t Addr, uint8_t Peripheral, uint8_t Cmd);
 void systemTimerIterruptHandler(void);
 #if defined(__PIC32MX__)
@@ -301,7 +301,7 @@ void myAsyncPacketHandler(T_DPA_PACKET *dpaAnswerPkt)
  * @param Timeout Timeout
  * @return Operation result
  */
-uint8_t sendMyDpaRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Timeout)
+uint8_t sendMyDpaRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint32_t Timeout)
 {
     uint8_t OpResult;
 

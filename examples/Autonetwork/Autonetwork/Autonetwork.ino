@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2018 IQRF Tech s.r.o.
+ * Copyright 2015-2020 IQRF Tech s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -279,7 +279,7 @@ void autonetworkHandler(uint8_t EventCode, T_AN_STATE *State)
  * @return - none
  *
  */
-void ccpAutonetworkCmd (uint16_t CommandTabParameter)
+void ccpAutonetworkCmd(uint16_t CommandTabParameter)
 {
     uint16_t  TempData;
 
@@ -339,7 +339,7 @@ void ccpClrBondsCmd (uint16_t CommandTabParameter)
  * @return - none
  *
  */
-void ccpLedCmd (uint16_t CommandTabParameter)
+void ccpLedCmd(uint16_t CommandTabParameter)
 {
     uint16_t Addr;
     uint8_t Cmd;

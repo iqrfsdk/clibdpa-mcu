@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2018 IQRF Tech s.r.o.
+ * Copyright 2015-2020 IQRF Tech s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@
 void myAsyncPacketHandler(T_DPA_PACKET *dpaAnswerPkt);
 char bToHexa_high(uint8_t B);
 char bToHexa_low(uint8_t B);
-uint8_t sendMyDpaRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Timeout);
+uint8_t sendMyDpaRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint32_t Timeout);
 void printDiscBondInfo(void);
 void printOsInfo(uint8_t *infoBuffer);
 
@@ -274,7 +274,7 @@ char bToHexa_low(uint8_t B)
  * @param Timeout Timeout
  * @return Operation result
  */
-uint8_t sendMyDpaRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Timeout)
+uint8_t sendMyDpaRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint32_t Timeout)
 {
 
     uint8_t Message;

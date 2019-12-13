@@ -1,8 +1,8 @@
 /**
  * @file DPA support library
- * @version 1.6.0
+ * @version 1.7.0
  *
- * Copyright 2015-2018 IQRF Tech s.r.o.
+ * Copyright 2015-2020 IQRF Tech s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -246,7 +246,7 @@ void dpaLibraryDriver(void)
  * @param Timeout Operation timeout in ms
  * @return Operation result (DPA_OPERATION_OK, DPA_OPERATION_IN_PROGRESS, DPA_OPERATION_TIMEOUT ... )
  */
-DPA_OPERATION_RESULT dpaSendRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Timeout)
+DPA_OPERATION_RESULT dpaSendRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint32_t Timeout)
 {
     DPA_OPERATION_RESULT OperationResult = DPA_OPERATION_IN_PROGRESS;
 

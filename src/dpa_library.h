@@ -1,8 +1,8 @@
 /**
  * @file DPA support library
- * @version 1.6.0
+ * @version 1.7.0
  *
- * Copyright 2015-2018 IQRF Tech s.r.o.
+ * Copyright 2015-2020 IQRF Tech s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ extern "C" {
 #include <stddef.h>
 #include <stdbool.h>
 
-#define __SPI_INTERFACE__       // select for communication via SPI
-//#define __UART_INTERFACE__    // select for communication via UART
+//#define __SPI_INTERFACE__       // select for communication via SPI
+#define __UART_INTERFACE__    // select for communication via UART
 
 //#define __STORE_CODE_SUPPORT__  // uncomment for TR7xD modules code upload support
 //#define __DPA_DEVELOPER_MODE__  // in developer mode prints DPA communication packets to console
@@ -81,7 +81,7 @@ typedef struct {
     uint8_t ExtraDataSize;
     uint8_t RdExtraDataSize;
     uint8_t TimeoutPrescaller;
-    uint16_t TimeoutTimer;
+    uint32_t TimeoutTimer;
     uint16_t FileByteCounter;
     uint32_t RequestTs;
     uint32_t ConfirmationTs;
@@ -135,7 +135,7 @@ void dpaLibraryDriver(void);
  * @param Timeout operation timeout in ms
  * @return operation result (DPA_OPERATION_OK, DPA_OPERATION_IN_PROGRESS, DPA_OPERATION_TIMEOUT ... )
  */
- DPA_OPERATION_RESULT dpaSendRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint16_t Timeout);
+ DPA_OPERATION_RESULT dpaSendRequest(T_DPA_PACKET *DpaRequest, uint8_t DataSize, uint32_t Timeout);
 
 /**
  * Makes CRC from TR module configuration data
