@@ -1,8 +1,9 @@
 /**
  * @file DPA support library
- * @version 1.7.0
+ * @version 1.7.1
  *
- * Copyright 2015-2020 IQRF Tech s.r.o.
+ * Copyright 2015-2021 IQRF Tech s.r.o.
+ * Copyright 2019-2021 MICRORISC s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -785,6 +786,14 @@ void dpaUartInterfaceDriver(void)
 
             // end of packet or DPA structure is full
             if (TempData == HDLC_FRM_FLAG_SEQUENCE || DpaUartIfControl.PacketCnt == DpaUartIfControl.PacketLen) {
+                // receiving full packet 64B
+                if (DpaUartIfControl.PacketCnt == DpaUartIfControl.PacketLen) {
+                    // add last Rx (CRC itself, already read in this last iteration) byte to CRC
+                    DpaUartIfControl.CRC = dpaDoCRC8(TempData, DpaUartIfControl.CRC);
+                    // read one more, end of packet, HDLC_FRM_FLAG_SEQUENCE
+                    dpaReceiveUartByte(&TempData);
+                }
+
                 if (DpaUartIfControl.CRC == 0 && DpaControl.DpaAnswerHandler != NULL) {
                     // remember size of received extra data
                     if (DpaUartIfControl.PacketCnt >= 8)
