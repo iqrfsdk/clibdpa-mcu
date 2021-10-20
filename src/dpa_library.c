@@ -824,6 +824,10 @@ void dpaUartInterfaceDriver(void)
 
             // add Rx byte to CRC
             DpaUartIfControl.CRC = dpaDoCRC8(TempData, DpaUartIfControl.CRC);
+            // CRC == 0 means we have just received correct CRC byte and we do not include it
+            if(DpaUartIfControl.CRC == 0) {
+                return;
+            }
 
             switch (DpaUartIfControl.PacketCnt) {
             case 0:
