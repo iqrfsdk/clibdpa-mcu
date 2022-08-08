@@ -56,6 +56,12 @@
 extern "C" uint8_t dpaSendSpiByte(uint8_t Tx_Byte);
 extern "C" void dpaDeselectTRmodule(void);
 #elif defined(__UART_INTERFACE__)
+#if defined (__AVR_ATmega168__) || defined (__AVR_ATmega168P__) || \
+    defined (__AVR_ATmega328__) || defined (__AVR_ATmega328P__)
+#include <SoftwareSerial.h>
+// RX: D2, TX: D3
+SoftwareSerial Serial1(2, 3);
+#endif
 extern "C" void dpaSendUartByte(uint8_t Tx_Byte);
 extern "C" uint8_t dpaReceiveUartByte(uint8_t *Rx_Byte);
 #endif
