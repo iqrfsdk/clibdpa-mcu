@@ -1,0 +1,54 @@
+name: PlatformIO CI
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        example:
+          - examples/Autonetwork/Autonetwork/
+          - examples/Blink/Blink/
+          - examples/Console/Console/
+          - examples/MQTT/MQTT/
+        interface: [SPI, UART]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Cache PlatformIO
+        uses: actions/cache@v2
+        with:
+          path: ~/.platformio
+          key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade platformio
+
+      - name: Install library dependencies
+        run: pio lib -g install TimerOne DueTimer PubSubClient 872
+
+      - name: Set correct interface
+        run: |
+          if [[ "$INTERFACE" == "UART" ]]; then sed -i "s/#define __SPI_INTERFACE__/\/\/#define __SPI_INTERFACE__/" src/dpa_library.h; fi
+          if [[ "$INTERFACE" == "UART" ]]; then sed -i "s/\/\/#define __UART_INTERFACE__/#define __UART_INTERFACE__/" src/dpa_library.h; fi
+        env:
+          INTERFACE: ${{ matrix.interface }}
+
+      - name: Run PlatformIO
+        run: pio ci --lib="." --project-conf ${{ matrix.example }}/../platformio.ini
+        env:
+          PLATFORMIO_CI_SRC: ${{ matrix.example }}
